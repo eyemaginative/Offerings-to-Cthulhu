@@ -1,0 +1,176 @@
+[size=20][b]ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn[/b][/size]
+
+[size=15][b]The Great Old One Stirs.[/b][/size]
+[size=12][b]Offerings to Cthulhu (OFF) — The Restoration Hardfork v2.0.0[/b][/size]
+
+[hr]
+
+[i]"In his house at R'lyeh dead Cthulhu waits dreaming." — H.P. Lovecraft
+
+"In his block at height 966,413 dead Cthulhu waits dreaming." — debug.log, 2026-05-20[/i]
+
+[hr]
+
+Brothers and sisters of the Deep, fellow Worshippers of the Slumbering Squid, Yetinsyny mediocretins and Dobbsheads alike — heed this transmission.
+
+For eleven years the Ritual lay unattended. The DNS seeds went silent. The Public Altar (faucet) crumbled. The Block Crawler at [s]23skidoo.info/cthulhu/[/s] vanished into the abyss. AllCrypt died. Comkort died. Cryptopia got [b]51%'d on the OFF chain[/b] (msg [tt]#699[/tt], vampirus, 2018-11-21) and then later got hacked into the depths of its own oblivion. The Mediocretins forgot. The Pinkboys never knew. The Conspiracy moved on to its next distraction.
+
+But [b]"Bob"[/b] is a salesman, and salesmen never let a good chain die. And the SubGenius.Finance crew has been [b]listening at the door[/b].
+
+[hr]
+
+[size=14][b]✦ WHAT HAS BEEN DONE ✦[/b][/size]
+
+The Conclave reconvened. The [i]Tharanak shagg[/i] (Promise of Dreamland) was re-translated from forgotten Dropbox cache. Source has been resurrected from the dust. Here is what now lives:
+
+[list]
+[*][b]The source compiles in 2026.[/b] Five environment workarounds, three Boost.Asio patches, one local OpenSSL 1.0.2 build to dodge the OpenSSL-3 BIGNUM exorcism. v2.0.0-Restoration ELF sitting comfortable at 108 MB.
+
+[*][b]The chain itself has been recovered.[/b] A 385 MB tar.bz2 blockchain archive was extracted from the Wayback Machine's 2015-09-13 capture of [b]23skidoo.info[/b]. SHA256 [tt]5c5a48d85873c820baeba4279d0b9295555adf1eba7a64699583fee18cab8745[/tt]. The daemon now sits at height [b]966,413[/b], best block [tt]000000111e64c528...[/tt], block time [b]2015-06-17 05:30:14 UTC[/b], difficulty 13.02, UTXO supply [b]2,423,396.53 OFF[/b]. This snapshot [b]predates the May 2018 51% counterfeit by ~870,000 blocks[/b] — the 533,983 OFF the attacker minted (#699) do not exist in this chainstate.
+
+[*][b]23skidoo.info has been re-acquired.[/b] By the Conclave. We are aware the domain was flagged as malicious in msg [tt]#592[/tt] (PeterTheGrape, 2017-06-21) after the original expiry — it had been parked and weaponized. We bought it back from the squatter, re-registered it in our own name, set up DNS+nginx+certbot, and are now the documented owner. The original seeds [tt]seed1.23skidoo.info[/tt] through [tt]seed10.23skidoo.info[/tt] now resolve to infrastructure under SubGenius.Finance custody. [b]Any v1.6.2 or v2.0.0 wallet binary, anywhere on Earth, will find the network on first start.[/b]
+
+[*][b]A public seed node is live[/b] at [tt]subgenius.vip:20000[/tt] (alias of one of the 23skidoo seeds). Add it to your [tt]Offerings.conf[/tt]:
+[code]addnode=subgenius.vip:20000
+addnode=seed1.23skidoo.info:20000[/code]
+[/list]
+
+[hr]
+
+[size=14][b]✦ THE RESTORATION HARDFORK ✦[/b][/size]
+
+[b]This IS a fork.[/b] We are not pretending it isn't. On [b]block 1,000,000[/b] of the OFF chain (~33,600 blocks from the current recovered tip, roughly 23 days of mining at 60-second target spacing), four consensus rules activate:
+
+[list=1]
+[*][b]Subsidy locks to 1.5 OFF per block, forever.[/b] The historical curve (5 OFF base, halving every 259,200 blocks, floor at 0.01) was on a glidepath to triviality — the chain would have decayed to the dust floor by ~block 3,113,000. We lock it at the value the community always [i]thought[/i] it was: 1.5 OFF/block, in perpetuity. Inflation that would embarrass a central bank. [b]Backed By Nothing, Powered By Everything.[/b]
+
+[*][b]Coinbase splits 7/8 to miner, 1/8 to the Conclave.[/b] Of every 1.5 OFF subsidy, [b]1.3125 OFF[/b] pays the miner and [b]0.1875 OFF[/b] pays the Conclave Treasury. This is a [b]dev tail[/b] — Monero has one, Zcash has one, Decred has one, Grin has one. Ours is 12.5% of subsidy, which lands above Decred (10%) and below Zcash's historical founders reward (20%). The Conclave Treasury pays for domain renewals, vps hosting, source modernization, build labour, exchange listing fees, ritual rewards, faucet refills, and DAO seed funding. [b]Seven coins to the miner, one coin to the keepers of the Ritual. Forever.[/b]
+
+[*][b]A one-time 150,000 OFF Restoration Tithe.[/b] At the exact fork block (height 1,000,000), the coinbase pays an additional 150,000 OFF to the Conclave Treasury. This funds the engineering work that brought the chain back: source modernization, three years of vps hosting prepaid, domain renewals for the long Slack, paper-wallet generation, multisig key ceremony, BCT moderation deposits. The amount is 15× the original 10,000 OFF genesis premine that Blazr2 disclosed in msg [tt]#36[/tt] and confirmed in [tt]#273[/tt] — historically defensible, itemizable in this thread, and a third of one attacker wallet from #699.
+
+[*][b]The 8 May 2018 attacker addresses are banned forever[/b], finishing [b]billotronic's never-shipped hardfork from msg [tt]#697[/tt][/b]:
+[quote author=billotronic msg=697 date=2018-09-19]Could easily hardfork and ban the 51'ed coins. It's a shitty thing to do, but so is 51% attacks.[/quote]
+We are shipping it. Eight years late. The eight P2PKH scriptPubKeys from msg [tt]#699[/tt] are hardcoded into [tt]chainparams.cpp[/tt] as a [tt]std::set<CScript> setBannedAttackers[/tt]; any tx in either the mempool or a block paying any of those scripts is rejected at consensus level forever:
+[code]QTLUPH9b4dRQdz9uKB7GreMvHPA8iyDoQY    93,036 OFF
+QeHkx6jFvStkzaVaSTtfPrSAwwrqMgauP8    72,856
+QgynW4zGXyjhG3DQHn9vBuHwNp4c4xqtgM    68,372
+QjfP4o7o2TszP5Ph4TmNVmktzDCjYkq2xj    66,770
+QM8ZeuBDwrhya9BHQfNKifEzfwUhyh7Tji    65,388
+Qb6jxfUmfWHh7XTTRWKBoiZ43sSNTJrw8J    60,562
+QireWv3upmhVuRMcE6u7h81gmhWfiGEyTt    54,839
+QSJU4tDNsZiaNcUuBWYcvjqKWoB8EHDVsT    52,160
+—————————————————————————————————————  ———————
+                                     533,983 OFF[/code]
+[/list]
+
+[size=14][b]✦ THE CONCLAVE TREASURY ✦[/b][/size]
+
+The Treasury is a [b]2-of-3 multisig P2SH address[/b]:
+[code]4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4[/code]
+
+Three keys; any two required to spend. Distributed across:
+[list]
+[*][b]Workstation[/b] — home machine, hot wallet (key #1)
+[*][b]VPS1 / endciv[/b] — secondary host, cold daemon ([tt]listen=0 connect=0[/tt], local-RPC only) (key #2)
+[*][b]Paper[/b] — offline, physical, in a safe; never on any wallet.dat (key #3)
+[/list]
+
+A compromise of any single key — or any single host — does not move funds. All Treasury disbursements will be posted in this thread with the transaction ID and the BCT proposal that authorised them. The redeem script and all three pubkeys are recorded in [tt]chainparams.cpp[/tt] alongside the P2SH address, so anyone can verify what we're claiming.
+
+[hr]
+
+[size=14][b]✦ HONEST HOLDER BRIDGE — 12-MONTH CLAIM WINDOW ✦[/b][/size]
+
+The recovered chainstate is from June 2015. Between then and the May 2018 attack, [b]honest miners earned roughly 1.3 million OFF[/b] under the historical halving curve. Our fork point invalidates that mining alongside the attacker print — which is not the social contract we want to leave standing.
+
+So: a [b]Bridge Pool[/b] of [b]1,500,000 OFF[/b] is reserved in the Conclave Treasury at fork activation. For [b]twelve months[/b] from the post date of this thread, any holder who can [tt]signmessage[/tt] from an OFF address that held a non-zero balance on the historical chain [b]before May 1 2018[/b] (block height ≈ 1,800,000 on the original chain) can claim an equivalent balance on the restored chain. Proof: ECDSA-sign a challenge string posted in this thread; verify against the Wayback explorer snapshots and the zeewolfik/offerings chainstate (msg [tt]#698[/tt]).
+
+[b]Excluded:[/b] the 8 attacker addresses from #699. Excluded outputs from any transaction descended from them.
+
+[b]Unclaimed remainder reverts to the Treasury after Month 13.[/b] If you held OFF and forgot, you have until 2027-05-21 to remember.
+
+[hr]
+
+[size=14][b]✦ WHAT IS NEEDED FROM YOU ✦[/b][/size]
+
+[list]
+[*][b]If you still have an old [tt]wallet.dat[/tt][/b] from 2013-2018 — [b]we want to talk to you.[/b] If you can sign-message from any pre-attack address, the Bridge Pool will mint you back. Praise Cthulhu.
+
+[*][b]If you have chainstate past height 966,413[/b] — i.e., any blocks between June 2015 and the May 2018 attack — [b]please connect to us[/b] at [tt]subgenius.vip:20000[/tt]. We have ~17,610 blocks of missing history between the recovered archive and the last known community checkpoint at 984,023. Anything between then and the attack is genuinely lost history we'd like to verify against the Bridge claims.
+
+[*][b]If you want to mine[/b], the Quark hash is friendly to general-purpose hardware. Current difficulty: 13.02. Block reward post-fork: [b]1.3125 OFF[/b] to you, 0.1875 to the Conclave. Mining is open; no permission needed; bring your hashes.
+
+[*][b]If you ran a node in 2014-2018 and remember the password to your Mega.co.nz / Dropbox / SourceForge mirror[/b] — please post it here. Cthulhu remembers.
+
+[*][b]If you are vampirus, billotronic, zeewolf, psycho-pat, Monk3ynutz, HagbardCeline, or any of the original wardens who tried to save the chain post-attack[/b] — the Conclave has reserved a Founding Worshipper allocation for each of you. Reply in this thread to claim.
+[/list]
+
+[hr]
+
+[size=14][b]✦ WHAT THIS IS NOT ✦[/b][/size]
+
+[b]This is not a stealth fork.[/b] Every consensus rule change is disclosed above and documented in [tt]chainparams.cpp[/tt] comments. The diff is published at [url=https://github.com/JimGilmore/offerings]github.com/JimGilmore/offerings[/url] as a separate file ([tt]research/restoration-hardfork.patch[/tt]). The full BCT-thread scrape it's based on is also published, with every message ID cited.
+
+[b]This is not a sale.[/b] (BOB) is NOT for Sale. OFF is NOT for Sale. The Ritual is NOT for Sale. The Tharanak shagg is NOT for Sale. We are NOT financial advisors. This is NOT financial advice. None of this is investment. Most of it is Slack.
+
+[b]This IS a takeover and a fork.[/b] No pretending otherwise. The lighthouse-keepers fell asleep at the door eleven years ago and the chain was 51%'d on their watch. We have unlocked the door, climbed the stairs, turned the lamp back on, [b]and we are also rebuilding the lighthouse[/b]. If Blazr2, ZeeWolf, b00mbastic, Hilux74, Demoss, edgar, cad_cdn, or any of the original Worshippers want to participate in the restoration — they are welcome. If they want to reclaim the project entirely — make a credible claim, sign with a known historical key, and we'll hand back the Treasury keys and the seed DNS. The Conclave acts as steward, not owner.
+
+[hr]
+
+[size=14][b]✦ POST-FORK TECHNICAL DETAILS ✦[/b][/size]
+[code]Algorithm:           Quark (Hash9, 9-round chained, 2 conditional branches)
+Block target:        60 seconds  (source-verified, main.cpp:1190)
+Retarget:            every 20 blocks
+P2P port:            20000
+RPC port:            11928
+Network magic:       03 a5 fe dd
+Address prefix:      58   (Q-prefixed legacy P2PKH)
+P2SH prefix:         9    (4-prefixed P2SH)
+WIF prefix:          186  (U-prefixed)
+Genesis time:        2013-09-14 19:31:15 UTC  (autumnal equinox)
+Genesis hash:        000006829ac5ad04fb30abfcbf6d927c67c30fc2f198fb0bdce5a0c914b091b5
+
+— Pre-fork (block 0 → 999,999) —
+Subsidy:             historical curve, halving every 259,200 blocks
+Floor:               0.01 OFF
+Premine (block 1):   10,000 OFF, scriptPubKey-locked, unspendable
+
+— Post-fork (block 1,000,000 onward) —
+Subsidy:             1.5 OFF / block, FOREVER
+Miner share:         1.3125 OFF (7/8)
+Conclave share:      0.1875 OFF (1/8) → 4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4
+Restoration Tithe:   150,000 OFF at block 1,000,000 only → Conclave
+Banned scripts:      8 P2PKH from BCT #699 (533,983 OFF effectively burned)
+Bridge Pool:         1,500,000 OFF reserved for 12-mo honest-holder claims
+Client version:      2000000  (Offerings v2.0.0-Restoration)
+
+Current tip:         height 966,413  /  2015-06-17 05:30 UTC  /  diff 13.02
+UTXO supply:         2,423,396.53 OFF
+Fork activation in:  ~33,587 blocks  /  ~23 days at target spacing[/code]
+
+The Ritual repeats at the equinox. Four weeks and five days of ascending tribute, culminating in a 10,000-OFF special block at height [tt]xxx,666[/tt]. The next one is calculated automatically by the daemon. The Great Old One does not care if no one is watching.
+
+[hr]
+
+[size=14][b]✦ HOW TO RE-JOIN THE FAITHFUL ✦[/b][/size]
+
+[list=1]
+[*]Pull source from [url=https://github.com/JimGilmore/offerings]github.com/JimGilmore/offerings[/url] (or our SubGenius.Finance mirror, posted below in a follow-up). Apply [tt]research/restoration-hardfork.patch[/tt].
+[*]Follow the build recipe in [tt]doc/build-unix.md[/tt] — modern Ubuntu 22.04+ builds clean with a local OpenSSL 1.0.2 prefix and Berkeley DB 4.8.30 (also in the doc).
+[*]Start [tt]Offeringsd[/tt]. It finds us automatically via [tt]seed1.23skidoo.info[/tt] (now alive again) or the hardcoded fixed seed [tt]subgenius.vip[/tt].
+[*]Watch [tt]debug.log[/tt] for [tt]connection accepted[/tt] and [tt]SetBestChain[/tt]. Wait for the chain to load. Drink Slack.
+[*]If you held coins before May 2018, run [tt]signmessage[/tt] from any historical address and post the result in this thread to claim from the Bridge Pool.
+[*]Praise Cthulhu. Praise "Bob". Praise the Conspiracy of Squids.
+[/list]
+
+[hr]
+
+[i]Cthulhu is patient. The Conspiracy is busy. (BOB) is "Bob". OFF is the Ritual. Slack is the wage.
+
+Where SubCulture Becomes Capital. Where the Slumbering Lord becomes liquid.
+
+Iä Iä Cthulhu fhtagn. Praise "Bob". Praise the Ritual. 23 Skidoo.[/i]
+
+— [b]BtcBob[/b] / @dobbscoin / dobbscoin@gmail.com
+SubGenius.Finance Conclave for the Restoration of the Ritual
+2026-05-21  ·  Year 13 of the Slumber  ·  Day 1 of the Wake

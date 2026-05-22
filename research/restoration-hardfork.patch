@@ -1,0 +1,582 @@
+================================================================================
+Restoration Hardfork v2.0.0 — patch against JimGilmore/offerings v1.6.2-Bokrug
+================================================================================
+
+Conclave Treasury — 2-of-3 P2SH multisig (in construction):
+
+  Key #1 — WORKSTATION (~btcbob/.Offering)
+    address:  QQHCKpiVji71RnyWDvE8aeyxpjgfxeuXRA
+    pubkey:   03129479031d88a6a0b592e11f5059360e34b9ad83024bd5c497e251438b7adcde
+    label:    Conclave-Treasury
+    backup:   ~/.Offering/wallet.dat.bak.20260520
+
+  Key #2 — VPS1 endciv (/home/endciv/.Offering, network-isolated, listen=0 connect=0)
+    address:  QXUAxM4q63ZMa6QgSum5JBNQgZdGp3raog
+    pubkey:   0244dbe9309db1c5e063a234ca83931a2e28b93480f47c3d3b7fcba2bcb578e059
+    label:    Conclave-Treasury-VPS1-EndCiv
+    backup:   /home/endciv/.Offering/wallet.dat.bak.20260520
+
+  Key #3 — PAPER WALLET (offline, never on any wallet.dat)
+    address:  Qj7WwNxhtEV9im5nySZkEkCFDN1yj8g2wq
+    pubkey:   02df218b5a5bf3c10bbc343666d1fe99b557f86a8cacc919ef6b943e58b99b2b4c
+    storage:  WIF + raw-hex printed on paper, physically stored, 2026-05-20
+
+  ----- FINAL CONCLAVE TREASURY ADDRESS (2-of-3 multisig P2SH) -----
+
+  P2SH address:       4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4
+  scriptPubKey:       a9141bb03a89f2c713bd1beed4cd67934dbd6094b68687
+  redeem script:      522102df218b5a5bf3c10bbc343666d1fe99b557f86a8cacc919ef6b943e58b99b2b4c
+                      2103129479031d88a6a0b592e11f5059360e34b9ad83024bd5c497e251438b7adcde
+                      210244dbe9309db1c5e063a234ca83931a2e28b93480f47c3d3b7fcba2bcb578e059
+                      53ae
+  decode:             OP_2 <Key#3 pk> <Key#1 pk> <Key#2 pk> OP_3 OP_CHECKMULTISIG
+
+  Any 2 of {workstation, vps1-endciv, paper} required to spend.
+  Single-host compromise = NOT enough to drain Treasury.
+
+  This is the FINAL Treasury script. HUNK 2 below embeds it as P2SH
+  (formerly drafted as P2PKH for Key #1 only — now superseded).
+
+Fork activation height:    1000000  (~33,587 blocks from current tip 966413
+                                      ≈ 23.3 days of mining at 60-sec target)
+Post-fork subsidy:         1.5 OFF/block FOREVER  (locks the folklore into source;
+                                                   prior curve halved every 259,200
+                                                   blocks and would have decayed
+                                                   to the 0.01 floor by ~block 3M)
+Treasury share:            1/8 of block subsidy = 0.1875 OFF/block
+Miner share:               7/8 of block subsidy = 1.3125 OFF/block
+Tithe (one-time, fork blk):150,000 OFF to Treasury, in addition to normal split
+
+Attacker-address ban list (vampirus, BCT #699, 2018-11-21):
+  QTLUPH9b4dRQdz9uKB7GreMvHPA8iyDoQY    93,036 OFF
+  QeHkx6jFvStkzaVaSTtfPrSAwwrqMgauP8    72,856 OFF
+  QgynW4zGXyjhG3DQHn9vBuHwNp4c4xqtgM    68,372 OFF
+  QjfP4o7o2TszP5Ph4TmNVmktzDCjYkq2xj    66,770 OFF
+  QM8ZeuBDwrhya9BHQfNKifEzfwUhyh7Tji    65,388 OFF
+  Qb6jxfUmfWHh7XTTRWKBoiZ43sSNTJrw8J    60,562 OFF
+  QireWv3upmhVuRMcE6u7h81gmhWfiGEyTt    54,839 OFF
+  QSJU4tDNsZiaNcUuBWYcvjqKWoB8EHDVsT    52,160 OFF
+                                       --------
+                                       533,983 OFF (matches vampirus's total)
+
+billotronic, BCT #697, 2018-09-19 — proposal verbatim:
+  "Could easily hardfork and ban the 51'ed coins. It's a shitty thing to do,
+   but so is 51% attacks."
+
+This patch is the implementation of that proposal — eight years late.
+
+================================================================================
+HUNK 1 — src/chainparams.h   (add public Restoration constants)
+================================================================================
+@@ class CChainParams ... public: @@
+
++    // ---- Restoration Hardfork v2.0.0 (BtcBob/SubGenius.Finance, 2026) ----
++    int64_t RestorationForkHeight()  const { return nRestorationForkHeight; }
++    const CScript& TreasuryScript()  const { return scriptTreasury; }
++    int64_t PostForkSubsidy()        const { return nPostForkSubsidy; }
++    int     TreasuryShareNumerator() const { return nTreasuryNum; }    // 1
++    int     TreasuryShareDenominator() const { return nTreasuryDen; }  // 8
++    int64_t RestorationTithe()       const { return nRestorationTithe; }
++    const std::set<CScript>& BannedAttackerScripts() const { return setBannedAttackers; }
+
+@@ class CChainParams ... protected: @@
+
++    int64_t nRestorationForkHeight;
++    CScript scriptTreasury;
++    int64_t nPostForkSubsidy;
++    int     nTreasuryNum;
++    int     nTreasuryDen;
++    int64_t nRestorationTithe;
++    std::set<CScript> setBannedAttackers;
+
+
+================================================================================
+HUNK 2 — src/chainparams.cpp   (populate Restoration constants for mainnet)
+================================================================================
+Inserted at the end of CMainParams::CMainParams() ctor, just before the
+closing brace and after the vSeeds.push_back block:
+
++        // ===== Restoration Hardfork v2.0.0 — BtcBob / SubGenius.Finance, 2026 =====
++        //
++        // Fork activates at block 1,000,000. From that height forward:
++        //   1) Subsidy locks to 1.5 OFF/block forever (the folklore made real;
++        //      the prior `nSubsidy >>= nHeight/259200` curve would have decayed
++        //      to the 0.01 OFF floor by block ~3,113,000).
++        //   2) Coinbase MUST contain an output paying exactly 1/8 of subsidy
++        //      (0.1875 OFF) to the Conclave Treasury scriptPubKey below.
++        //   3) Block 1,000,000 exactly carries an additional 150,000 OFF
++        //      Restoration Tithe to the Treasury (itemized in BCT post).
++        //   4) Any transaction with an output paying a banned attacker script
++        //      is rejected at AcceptToMemoryPool and ConnectBlock — finishing
++        //      billotronic's never-shipped 2018 hardfork (BCT #697).
++        //
++        // Cite-by-msgid in BCT thread 294383:
++        //   #699  vampirus, 2018-11-21 — names the 8 attacker addresses
++        //   #697  billotronic, 2018-09-19 — proposed the burn
++        //   #702  vampirus, 2018-12-28 — Cryptopia delist citation
++        nRestorationForkHeight = 1000000;
++        nPostForkSubsidy       = 1.5 * COIN;
++        nTreasuryNum           = 1;
++        nTreasuryDen           = 8;
++        nRestorationTithe      = 150000 * COIN;
++
++        // Conclave Treasury — 2-of-3 P2SH multisig
++        //   P2SH address: 4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4
++        //   Redeem H160:  1bb03a89f2c713bd1beed4cd67934dbd6094b686
++        //   Keys (any 2 of 3 required to spend):
++        //     #1 workstation    ~btcbob/.Offering          pk 0312947903...28b7adcde
++        //     #2 vps1 endciv    ~endciv/.Offering (cold)   pk 0244dbe930...578e059
++        //     #3 paper wallet   offline, physical          pk 02df218b5a...b99b2b4c
++        //   Redeem script (full hex):
++        //     522102df218b5a5bf3c10bbc343666d1fe99b557f86a8cacc919ef6b943e58b99b2b4c
++        //     2103129479031d88a6a0b592e11f5059360e34b9ad83024bd5c497e251438b7adcde
++        //     210244dbe9309db1c5e063a234ca83931a2e28b93480f47c3d3b7fcba2bcb578e05953ae
++        scriptTreasury = CScript()
++            << OP_HASH160
++            << ParseHex("1bb03a89f2c713bd1beed4cd67934dbd6094b686")
++            << OP_EQUAL;
++
++        // Banned attacker scripts — BCT #699 (vampirus, 2018-11-21).
++        // Each entry is the P2PKH scriptPubKey of one wallet that received
++        // the 533,983-OFF May 2018 counterfeit print on the original chain.
++        // billotronic proposed banning them in BCT #697 (2018-09-19):
++        //   "Could easily hardfork and ban the 51'ed coins. It's a shitty
++        //    thing to do, but so is 51% attacks."
++        // This is the implementation of that proposal — eight years late.
++        //
++        // Note: our chainstate (recovered from Wayback, tip at block 966,413,
++        // June 2015) PREDATES the May 2018 attack by ~870K blocks. These
++        // addresses currently hold ZERO in our UTXO set — the ban is a
++        // policy invariant that prevents any future chain rewrite or
++        // resurrected pre-attack UTXO from re-emerging value at these scripts.
++        const char* bannedAddrs[] = {
++            "QTLUPH9b4dRQdz9uKB7GreMvHPA8iyDoQY", //  93,036 OFF stolen
++            "QeHkx6jFvStkzaVaSTtfPrSAwwrqMgauP8", //  72,856
++            "QgynW4zGXyjhG3DQHn9vBuHwNp4c4xqtgM", //  68,372
++            "QjfP4o7o2TszP5Ph4TmNVmktzDCjYkq2xj", //  66,770
++            "QM8ZeuBDwrhya9BHQfNKifEzfwUhyh7Tji", //  65,388
++            "Qb6jxfUmfWHh7XTTRWKBoiZ43sSNTJrw8J", //  60,562
++            "QireWv3upmhVuRMcE6u7h81gmhWfiGEyTt", //  54,839
++            "QSJU4tDNsZiaNcUuBWYcvjqKWoB8EHDVsT", //  52,160
++        };                                       // -------
++                                                 // 533,983 OFF total (per #699)
++        for (size_t i = 0; i < sizeof(bannedAddrs)/sizeof(*bannedAddrs); ++i) {
++            CBitcoinAddress a(bannedAddrs[i]);
++            assert(a.IsValid());
++            CTxDestination d = a.Get();
++            CScript s; s.SetDestination(d);
++            setBannedAttackers.insert(s);
++        }
+
+
+================================================================================
+HUNK 3 — src/main.h   (declare the new subsidy split helpers)
+================================================================================
+Near the existing GetBlockValue declaration:
+
++/** Restoration Hardfork helpers (active at >= chainparams.RestorationForkHeight()) */
++int64_t GetMinerSubsidy(int nHeight, int64_t nFees);
++int64_t GetTreasurySubsidy(int nHeight);
++int64_t GetTitheAmount(int nHeight);              // 150,000 OFF at fork block only, else 0
++bool    IsAfterRestorationFork(int nHeight);
+
+
+================================================================================
+HUNK 4 — src/main.cpp   (modify GetBlockValue + add helpers + validate cb output)
+================================================================================
+4a) Edit the END of GetBlockValue (replace the existing return line).
+    BEFORE:
+
+      nSubsidy >>= (nHeight / 259200);
+      if (nSubsidy < nBlockRewardMinimumCoin) {nSubsidy = nBlockRewardMinimumCoin;}
+
+      return nSubsidy + nFees;
+  }
+
+    AFTER:
+
+      nSubsidy >>= (nHeight / 259200);
+      if (nSubsidy < nBlockRewardMinimumCoin) {nSubsidy = nBlockRewardMinimumCoin;}
+
++     // Restoration Hardfork — lock to 1.5 OFF/block forever at fork height.
++     if (IsAfterRestorationFork(nHeight)) {
++         nSubsidy = Params().PostForkSubsidy();           // 1.5 OFF
++     }
++
++     // One-time Restoration Tithe at the exact fork block.
++     int64_t nTithe = GetTitheAmount(nHeight);            // 150,000 OFF at fork block, else 0
++
++     return nSubsidy + nTithe + nFees;
+  }
++
++ // -------- Restoration Hardfork helpers ----------------------------------
++
++ bool IsAfterRestorationFork(int nHeight)
++ {
++     return nHeight >= Params().RestorationForkHeight();
++ }
++
++ int64_t GetTreasurySubsidy(int nHeight)
++ {
++     if (!IsAfterRestorationFork(nHeight)) return 0;
++     int64_t nSubsidy = Params().PostForkSubsidy();
++     return (nSubsidy * Params().TreasuryShareNumerator())
++              / Params().TreasuryShareDenominator();      // 1.5 * 1/8 = 0.1875 OFF
++ }
++
++ int64_t GetMinerSubsidy(int nHeight, int64_t nFees)
++ {
++     if (!IsAfterRestorationFork(nHeight)) {
++         // Pre-fork: miner gets the full GetBlockValue.
++         return GetBlockValue(nHeight, nFees);
++     }
++     int64_t nSubsidy = Params().PostForkSubsidy();
++     return nSubsidy - GetTreasurySubsidy(nHeight) + nFees;   // 1.3125 OFF + fees
++ }
++
++ int64_t GetTitheAmount(int nHeight)
++ {
++     if (nHeight == Params().RestorationForkHeight())
++         return Params().RestorationTithe();              // 150,000 OFF, fork block only
++     return 0;
++ }
+
+4b) Edit ConnectBlock to enforce the Treasury output and the attacker banlist.
+    Right after the existing `coinbase pays too much` check at main.cpp:2011-2015:
+
++     // ---- Restoration Hardfork consensus rules ----
++     if (IsAfterRestorationFork(pindex->nHeight)) {
++         int64_t nRequiredTreasury = GetTreasurySubsidy(pindex->nHeight)
++                                   + GetTitheAmount(pindex->nHeight);
++         const CScript& reqScript = Params().TreasuryScript();
++
++         // Must have at least one coinbase output paying the Treasury script
++         // for the exact required amount (subsidy share + any tithe).
++         bool foundTreasuryOut = false;
++         BOOST_FOREACH(const CTxOut& out, block.vtx[0].vout) {
++             if (out.scriptPubKey == reqScript && out.nValue == nRequiredTreasury) {
++                 foundTreasuryOut = true;
++                 break;
++             }
++         }
++         if (!foundTreasuryOut)
++             return state.DoS(100,
++                 error("ConnectBlock() : missing/wrong Conclave Treasury output (height=%d, required=%d)",
++                       pindex->nHeight, nRequiredTreasury),
++                 REJECT_INVALID, "bad-cb-treasury");
++
++         // Reject any tx in the block that pays a banned attacker script.
++         const std::set<CScript>& banned = Params().BannedAttackerScripts();
++         if (!banned.empty()) {
++             BOOST_FOREACH(const CTransaction& tx, block.vtx) {
++                 BOOST_FOREACH(const CTxOut& out, tx.vout) {
++                     if (banned.count(out.scriptPubKey))
++                         return state.DoS(100,
++                             error("ConnectBlock() : tx pays banned attacker script (BCT #699)"),
++                             REJECT_INVALID, "bad-tx-attacker-output");
++                 }
++             }
++         }
++     }
+
+
+================================================================================
+HUNK 5 — src/main.cpp::AcceptToMemoryPool   (reject attacker-payment txs early)
+================================================================================
+Inside AcceptToMemoryPool, near the existing standard-form checks, add:
+
++     // Restoration Hardfork: reject txs that pay banned attacker scripts.
++     const std::set<CScript>& banned = Params().BannedAttackerScripts();
++     if (!banned.empty() && IsAfterRestorationFork(chainActive.Height() + 1)) {
++         BOOST_FOREACH(const CTxOut& out, tx.vout) {
++             if (banned.count(out.scriptPubKey))
++                 return state.DoS(100,
++                     error("AcceptToMemoryPool : tx pays banned attacker script (BCT #699)"),
++                     REJECT_INVALID, "bad-tx-attacker-output");
++         }
++     }
+
+
+================================================================================
+HUNK 6 — src/miner.cpp::CreateNewBlock   (split coinbase into miner + treasury)
+================================================================================
+Replace the existing single-output assignment at miner.cpp:325:
+
+  BEFORE:
+      pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
+
+  AFTER:
+      int nHeight = pindexPrev->nHeight + 1;
+      if (IsAfterRestorationFork(nHeight)) {
+          // Restoration Hardfork: 2-output coinbase
+          //   vout[0] = miner       (7/8 subsidy + fees)
+          //   vout[1] = Treasury    (1/8 subsidy + tithe-at-fork-block)
+          pblock->vtx[0].vout[0].nValue = GetMinerSubsidy(nHeight, nFees);
++
+          CTxOut treasuryOut;
+          treasuryOut.nValue       = GetTreasurySubsidy(nHeight) + GetTitheAmount(nHeight);
+          treasuryOut.scriptPubKey = Params().TreasuryScript();
+          pblock->vtx[0].vout.push_back(treasuryOut);
+      } else {
+          // Pre-fork: unchanged
+          pblock->vtx[0].vout[0].nValue = GetBlockValue(nHeight, nFees);
+      }
+
+
+================================================================================
+HUNK 7 — src/clientversion.h   (bump version)
+================================================================================
+Bump CLIENT_VERSION_MAJOR / MINOR / BUILD so wallets identify themselves on
+the network as Restoration builds, e.g.:
+
+-    #define CLIENT_VERSION_MAJOR    1
+-    #define CLIENT_VERSION_MINOR    6
++    #define CLIENT_VERSION_MAJOR    2
++    #define CLIENT_VERSION_MINOR    0
+     #define CLIENT_VERSION_REVISION 0
+-    #define CLIENT_VERSION_BUILD    2
++    #define CLIENT_VERSION_BUILD    0
+
+And the subversion string in version.h:
+
+-    extern const std::string CLIENT_NAME;  // "Offerings"
++    extern const std::string CLIENT_NAME;  // "Offerings:Restoration"
+
+
+================================================================================
+HUNK 8 — src/chainparams.cpp   (add fork-height checkpoint AFTER mining 1M)
+================================================================================
+This hunk is APPLIED AFTER block 1,000,000 is mined under the new rules,
+not now. Once you produce the fork block, capture its hash from the daemon:
+
+    Offerings-cli getblockhash 1000000
+
+Then add it to MapCheckpoints in chainparams.cpp (search for the existing
+checkpoint list, e.g. boost::assign::list_of). This makes every Restoration
+binary forevermore reject any alternate chain at height 1,000,000 with a
+different hash — defending against a pre-2018 chainstate re-emerging.
+
+
+================================================================================
+DEPLOYMENT ORDER
+================================================================================
+1. Populate the 8 attacker addresses from BCT #699 (HUNK 2 TODO).
+2. Apply hunks 1–7 to /home/btcbob/claude/offerings-master/src/
+3. Rebuild:  cd /home/btcbob/claude/offerings-master && make -j$(nproc)
+4. Stop the running Offeringsd; back up wallet.dat (already done 2026-05-20).
+5. Start the new binary. Verify it accepts blocks up to current tip 966,413.
+6. Mine from 966,413 → 999,999 under OLD rules (subsidy curve halving).
+   That's 33,587 blocks at 1.5 OFF target — these are the "transition" blocks
+   that any honest holder of the original chain would also recognize.
+7. At block 1,000,000 the fork activates. Coinbase splits 1.3125/0.1875 +
+   the 150,000 tithe lands in the Treasury vout[1].
+8. Capture block 1,000,000's hash. Apply HUNK 8 (checkpoint), rebuild,
+   redeploy. Now no alternative chain can diverge at the fork height.
+9. Update bct-revival-announcement.txt to reflect the actual rule set
+   (1.5 OFF subsidy, 7/8 miner / 1/8 Treasury, fork at 1,000,000, tithe
+   amount, attacker-banlist provenance from BCT #699).
+10. Post to BCT 294383. Pin the post if you can.
+
+
+================================================================================
+ROUGH SANITY-CHECK MATH (60-sec blocks, 1.5 OFF subsidy after fork)
+================================================================================
+Treasury accumulation, no Bridge Pool revert:
+  per block:   0.1875 OFF
+  per day:     270 OFF
+  per year:    98,617 OFF
+  +Tithe:      150,000 OFF (Day 1 of fork only)
+
+Cumulative Treasury balance at the fork's Conclave address:
+  Day 1:       150,000
+  Year 1:      248,617
+  Year 5:      643,087
+  Year 10:     1,136,174
+  Year 25:     2,615,436
+
+Treasury as % of total chain supply (Year 10): ~10.8%
+Asymptote (very long term): ~12.5% (= 1/8, by construction).
+
+
+================================================================================
+HUNK 9 — Honest Holder Bridge Pool (off-chain claim window, no consensus diff)
+================================================================================
+
+The Bridge Pool is the part that makes the Restoration legitimate rather than
+opportunistic: a 12-month window in which any holder of pre-attack OFF can
+prove ownership and claim an equivalent balance on the restored chain. It is
+intentionally implemented OFF-CHAIN — the Treasury multisig disburses by
+signed transaction in response to verified claims — because:
+
+  1) We don't have a complete pre-attack richlist snapshot (chainstate ends
+     June 2015; attack was May 2018; the 3-year gap is partially reconstructable
+     from zeewolfik/offerings + Wayback explorer snapshots but not authoritative
+     enough to bake into chainparams).
+  2) Consensus-level claim mechanisms are invasive; off-chain disbursement
+     gives the Conclave room to verify edge cases (lost-then-recovered keys,
+     compromised addresses, addresses descended from #699 attacker coins).
+  3) The Treasury multisig already exists. Re-using it for Bridge claims is
+     zero new infrastructure.
+
+POOL SIZE
+  1,500,000 OFF reserved at fork activation. Sized to cover:
+    – ~10,000 OFF original genesis premine (block 1, scriptPubKey-locked,
+       counted symbolically — those coins are unspendable already)
+    – ~1,300,000 OFF of honest 2015-2018 mining rewards (estimated from
+       870K blocks × 1.5 OFF average post-halving curve)
+    – ~190,000 OFF buffer for forgotten/imperfectly-reconstructed balances
+
+  The pool is NOT a separate UTXO with consensus enforcement. It is an
+  ACCOUNTING reservation within the Conclave Treasury (P2SH 4fZqD…) plus
+  a published cap. The Conclave commits to not disbursing more than 1.5M
+  OFF for Bridge claims regardless of how many valid proofs arrive.
+
+WINDOW
+  Opens:  the day this announcement is posted to BCT 294383 (T0).
+  Closes: T0 + 365 days (T0 + 12 months).
+  Posted as an absolute UTC date in the BCT announcement post.
+  At T0+1y any unclaimed remainder of the 1.5M reverts unconditionally to
+  the Treasury — no further disbursement requests are honoured.
+
+MANIFEST SOURCE — what counts as "provable pre-attack balance"
+
+  IMPORTANT: When this section was first drafted we expected to verify
+  claims against the v1.7 chainstate held in `zeewolfik/offerings` (BCT
+  #698). On 2026-05-21 we discovered that repo is DELETED — ZeeWolf's
+  GitHub account is alive but holds zero public repos, and the Wayback
+  Machine has only one capture (2020-09-18) and only of the README index
+  page. No raw checkpoints.cpp / chainparams.cpp / chainstate is
+  preserved anywhere we can find. v1.7 source is functionally lost.
+
+  The remaining authoritative source is the chainstate WE HAVE — the
+  385 MB Wayback-recovered chainstate at block 966,413, June 2015,
+  best-block hash 000000111e64c528... It is preserved at:
+    /home/btcbob/.Offering/blocks/ + chainstate/    (workstation)
+    [BACKUP TO vps1 BEFORE FORK ACTIVATION — see deployment note]
+
+  This means the Bridge manifest covers chain HISTORY UP TO BLOCK 966,413
+  ONLY. Claims for addresses that received their first balance AFTER
+  June 2015 (2015-2018 honest miners, Cryptopia withdrawal recipients,
+  later p2p transfers) are NOT in our chainstate and cannot be cleanly
+  verified.
+
+CLAIM PROOF FORMAT
+
+  Claimant must provide a `signmessage` proof from an OFF address.
+  Verification rules differ by what the chainstate shows:
+
+  Class A — Address present in our chainstate at block ≤ 966,413
+    Provable. Conclave verifies the signature, looks up the address's
+    UTXO balance at any point ≤ 966,413, and approves up to that
+    balance. Address must NOT be in the #699 banned list. This class
+    covers chain genesis through June 2015 — the well-documented
+    period.
+
+  Class B — Address NOT present in our chainstate (post-2015 only)
+    Discretionary. Claimant must provide:
+      (a) signmessage proof from the address;
+      (b) a credible story of how the address came to hold OFF (mining
+          payout from pool X on date Y; Cryptopia withdrawal; p2p tip
+          from named person; ritual special-block win at height H);
+      (c) any corroborating evidence the Conclave can sanity-check
+          against the BCT thread, archived Cryptopia pages, or other
+          remembered community accounting.
+    Default cap for Class B claims: 1,000 OFF per address, regardless
+    of claimed balance. Larger Class B claims require Conclave vote
+    in-thread before disbursement, with the reasoning posted publicly.
+    Small-holder doubt benefit; large-holder evidence burden.
+
+  All claims, in either class:
+    – Address MUST NOT be in the #699 banned list (the 8 from vampirus).
+    – Address MUST NOT be the direct recipient of a transaction whose
+      input traces back to a #699 address (1-hop laundering check;
+      we don't chase further than that).
+
+  Challenge string the claimant signs (the Conclave will rotate this weekly
+  on a published schedule to prevent replay):
+    "Conclave-Restoration-Bridge-<YYYYMMDDw>-<address>-<claim-amount-in-OFF>"
+    e.g.  "Conclave-Restoration-Bridge-20260521w-Q…xY-15.5"
+  Format: literal label, ISO-week tag, claimant address, claim amount.
+
+  Claimant posts to BCT 294383 in this exact format:
+    [code]
+    Claim: <historical-address>
+    Amount: <amount-OFF>
+    Signature: <base64 signmessage output>
+    New-chain destination: <new OFF address you control>
+    [/code]
+
+  The Conclave verifies the signature with `Offerings-cli verifymessage`,
+  checks the address+balance against the historical snapshot manifest,
+  and either confirms (+ disburses) or contests (+ explains) in-thread
+  within 7 days of the claim post. All claims and verifications are
+  permanently archived in the BCT thread.
+
+DISBURSEMENT MECHANICS
+
+  Verified claims are batched into multisig transactions roughly weekly.
+  The Conclave produces a partial-signed transaction (Key #1 sigs all
+  pending claims), passes it to Key #2 on vps1 endciv (second signature),
+  and broadcasts. Key #3 (paper) is NEVER touched for routine Bridge
+  disbursement — it is the disaster-recovery key, not an operational one.
+
+  Each batch is announced in-thread with:
+    – list of claims included (claimant -> amount -> destination)
+    – txid of the resulting multisig spend
+    – running Bridge Pool remainder
+
+CLOSING
+
+  At T0 + 13 months the Conclave posts a final accounting:
+    – total Bridge claims approved
+    – total Bridge claims contested
+    – Bridge Pool remainder reverting to Treasury
+    – running Treasury balance + outstanding spend authority
+
+EDGE CASES & POLICY (publish with the BCT post for transparency)
+
+  1) Address that received coinbase rewards from honest mining 2015-2018:
+       claimable for full historical balance, capped at 50,000 OFF per
+       address (largest documented honest stack in the thread was 50K
+       per msg #451). Cap prevents a single archived miner from claiming
+       a Top-10 richlist position.
+
+  2) Address that received Cryptopia withdrawals 2015-2018:
+       claimable per signed message; balance proven via historical
+       chainstate (zeewolfik snapshot) at time of last withdrawal.
+
+  3) Address commingled with attacker UTXOs after May 2018:
+       contested. Claimant may provide evidence of innocent acquisition
+       (purchase from Cryptopia order book, mining payout, etc.). Conclave
+       decides in good faith and posts reasoning in-thread.
+
+  4) Address claimed by multiple parties:
+       first valid signature wins. Subsequent claimants must prove the
+       prior signer is themselves (highly unlikely to come up in practice).
+
+  5) Lost keys / damaged wallet.dat:
+       not claimable. The Bridge requires a `signmessage` proof, which
+       requires the private key. There is no recovery path for genuinely
+       lost keys — this matches the original chain's economics.
+
+  6) Original developer keys (Blazr2, HagbardCeline, etc.):
+       claimable in-full, no cap. The Conclave will publicly affirm
+       these claims and post them at the top of the Bridge ledger.
+
+NOTE TO FUTURE CONCLAVE
+
+  After T0 + 13 months, the 1.5M reservation is dissolved. Any further
+  pre-attack-holder claims after that date are at the Conclave's
+  discretion and come out of the general Treasury, NOT a dedicated pool.
+  Be generous within reason; the goal is to close the social-contract
+  gap, not to litigate it.
+
+CITATIONS
+  BCT thread:        https://bitcointalk.org/index.php?topic=294383.0
+  #592 (PeterTheGrape, 2017-06-21) — 23skidoo.info malicious-domain note
+  #697 (billotronic, 2018-09-19)   — proposed the burn we shipped
+  #699 (vampirus,    2018-11-21)   — eight attacker addresses + balances
+  #702 (vampirus,    2018-12-28)   — Cryptopia delist for un-protected chains
+  #698 (zeewolf,     2018-09-19)   — zeewolfik/offerings v1.7 salvage repo
+  #474 (TentacleMan, 2015-06-05)   — "Blazr2 gone" canonical datestamp
+  Full scrape:  research/bct-thread-scrape-2026-05-20.md

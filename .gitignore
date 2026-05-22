@@ -1,0 +1,59 @@
+# Build artifacts
+*.o
+*.lo
+*.la
+*.Po
+*.a
+*.so
+.deps/
+.libs/
+src/Offeringsd
+src/Offerings-cli
+src/Offerings-tx
+src/test/test_offerings
+src/qt/offerings-qt
+src/qt/moc_*.cpp
+src/qt/qrc_*.cpp
+src/qt/ui_*.h
+
+# Autotools generated
+/Makefile
+/Makefile.in
+/configure
+configure~
+config.log
+config.status
+config.h
+config.h.in
+config.h.in~
+aclocal.m4
+autom4te.cache/
+src/Makefile.in
+src/config/
+
+# Local build dependencies
+/db4/
+/openssl-1.0.2*/
+/boost-*/
+
+# Stray archives
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Operational / private research (publish selectively)
+research/chaos-handoff-*.md
+research/chainstate-backup-record.md
+research/email-*.txt
+research/github-issue-*.md
+
+# Internal Claude collaboration scaffolding (references local paths + infra)
+CLAUDE.md
+
+# Editor / OS
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode/
+.idea/
