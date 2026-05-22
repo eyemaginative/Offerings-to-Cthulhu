@@ -11,11 +11,11 @@
 
 [hr]
 
-Brothers and sisters of the Deep, fellow Worshippers of the Slumbering Squid, Yetinsyny mediocretins and Dobbsheads alike — heed this transmission.
+Brothers and sisters of the Deep, fellow Worshippers of the Slumbering Squid, dreamers and the not-yet-awakened — heed this transmission.
 
-For eleven years the Ritual lay unattended. The DNS seeds went silent. The Public Altar (faucet) crumbled. The Block Crawler at [s]23skidoo.info/cthulhu/[/s] vanished into the abyss. AllCrypt died. Comkort died. Cryptopia got [b]51%'d on the OFF chain[/b] (msg [tt]#699[/tt], vampirus, 2018-11-21) and then later got hacked into the depths of its own oblivion. The Mediocretins forgot. The Pinkboys never knew. The Conspiracy moved on to its next distraction.
+For eleven years the Ritual lay unattended. The DNS seeds went silent. The Public Altar (faucet) crumbled. The Block Crawler at [s]23skidoo.info/cthulhu/[/s] vanished into the abyss. AllCrypt died. Comkort died. Cryptopia got [b]51%'d on the OFF chain[/b] (msg [tt]#699[/tt], vampirus, 2018-11-21) and then later got hacked into the depths of its own oblivion. The dreamers forgot. The unworthy never knew. The world moved on to its next distraction.
 
-But [b]"Bob"[/b] is a salesman, and salesmen never let a good chain die. And the SubGenius.Finance crew has been [b]listening at the door[/b].
+But Cthulhu is patient, and the patient ones do not let a sleeping god lie. The SubGenius.Finance Conclave has been [b]listening at the door[/b].
 
 [hr]
 
@@ -42,11 +42,11 @@ addnode=seed1.23skidoo.info:20000[/code]
 [b]This IS a fork.[/b] We are not pretending it isn't. On [b]block 1,000,000[/b] of the OFF chain (~33,600 blocks from the current recovered tip, roughly 23 days of mining at 60-second target spacing), four consensus rules activate:
 
 [list=1]
-[*][b]Subsidy locks to 1.5 OFF per block, forever.[/b] The historical curve (5 OFF base, halving every 259,200 blocks, floor at 0.01) was on a glidepath to triviality — the chain would have decayed to the dust floor by ~block 3,113,000. We lock it at the value the community always [i]thought[/i] it was: 1.5 OFF/block, in perpetuity. Inflation that would embarrass a central bank. [b]Backed By Nothing, Powered By Everything.[/b]
+[*][b]Subsidy locks to 1.5 OFF per block, forever.[/b] The historical curve (5 OFF base, halving every 259,200 blocks, floor at 0.01) was on a glidepath to triviality — the chain would have decayed to the dust floor by ~block 3,113,000. We lock it at the value the community always [i]thought[/i] it was: 1.5 OFF/block, in perpetuity. Inflation that would embarrass a central bank. [b]Backed by the Deep, Powered by the Faithful.[/b]
 
 [*][b]Coinbase splits 7/8 to miner, 1/8 to the Conclave.[/b] Of every 1.5 OFF subsidy, [b]1.3125 OFF[/b] pays the miner and [b]0.1875 OFF[/b] pays the Conclave Treasury. This is a [b]dev tail[/b] — Monero has one, Zcash has one, Decred has one, Grin has one. Ours is 12.5% of subsidy, which lands above Decred (10%) and below Zcash's historical founders reward (20%). The Conclave Treasury pays for domain renewals, vps hosting, source modernization, build labour, exchange listing fees, ritual rewards, faucet refills, and DAO seed funding. [b]Seven coins to the miner, one coin to the keepers of the Ritual. Forever.[/b]
 
-[*][b]A one-time 150,000 OFF Restoration Tithe.[/b] At the exact fork block (height 1,000,000), the coinbase pays an additional 150,000 OFF to the Conclave Treasury. This funds the engineering work that brought the chain back: source modernization, three years of vps hosting prepaid, domain renewals for the long Slack, paper-wallet generation, multisig key ceremony, BCT moderation deposits. The amount is 15× the original 10,000 OFF genesis premine that Blazr2 disclosed in msg [tt]#36[/tt] and confirmed in [tt]#273[/tt] — historically defensible, itemizable in this thread, and a third of one attacker wallet from #699.
+[*][b]A one-time 150,000 OFF Restoration Tithe.[/b] At the exact fork block (height 1,000,000), the coinbase pays an additional 150,000 OFF to the Conclave Treasury. This funds the engineering work that brought the chain back: source modernization, three years of vps hosting prepaid, domain renewals for the long Slumber, paper-wallet generation, multisig key ceremony, BCT moderation deposits. The amount is 15× the original 10,000 OFF genesis premine that Blazr2 disclosed in msg [tt]#36[/tt] and confirmed in [tt]#273[/tt] — historically defensible, itemizable in this thread, and a third of one attacker wallet from #699.
 
 [*][b]The 8 May 2018 attacker addresses are banned forever[/b], finishing [b]billotronic's never-shipped hardfork from msg [tt]#697[/tt][/b]:
 [quote author=billotronic msg=697 date=2018-09-19]Could easily hardfork and ban the 51'ed coins. It's a shitty thing to do, but so is 51% attacks.[/quote]
@@ -109,9 +109,9 @@ So: a [b]Bridge Pool[/b] of [b]1,500,000 OFF[/b] is reserved in the Conclave Tre
 
 [size=14][b]✦ WHAT THIS IS NOT ✦[/b][/size]
 
-[b]This is not a stealth fork.[/b] Every consensus rule change is disclosed above and documented in [tt]chainparams.cpp[/tt] comments. The diff is published at [url=https://github.com/JimGilmore/offerings]github.com/JimGilmore/offerings[/url] as a separate file ([tt]research/restoration-hardfork.patch[/tt]). The full BCT-thread scrape it's based on is also published, with every message ID cited.
+[b]This is not a stealth fork.[/b] Every consensus rule change is disclosed above and documented in [tt]chainparams.cpp[/tt] comments. The diff is published at [url=https://github.com/SubGeniusFinance/Offerings-to-Cthulhu]github.com/SubGeniusFinance/Offerings-to-Cthulhu[/url] as a separate file ([tt]research/restoration-hardfork.patch[/tt]). The full BCT-thread scrape it's based on is also published, with every message ID cited.
 
-[b]This is not a sale.[/b] (BOB) is NOT for Sale. OFF is NOT for Sale. The Ritual is NOT for Sale. The Tharanak shagg is NOT for Sale. We are NOT financial advisors. This is NOT financial advice. None of this is investment. Most of it is Slack.
+[b]This is not a sale.[/b] OFF is NOT for Sale. The Ritual is NOT for Sale. The Tharanak shagg is NOT for Sale. We are NOT financial advisors. This is NOT financial advice. None of this is investment. Most of it is dread.
 
 [b]This IS a takeover and a fork.[/b] No pretending otherwise. The lighthouse-keepers fell asleep at the door eleven years ago and the chain was 51%'d on their watch. We have unlocked the door, climbed the stairs, turned the lamp back on, [b]and we are also rebuilding the lighthouse[/b]. If Blazr2, ZeeWolf, b00mbastic, Hilux74, Demoss, edgar, cad_cdn, or any of the original Worshippers want to participate in the restoration — they are welcome. If they want to reclaim the project entirely — make a credible claim, sign with a known historical key, and we'll hand back the Treasury keys and the seed DNS. The Conclave acts as steward, not owner.
 
@@ -155,21 +155,21 @@ The Ritual repeats at the equinox. Four weeks and five days of ascending tribute
 [size=14][b]✦ HOW TO RE-JOIN THE FAITHFUL ✦[/b][/size]
 
 [list=1]
-[*]Pull source from [url=https://github.com/JimGilmore/offerings]github.com/JimGilmore/offerings[/url] (or our SubGenius.Finance mirror, posted below in a follow-up). Apply [tt]research/restoration-hardfork.patch[/tt].
+[*]Pull source from [url=https://github.com/SubGeniusFinance/Offerings-to-Cthulhu]github.com/SubGeniusFinance/Offerings-to-Cthulhu[/url] (the canonical Restoration home, JimGilmore/offerings v1.6.2-Bokrug lineage). Apply [tt]research/restoration-hardfork.patch[/tt].
 [*]Follow the build recipe in [tt]doc/build-unix.md[/tt] — modern Ubuntu 22.04+ builds clean with a local OpenSSL 1.0.2 prefix and Berkeley DB 4.8.30 (also in the doc).
 [*]Start [tt]Offeringsd[/tt]. It finds us automatically via [tt]seed1.23skidoo.info[/tt] (now alive again) or the hardcoded fixed seed [tt]subgenius.vip[/tt].
-[*]Watch [tt]debug.log[/tt] for [tt]connection accepted[/tt] and [tt]SetBestChain[/tt]. Wait for the chain to load. Drink Slack.
+[*]Watch [tt]debug.log[/tt] for [tt]connection accepted[/tt] and [tt]SetBestChain[/tt]. Wait for the chain to load. Dream deep.
 [*]If you held coins before May 2018, run [tt]signmessage[/tt] from any historical address and post the result in this thread to claim from the Bridge Pool.
-[*]Praise Cthulhu. Praise "Bob". Praise the Conspiracy of Squids.
+[*]Praise Cthulhu. Praise the Conclave. Praise the Slumbering Squid.
 [/list]
 
 [hr]
 
-[i]Cthulhu is patient. The Conspiracy is busy. (BOB) is "Bob". OFF is the Ritual. Slack is the wage.
+[i]Cthulhu is patient. The Deep is older than memory. The Ritual is the wage.
 
-Where SubCulture Becomes Capital. Where the Slumbering Lord becomes liquid.
+Where the Slumbering Lord becomes liquid.
 
-Iä Iä Cthulhu fhtagn. Praise "Bob". Praise the Ritual. 23 Skidoo.[/i]
+Iä Iä Cthulhu fhtagn. Praise the Ritual. 23 Skidoo.[/i]
 
 — [b]BtcBob[/b] / @dobbscoin / dobbscoin@gmail.com
 SubGenius.Finance Conclave for the Restoration of the Ritual
