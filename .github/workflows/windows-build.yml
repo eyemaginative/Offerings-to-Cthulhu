@@ -61,16 +61,29 @@ jobs:
       - name: autogen
         run: ./autogen.sh
 
+      - name: Diagnose toolchain
+        run: |
+          echo "PATH=$PATH"
+          which gcc g++ ld ar
+          gcc --version | head -1
+          g++ --version | head -1
+          echo "--- hello world test ---"
+          echo 'int main(){return 0;}' > /tmp/hello.cpp
+          g++ /tmp/hello.cpp -o /tmp/hello.exe && echo "BASIC LINK OK" || echo "BASIC LINK FAIL"
+
       - name: configure
         env:
-          CXXFLAGS: "-std=c++11 -Wno-error -O2 -g -include ${HOME}/boost_bind_compat.h"
-          CFLAGS: "-Wno-error -O2 -g"
+          CC: gcc
+          CXX: g++
         run: |
+          export CXXFLAGS="-std=c++11 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          export CFLAGS="-Wno-error -O2 -g"
           ./configure \
             --with-gui=qt5 \
             --disable-tests \
             --without-miniupnpc \
-            --disable-bench
+            --disable-bench \
+            || { echo '=== config.log tail ==='; tail -150 config.log; exit 1; }
 
       - name: make
         run: make -j2
