@@ -58,6 +58,30 @@ jobs:
           using namespace boost::placeholders;
           EOF
 
+      - name: Cache OpenSSL 1.0.2u build
+        id: cache-openssl
+        uses: actions/cache@v4
+        with:
+          path: C:\msys64\home\runneradmin\openssl-1.0.2
+          key: openssl-1.0.2u-mingw64-v1
+
+      - name: Build OpenSSL 1.0.2u (if not cached)
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          # OFF's bignum.h subclasses BIGNUM. OpenSSL 1.1+ made BIGNUM opaque,
+          # breaking this. MSYS2 ships OpenSSL 3.6.2. Build OpenSSL 1.0.2u
+          # locally to satisfy the source. Same approach used by the Linux build
+          # (see offerings-build-recipe.md memory). ~5min compile, then cached.
+          set -e
+          cd $HOME
+          curl -sL https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz | tar xz
+          cd openssl-1.0.2u
+          ./Configure mingw64 no-shared no-dso --prefix=$HOME/openssl-1.0.2 \
+            --cross-compile-prefix=
+          make -j2 build_libs
+          make install_sw
+          ls $HOME/openssl-1.0.2/lib/
+
       - name: Patch broken AC_CHECK_LIB(Qt5, main) checks
         run: |
           # OFF's bitcoin_qt.m4 manually probes -lQt5{Core,Gui,Network} with
@@ -128,6 +152,10 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          # Point at local OpenSSL 1.0.2 ahead of system OpenSSL 3.x.
+          export CPPFLAGS="-I$HOME/openssl-1.0.2/include $CPPFLAGS"
+          export LDFLAGS="-L$HOME/openssl-1.0.2/lib $LDFLAGS"
+          export PKG_CONFIG_PATH="$HOME/openssl-1.0.2/lib/pkgconfig:$PKG_CONFIG_PATH"
           export CXXFLAGS="-std=c++11 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
           export CFLAGS="-Wno-error -O2 -g"
           ./configure \
