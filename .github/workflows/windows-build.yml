@@ -93,6 +93,85 @@ jobs:
           cp -r include/openssl/*.h $HOME/openssl-1.0.2/include/openssl/
           ls $HOME/openssl-1.0.2/lib/ $HOME/openssl-1.0.2/include/openssl/ | head -20
 
+      - name: Patch source for Boost 1.91 compat
+        run: |
+          set -e
+          # Boost removed: io_service (use io_context), io_service::work (use
+          # executor_work_guard), resolver::query, resolver::iterator. Patch
+          # source to use modern APIs.
+
+          # 1. Rewrite rpcprotocol.h:connect() entirely — resolver API was redesigned.
+          python3 - <<'PYEOF'
+          path = 'src/rpcprotocol.h'
+          src = open(path).read()
+          old = '''    bool connect(const std::string& server, const std::string& port)
+              {
+                  boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));
+                  boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
+                  boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+                  boost::asio::ip::tcp::resolver::iterator end;
+                  boost::system::error_code error = boost::asio::error::host_not_found;
+                  while (error && endpoint_iterator != end)
+                  {
+                      stream.lowest_layer().close();
+                      stream.lowest_layer().connect(*endpoint_iterator++, error);
+                  }
+                  if (error)
+                      return false;
+                  return true;
+              }'''
+          new = '''    bool connect(const std::string& server, const std::string& port)
+              {
+                  boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_executor());
+                  boost::system::error_code error = boost::asio::error::host_not_found;
+                  try {
+                      auto endpoints = resolver.resolve(server, port);
+                      for (const auto& ep : endpoints) {
+                          stream.lowest_layer().close();
+                          stream.lowest_layer().connect(ep, error);
+                          if (!error) break;
+                      }
+                  } catch (const boost::system::system_error&) {
+                      return false;
+                  }
+                  return !error;
+              }'''
+          # Tolerate whitespace differences:
+          import re
+          def norm(s): return re.sub(r'\s+', ' ', s).strip()
+          src_norm = norm(src)
+          if norm(old) in src_norm:
+              # Reconstruct: find old block tolerating whitespace and replace verbatim
+              pat = re.escape(old).replace(r'\ ', r'\s+')
+              src = re.sub(pat, new, src, count=1)
+              open(path, 'w').write(src)
+              print('OK: rewrote connect() in rpcprotocol.h')
+          else:
+              print('ERROR: connect() block not found in expected form')
+              raise SystemExit(1)
+          PYEOF
+
+          # 2. rpcserver.cpp: get_executor().context() → drop .context() (Boost 1.91 removed it),
+          #    pass executor directly to constructors that accept it.
+          sed -i 's|static_cast<boost::asio::io_service&>(acceptor->get_executor().context())|*rpc_io_service|g' src/rpcserver.cpp
+
+          # 3. io_service::work → executor_work_guard<io_context::executor_type>
+          for f in src/rpcserver.cpp src/rpcclient.cpp; do
+            sed -i 's|asio::io_service::work \*|asio::executor_work_guard<asio::io_context::executor_type> *|g' "$f"
+            sed -i 's|new asio::io_service::work(\*rpc_io_service)|new asio::executor_work_guard<asio::io_context::executor_type>(rpc_io_service->get_executor())|g' "$f"
+          done
+
+          # 4. io_service → io_context (do this LAST so earlier patterns still match)
+          for f in src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h; do
+            sed -i 's|boost::asio::io_service\b|boost::asio::io_context|g' "$f"
+            sed -i 's|\basio::io_service\b|asio::io_context|g' "$f"
+          done
+
+          echo '--- remaining io_service references (should be 0) ---'
+          grep -c 'io_service' src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h || true
+          echo '--- modified file checksums ---'
+          md5sum src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h
+
       - name: Patch broken AC_CHECK_LIB(Qt5, main) checks
         run: |
           # OFF's bitcoin_qt.m4 manually probes -lQt5{Core,Gui,Network} with
