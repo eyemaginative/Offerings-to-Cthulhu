@@ -329,8 +329,6 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   BITCOIN_QT_CHECK([
     AC_LANG_PUSH([C++])
     _qt_save_LIBS="$LIBS"
-    _qt_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $QT_INCLUDES"
     LIBS="$LIBS -l${QT_LIB_PREFIX}Core"
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtCore>]],[[]])],
       [:],[BITCOIN_QT_FAIL([lib${QT_LIB_PREFIX}Core not found])])
@@ -341,7 +339,6 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtGui>]],[[]])],
       [:],[BITCOIN_QT_FAIL([lib${QT_LIB_PREFIX}Gui or Widgets not found])])
     LIBS="$_qt_save_LIBS"
-    CPPFLAGS="$_qt_save_CPPFLAGS"
     AC_LANG_POP([C++])
   ])
   QT_LIBS="$LIBS"
