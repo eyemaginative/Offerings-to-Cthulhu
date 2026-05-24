@@ -20,21 +20,24 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f, bool isTest
 {
     setAutoFillBackground(true);
 
-    // set reference point, paddings
-    int paddingRight            = 300;
-    int paddingTop              = 50;
-    int titleVersionVSpace      = 17;
-    int titleCopyrightVSpace    = 35;
+    // text to render — split across top-left (brand), bottom-left (Awakening
+    // verse), bottom-right (copyright stack). The splash PNG carries the art
+    // and the silver bezel; this code overlays the typography.
+    QString titleText       = tr("Cthulhu Offerings");
+    QString versionText     = QString(tr("Version %1 \xE2\x80\x94 Restoration"))
+                                .arg(QString::fromStdString(FormatFullVersion()));
+    // R'lyehian chant — Descent verse pinned at block 1,000,000 in chainparams.
+    QString chantText       = QString::fromUtf8("ph\xE2\x80\x99nglui mglw\xE2\x80\x99nafh Cthulhu R\xE2\x80\x99lyeh wgah\xE2\x80\x99nagl fhtagn");
+    QString awakensText     = tr("He Awakens.");
+    QString blockText       = tr("at Block 1,000,000");
+    QString copyDevsText    = QChar(0xA9) + QString(" %1 ").arg(COPYRIGHT_YEAR)
+                                + tr("The Offerings to Cthulhu Developers");
+    QString copyCommText    = QChar(0xA9) + QString(" %1 ").arg(COPYRIGHT_YEAR)
+                                + tr("by SubGenius.Finance Community");
+    QString taglineText     = tr("SubGenius.Finance: Where Sub-Culture Becomes Capital");
+    QString testnetAddText  = tr("[TESTNET]");
 
-    float fontFactor            = 1.0;
-
-    // define text to place
-    QString titleText       = tr("Offerings Core");
-    QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightText   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin and Offerings Core developers"));
-    QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
-
-    QString font            = "Arial";
+    QString serif = "Serif";  // Qt resolves to system default serif (DejaVu/Liberation/Times)
 
     // load the bitmap for writing some text over it
     QPixmap newPixmap;
@@ -46,45 +49,57 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f, bool isTest
     }
 
     QPainter pixPaint(&newPixmap);
-    pixPaint.setPen(QColor(100,100,100));
+    pixPaint.setRenderHint(QPainter::Antialiasing);
+    pixPaint.setRenderHint(QPainter::TextAntialiasing);
 
-    // check font size and drawing with
-    pixPaint.setFont(QFont(font, 33*fontFactor));
-    QFontMetrics fm = pixPaint.fontMetrics();
-    int titleTextWidth  = fm.width(titleText);
-    if(titleTextWidth > 160) {
-        // strange font rendering, Arial probably not found
-        fontFactor = 0.75;
-    }
+    int w = newPixmap.width();
+    int h = newPixmap.height();
 
-    pixPaint.setFont(QFont(font, 33*fontFactor));
-    fm = pixPaint.fontMetrics();
-    titleTextWidth  = fm.width(titleText);
-    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop,titleText);
+    // === top-left: project title + version ===
+    pixPaint.setPen(QColor(0xdd, 0xa1, 0x49));  // gold accent
+    pixPaint.setFont(QFont(serif, 18, QFont::Bold));
+    pixPaint.drawText(20, 32, titleText);
 
-    pixPaint.setFont(QFont(font, 15*fontFactor));
+    pixPaint.setPen(QColor(0xcc, 0xcc, 0xcc));
+    pixPaint.setFont(QFont(serif, 9));
+    pixPaint.drawText(20, 52, versionText);
 
-    // if the version string is to long, reduce size
-    fm = pixPaint.fontMetrics();
-    int versionTextWidth  = fm.width(versionText);
-    if(versionTextWidth > titleTextWidth+paddingRight-10) {
-        pixPaint.setFont(QFont(font, 10*fontFactor));
-        titleVersionVSpace -= 5;
-    }
-    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight+2,paddingTop+titleVersionVSpace,versionText);
+    // === bottom-left: chant → rupture → block ===
+    pixPaint.setPen(QColor(0xd4, 0xc7, 0x9a));  // muted gold
+    QFont chantFont(serif, 11);
+    chantFont.setItalic(true);
+    pixPaint.setFont(chantFont);
+    pixPaint.drawText(22, h - 130, chantText);
 
-    // draw copyright stuff
-    pixPaint.setFont(QFont(font, 10*fontFactor));
-    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop+titleCopyrightVSpace,copyrightText);
+    pixPaint.setPen(QColor(0xdd, 0xa1, 0x49));
+    pixPaint.setFont(QFont(serif, 32, QFont::Bold));
+    pixPaint.drawText(22, h - 75, awakensText);
 
-    // draw testnet string if testnet is on
+    pixPaint.setPen(QColor(0xa8, 0xa8, 0xa8));
+    QFont blockFont(serif, 11);
+    blockFont.setItalic(true);
+    pixPaint.setFont(blockFont);
+    pixPaint.drawText(24, h - 50, blockText);
+
+    // === bottom-right: copyright stack + SubGenius.Finance tagline ===
+    pixPaint.setPen(QColor(0xb8, 0xb8, 0xb8));
+    pixPaint.setFont(QFont(serif, 9));
+    QFontMetrics fmCopy = pixPaint.fontMetrics();
+    pixPaint.drawText(w - fmCopy.width(copyDevsText) - 18, h - 58, copyDevsText);
+    pixPaint.drawText(w - fmCopy.width(copyCommText) - 18, h - 42, copyCommText);
+
+    pixPaint.setPen(QColor(0xdd, 0xa1, 0x49));
+    pixPaint.setFont(QFont(serif, 9, QFont::Bold));
+    QFontMetrics fmTag = pixPaint.fontMetrics();
+    pixPaint.drawText(w - fmTag.width(taglineText) - 18, h - 18, taglineText);
+
+    // testnet stamp — bold red across upper-center
     if(isTestNet) {
-        QFont boldFont = QFont(font, 10*fontFactor);
-        boldFont.setWeight(QFont::Bold);
-        pixPaint.setFont(boldFont);
-        fm = pixPaint.fontMetrics();
-        int testnetAddTextWidth  = fm.width(testnetAddText);
-        pixPaint.drawText(newPixmap.width()-testnetAddTextWidth-10,15,testnetAddText);
+        QFont testnetFont(serif, 16, QFont::Bold);
+        pixPaint.setFont(testnetFont);
+        pixPaint.setPen(QColor(0xc0, 0x40, 0x40));
+        QFontMetrics fmTn = pixPaint.fontMetrics();
+        pixPaint.drawText((w - fmTn.width(testnetAddText)) / 2, 90, testnetAddText);
     }
 
     pixPaint.end();

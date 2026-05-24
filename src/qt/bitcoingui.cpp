@@ -263,9 +263,9 @@ void BitcoinGUI::createActions(bool fIsTestnet)
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
     if (!fIsTestnet)
-        aboutAction = new QAction(QIcon(":/icons/bitcoin"), tr("&About Offerings Core"), this);
+        aboutAction = new QAction(QIcon(":/icons/bitcoin"), tr("&About Cthulhu Offerings"), this);
     else
-        aboutAction = new QAction(QIcon(":/icons/bitcoin_testnet"), tr("&About Offerings Core"), this);
+        aboutAction = new QAction(QIcon(":/icons/bitcoin_testnet"), tr("&About Cthulhu Offerings"), this);
     aboutAction->setStatusTip(tr("Show information about Offerings"));
     aboutAction->setMenuRole(QAction::AboutRole);
 #if QT_VERSION < 0x050000
@@ -308,7 +308,7 @@ void BitcoinGUI::createActions(bool fIsTestnet)
     openAction->setStatusTip(tr("Open a Offerings: URI or payment request"));
 
     showHelpMessageAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Command-line options"), this);
-    showHelpMessageAction->setStatusTip(tr("Show the Offerings Core help message to get a list with possible Offerings Command-line options"));
+    showHelpMessageAction->setStatusTip(tr("Show the Cthulhu Offerings help message to get a list with possible command-line options"));
 
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
@@ -456,12 +456,12 @@ void BitcoinGUI::createTrayIcon(bool fIsTestnet)
 
     if (!fIsTestnet)
     {
-        trayIcon->setToolTip(tr("Offerings client"));
+        trayIcon->setToolTip(tr("Cthulhu Offerings client"));
         trayIcon->setIcon(QIcon(":/icons/toolbar"));
     }
     else
     {
-        trayIcon->setToolTip(tr("Offerings client") + " " + tr("[testnet]"));
+        trayIcon->setToolTip(tr("Cthulhu Offerings client") + " " + tr("[testnet]"));
         trayIcon->setIcon(QIcon(":/icons/toolbar_testnet"));
     }
 

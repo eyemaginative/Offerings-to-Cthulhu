@@ -45,6 +45,9 @@
         <file alias="book">res/images/book.png</file>
         <file alias="altar">res/images/altar.png</file>
     </qresource>
+    <qresource prefix="/css">
+        <file alias="cthulhu-dark">res/css/cthulhu-dark.qss</file>
+    </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
         <file alias="splash">res/images/splash.png</file>

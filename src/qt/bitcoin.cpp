@@ -34,6 +34,7 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <QApplication>
+#include <QFile>
 #include <QLibraryInfo>
 #include <QLocale>
 #include <QMessageBox>
@@ -476,6 +477,16 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(bitcoin);
     BitcoinApplication app(argc, argv);
+
+    // Cthulhu Offerings dark theme — deep-oceanic palette anchored on splash art.
+    {
+        QFile cssFile(":/css/cthulhu-dark");
+        if (cssFile.open(QFile::ReadOnly | QFile::Text)) {
+            app.setStyleSheet(QString::fromUtf8(cssFile.readAll()));
+            cssFile.close();
+        }
+    }
+
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
