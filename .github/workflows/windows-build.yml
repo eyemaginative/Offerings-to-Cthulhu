@@ -1,0 +1,108 @@
+name: Build Windows wallet (MSYS2 / mingw64)
+
+# Native MSYS2 + mingw64 build on GitHub's Windows runners.
+# Sidesteps the missing `depends/` system in this fork — uses MSYS2 packages
+# for Boost, OpenSSL, Qt5, protobuf, qrencode, BDB instead.
+#
+# Triggers: every push to main, every PR, and manual workflow_dispatch.
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*', 'wallet-*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  windows-mingw64:
+    name: Cthulhu Offerings (Windows x86_64)
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 + mingw64 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            autoconf
+            automake
+            libtool
+            pkg-config
+            git
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qt5-translations
+            mingw-w64-x86_64-protobuf
+            mingw-w64-x86_64-qrencode
+            mingw-w64-x86_64-db
+
+      - name: Set up Boost.Bind placeholders compatibility header
+        run: |
+          cat > $HOME/boost_bind_compat.h <<'EOF'
+          #pragma once
+          #include <boost/bind/bind.hpp>
+          using namespace boost::placeholders;
+          EOF
+
+      - name: autogen
+        run: ./autogen.sh
+
+      - name: configure
+        env:
+          CXXFLAGS: "-std=c++11 -Wno-error -O2 -g -include ${HOME}/boost_bind_compat.h"
+          CFLAGS: "-Wno-error -O2 -g"
+        run: |
+          ./configure \
+            --with-gui=qt5 \
+            --disable-tests \
+            --without-miniupnpc \
+            --disable-bench
+
+      - name: make
+        run: make -j2
+
+      - name: Strip binaries
+        run: strip --strip-all src/Offeringsd.exe src/Offerings-cli.exe src/qt/Offerings-qt.exe
+
+      - name: Package Windows binaries
+        run: |
+          mkdir -p dist
+          cp src/Offeringsd.exe dist/
+          cp src/Offerings-cli.exe dist/
+          cp src/qt/Offerings-qt.exe dist/
+          cd dist && sha256sum *.exe > SHA256SUMS
+          tar czf ../offerings-cthulhu-wallet-windows-x86_64.tar.gz *.exe SHA256SUMS
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cthulhu-offerings-windows-x86_64
+          path: |
+            offerings-cthulhu-wallet-windows-x86_64.tar.gz
+            dist/SHA256SUMS
+          retention-days: 90
+
+      - name: Attach to release (if tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            offerings-cthulhu-wallet-windows-x86_64.tar.gz
+            dist/SHA256SUMS
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
