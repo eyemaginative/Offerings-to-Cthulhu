@@ -179,6 +179,10 @@ jobs:
             sed -i -E 's|boost::filesystem::extension\(([^)]+)\)|boost::filesystem::path(\1).extension().string()|g' "$f"
           done
 
+          # 6. C++17 strict comparators: std::set requires operator() to be const.
+          # CBlockIndexWorkComparator in main.cpp has non-const operator().
+          sed -i 's|bool operator()(CBlockIndex \*pa, CBlockIndex \*pb) {|bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {|g' src/main.cpp
+
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
           grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' | head -10 || true
           echo '--- modified file checksums ---'
