@@ -83,6 +83,7 @@ jobs:
             --disable-tests \
             --without-miniupnpc \
             --disable-bench \
+            --with-incompatible-bdb \
             || { echo '=== config.log tail ==='; tail -150 config.log; exit 1; }
 
       - name: make
