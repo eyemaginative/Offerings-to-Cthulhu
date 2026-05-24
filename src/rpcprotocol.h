@@ -103,20 +103,19 @@ public:
     }
     bool connect(const std::string& server, const std::string& port)
     {
-        // Use executor directly (Boost 1.66+); modern resolve() drops deprecated query/iterator API.
-        boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_executor());
+        boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));
+        boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+        boost::asio::ip::tcp::resolver::iterator end;
         boost::system::error_code error = boost::asio::error::host_not_found;
-        try {
-            auto endpoints = resolver.resolve(server, port);
-            for (const auto& ep : endpoints) {
-                stream.lowest_layer().close();
-                stream.lowest_layer().connect(ep, error);
-                if (!error) break;
-            }
-        } catch (const boost::system::system_error&) {
-            return false;
+        while (error && endpoint_iterator != end)
+        {
+            stream.lowest_layer().close();
+            stream.lowest_layer().connect(*endpoint_iterator++, error);
         }
-        return !error;
+        if (error)
+            return false;
+        return true;
     }
 
 private:

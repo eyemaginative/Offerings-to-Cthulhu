@@ -93,16 +93,138 @@ jobs:
           cp -r include/openssl/*.h $HOME/openssl-1.0.2/include/openssl/
           ls $HOME/openssl-1.0.2/lib/ $HOME/openssl-1.0.2/include/openssl/ | head -20
 
-      - name: Verify source patches are in-tree
+      - name: Patch source for Boost 1.91 compat
         run: |
-          # Boost 1.91 compat (io_context, resolver, filesystem) and bitcoin_qt.m4
-          # fixes are now committed to the source tree. Verify no regressions.
           set -e
-          echo "--- asio::io_service type refs (should be 0) ---"
-          grep -cE 'asio::io_service|boost::asio::io_service' src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h | grep -v ':0$' && { echo "ERROR: stale io_service type found"; exit 1; } || true
-          echo "--- filesystem::basename/extension (should be 0) ---"
-          grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' && { echo "ERROR: stale basename/extension found"; exit 1; } || true
-          echo "All in-tree checks passed."
+          # Boost removed: io_service (use io_context), io_service::work (use
+          # executor_work_guard), resolver::query, resolver::iterator. Patch
+          # source to use modern APIs.
+
+          # 1. Rewrite rpcprotocol.h:connect() entirely — resolver API was redesigned.
+          python3 - <<'PYEOF'
+          path = 'src/rpcprotocol.h'
+          src = open(path).read()
+          old = '''    bool connect(const std::string& server, const std::string& port)
+              {
+                  boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));
+                  boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
+                  boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+                  boost::asio::ip::tcp::resolver::iterator end;
+                  boost::system::error_code error = boost::asio::error::host_not_found;
+                  while (error && endpoint_iterator != end)
+                  {
+                      stream.lowest_layer().close();
+                      stream.lowest_layer().connect(*endpoint_iterator++, error);
+                  }
+                  if (error)
+                      return false;
+                  return true;
+              }'''
+          new = '''    bool connect(const std::string& server, const std::string& port)
+              {
+                  boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_executor());
+                  boost::system::error_code error = boost::asio::error::host_not_found;
+                  try {
+                      auto endpoints = resolver.resolve(server, port);
+                      for (const auto& ep : endpoints) {
+                          stream.lowest_layer().close();
+                          stream.lowest_layer().connect(ep, error);
+                          if (!error) break;
+                      }
+                  } catch (const boost::system::system_error&) {
+                      return false;
+                  }
+                  return !error;
+              }'''
+          # Tolerate whitespace differences:
+          import re
+          def norm(s): return re.sub(r'\s+', ' ', s).strip()
+          src_norm = norm(src)
+          if norm(old) in src_norm:
+              # Reconstruct: find old block tolerating whitespace and replace verbatim
+              pat = re.escape(old).replace(r'\ ', r'\s+')
+              src = re.sub(pat, new, src, count=1)
+              open(path, 'w').write(src)
+              print('OK: rewrote connect() in rpcprotocol.h')
+          else:
+              print('ERROR: connect() block not found in expected form')
+              raise SystemExit(1)
+          PYEOF
+
+          # 2. rpcserver.cpp: get_executor().context() → drop .context() (Boost 1.91 removed it),
+          #    pass executor directly to constructors that accept it.
+          sed -i 's|static_cast<boost::asio::io_service&>(acceptor->get_executor().context())|*rpc_io_service|g' src/rpcserver.cpp
+
+          # 3. io_service::work → executor_work_guard<io_context::executor_type>
+          for f in src/rpcserver.cpp src/rpcclient.cpp; do
+            sed -i 's|asio::io_service::work \*|asio::executor_work_guard<asio::io_context::executor_type> *|g' "$f"
+            sed -i 's|new asio::io_service::work(\*rpc_io_service)|new asio::executor_work_guard<asio::io_context::executor_type>(rpc_io_service->get_executor())|g' "$f"
+          done
+
+          # 4. io_service → io_context (do this LAST so earlier patterns still match)
+          for f in src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h; do
+            sed -i 's|boost::asio::io_service\b|boost::asio::io_context|g' "$f"
+            sed -i 's|\basio::io_service\b|asio::io_context|g' "$f"
+          done
+
+          echo '--- remaining io_service references (should be 0) ---'
+          grep -c 'io_service' src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h || true
+
+          # 5. Boost.Filesystem: basename()/extension() free functions removed in
+          # Boost 1.91; use path::stem() / path::extension() member methods.
+          # The arg may be a std::string, so wrap in boost::filesystem::path().
+          for f in src/init.cpp src/util.cpp src/main.cpp src/wallet.cpp src/walletdb.cpp; do
+            [ -f "$f" ] || continue
+            sed -i -E 's|boost::filesystem::basename\(([^)]+)\)|boost::filesystem::path(\1).stem().string()|g' "$f"
+            sed -i -E 's|boost::filesystem::extension\(([^)]+)\)|boost::filesystem::path(\1).extension().string()|g' "$f"
+          done
+
+          # 6. C++17 strict comparators: std::set requires operator() to be const.
+          # CBlockIndexWorkComparator in main.cpp has non-const operator().
+          sed -i 's|bool operator()(CBlockIndex \*pa, CBlockIndex \*pb) {|bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {|g' src/main.cpp
+
+          # 7. Boost API drift in rpcserver.cpp:
+          # - deadline_timer no longer pulled in by <boost/asio.hpp>; add explicit include
+          # - is_complete() -> is_absolute() in filesystem::path
+          # - to_ulong() -> to_uint() on address_v4
+          # - socket_base::max_connections -> max_listen_connections
+          if [ -f src/rpcserver.cpp ]; then
+            # Add deadline_timer include if not already present
+            if ! grep -q 'boost/asio/deadline_timer.hpp' src/rpcserver.cpp; then
+              sed -i '/^#include <boost\/asio.hpp>/a #include <boost/asio/deadline_timer.hpp>' src/rpcserver.cpp
+            fi
+            sed -i 's|\.is_complete()|.is_absolute()|g' src/rpcserver.cpp src/util.cpp src/init.cpp 2>/dev/null || true
+            sed -i 's|\.to_ulong()|.to_uint()|g' src/rpcserver.cpp src/netbase.cpp 2>/dev/null || true
+            sed -i 's|socket_base::max_connections|socket_base::max_listen_connections|g' src/rpcserver.cpp src/net.cpp 2>/dev/null || true
+            # is_v4_compatible removed in Boost 1.71+ (the IPv4-compatible IPv6 format
+            # was deprecated by RFC 4291 itself). Treat as is_v4_mapped — only mapped
+            # form is actually in use in modern networks.
+            sed -i 's|is_v4_compatible()|is_v4_mapped()|g' src/rpcserver.cpp
+          fi
+
+          echo '--- remaining filesystem::basename/extension (should be 0) ---'
+          grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' | head -10 || true
+          echo '--- modified file checksums ---'
+          md5sum src/rpcserver.cpp src/rpcclient.cpp src/rpcprotocol.h src/init.cpp 2>/dev/null
+
+      - name: Patch broken AC_CHECK_LIB(Qt5, main) checks
+        run: |
+          # OFF's bitcoin_qt.m4 manually probes -lQt5{Core,Gui,Network} with
+          # AC_CHECK_LIB using main as the function. AC_CHECK_LIB uses the C
+          # compiler by default; Qt5 libs are C++ — symbol mangling means the
+          # link test always fails. pkg-config already validated Qt5 at this
+          # point (line ~315 of bitcoin_qt.m4), so these manual checks are
+          # redundant. Comment them out so autogen regenerates a working
+          # configure.
+          set -e
+          # Replace BITCOIN_QT_CHECK(AC_CHECK_LIB(...)) with BITCOIN_QT_CHECK([:]) — a no-op
+          # shell command. Using dnl would leave empty if/fi blocks (invalid shell).
+          sed -i -E 's|^([[:space:]]*)BITCOIN_QT_CHECK\(AC_CHECK_LIB\([^)]*\)[^)]*\)\)|\1BITCOIN_QT_CHECK([:])|g' src/m4/bitcoin_qt.m4
+          # Plain AC_CHECK_LIB([${QT_LIB_PREFIX}...]) lines (QtTest/QtDBus) are not inside
+          # if/fi blocks so dnl-ing is safe.
+          sed -i -E 's|^([[:space:]]*)AC_CHECK_LIB\(\[\$\{QT_LIB_PREFIX\}|\1dnl AC_CHECK_LIB([${QT_LIB_PREFIX}|g' src/m4/bitcoin_qt.m4
+          echo "--- patched lines ---"
+          grep -nE "(BITCOIN_QT_CHECK\(\[:\]\)|dnl AC_CHECK_LIB)" src/m4/bitcoin_qt.m4 | head -15
 
       - name: autogen
         run: ./autogen.sh
@@ -172,6 +294,7 @@ jobs:
             --with-qt-libdir=/mingw64/lib \
             --with-qt-bindir=/mingw64/bin \
             --with-qt-plugindir=/mingw64/share/qt5/plugins \
+            --with-qt-translationdir=/mingw64/share/qt5/translations \
             || { echo '=== config.log tail ==='; tail -200 config.log; exit 1; }
 
       - name: make
