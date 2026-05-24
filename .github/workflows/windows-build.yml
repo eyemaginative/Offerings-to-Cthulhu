@@ -75,8 +75,14 @@ jobs:
           ls /mingw64/include/boost/version.hpp
           ls /mingw64/lib/libboost_*.a /mingw64/lib/libboost_*.dll.a 2>&1 | head -20
           echo "--- qt5 ---"
-          which qmake qmake-qt5 moc lrelease
-          ls /mingw64/lib/libQt5*.dll.a 2>&1 | head -10
+          which qmake qmake-qt5 moc uic rcc lrelease lrelease-qt5 lupdate
+          ls /mingw64/lib/libQt5*.dll.a 2>&1 | head -5
+          echo "--- qt5 include layout ---"
+          ls -d /mingw64/include/QtCore /mingw64/include/qt5/QtCore /mingw64/include/QtCore/QtCore 2>&1
+          /mingw64/bin/qmake-qt5 -query QT_INSTALL_HEADERS QT_INSTALL_LIBS QT_INSTALL_BINS 2>&1
+          echo "--- pkg-config for Qt5 ---"
+          pkg-config --exists Qt5Core && echo "Qt5Core pkg-config: OK" || echo "Qt5Core pkg-config: MISSING"
+          pkg-config --cflags Qt5Core 2>&1
           echo "(diagnose end; never fails the job)"
 
       - name: Stub header-only boost libs
@@ -109,10 +115,14 @@ jobs:
             --with-gui=qt5 \
             --disable-tests \
             --without-miniupnpc \
-            --disable-bench \
             --with-incompatible-bdb \
             --with-boost-libdir=/mingw64/lib \
             --with-boost=/mingw64 \
+            --with-qt-incdir=/mingw64/include \
+            --with-qt-libdir=/mingw64/lib \
+            --with-qt-bindir=/mingw64/bin \
+            --with-qt-plugindir=/mingw64/share/qt5/plugins \
+            --with-qt-translationdir=/mingw64/share/qt5/translations \
             || { echo '=== config.log tail ==='; tail -200 config.log; exit 1; }
 
       - name: make
