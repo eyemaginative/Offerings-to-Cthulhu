@@ -70,6 +70,12 @@ jobs:
           echo "--- hello world test ---"
           echo 'int main(){return 0;}' > /tmp/hello.cpp
           g++ /tmp/hello.cpp -o /tmp/hello.exe && echo "BASIC LINK OK" || echo "BASIC LINK FAIL"
+          echo "--- boost layout ---"
+          ls /mingw64/include/boost/version.hpp 2>&1 | head
+          ls /mingw64/lib/libboost_system* /mingw64/lib/libboost_thread* /mingw64/lib/libboost_filesystem* 2>&1 | head -10
+          echo "--- qt5 ---"
+          which qmake qmake-qt5 moc lrelease 2>&1
+          ls /mingw64/lib/libQt5*.dll.a 2>&1 | head -10
 
       - name: configure
         env:
@@ -84,7 +90,9 @@ jobs:
             --without-miniupnpc \
             --disable-bench \
             --with-incompatible-bdb \
-            || { echo '=== config.log tail ==='; tail -150 config.log; exit 1; }
+            --with-boost-libdir=/mingw64/lib \
+            --with-boost=/mingw64 \
+            || { echo '=== config.log tail ==='; tail -200 config.log; exit 1; }
 
       - name: make
         run: make -j2
