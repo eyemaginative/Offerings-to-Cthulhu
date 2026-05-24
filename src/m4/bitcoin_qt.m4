@@ -321,14 +321,26 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
     fi
   ])
 
+  dnl AC_CHECK_LIB uses the C compiler; Qt5 libs are C++ — symbol mangling breaks the link
+  dnl test. Instead, probe with AC_LINK_IFELSE under AC_LANG([C++]) which correctly resolves
+  dnl C++ symbols. We still need zlib and libpng (Qt depends on them for static builds).
   BITCOIN_QT_CHECK(AC_CHECK_LIB([z] ,[main],,BITCOIN_QT_FAIL(zlib not found)))
   BITCOIN_QT_CHECK(AC_CHECK_LIB([png] ,[main],,BITCOIN_QT_FAIL(png not found)))
-  BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Core]   ,[main],,BITCOIN_QT_FAIL(lib$QT_LIB_PREFIXCore not found)))
-  BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Gui]    ,[main],,BITCOIN_QT_FAIL(lib$QT_LIB_PREFIXGui not found)))
-  BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Network],[main],,BITCOIN_QT_FAIL(lib$QT_LIB_PREFIXNetwork not found)))
-  if test x$bitcoin_qt_got_major_vers == x5; then
-    BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Widgets],[main],,BITCOIN_QT_FAIL(lib$QT_LIB_PREFIXWidgets not found)))
-  fi
+  BITCOIN_QT_CHECK([
+    AC_LANG_PUSH([C++])
+    _qt_save_LIBS="$LIBS"
+    LIBS="$LIBS -l${QT_LIB_PREFIX}Core"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtCore>]],[[]])],
+      [:],[BITCOIN_QT_FAIL([lib${QT_LIB_PREFIX}Core not found])])
+    LIBS="$_qt_save_LIBS -l${QT_LIB_PREFIX}Core -l${QT_LIB_PREFIX}Gui -l${QT_LIB_PREFIX}Network"
+    if test x$bitcoin_qt_got_major_vers == x5; then
+      LIBS="$LIBS -l${QT_LIB_PREFIX}Widgets"
+    fi
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtGui>]],[[]])],
+      [:],[BITCOIN_QT_FAIL([lib${QT_LIB_PREFIX}Gui or Widgets not found])])
+    LIBS="$_qt_save_LIBS"
+    AC_LANG_POP([C++])
+  ])
   QT_LIBS="$LIBS"
   LIBS="$TEMP_LIBS"
 
@@ -344,9 +356,9 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   BITCOIN_QT_CHECK([
     if test x$bitcoin_qt_got_major_vers == x5; then
       _BITCOIN_QT_IS_STATIC
-      if test x$bitcoin_cv_static_qt == xyes; then 
+      if test x$bitcoin_cv_static_qt == xyes; then
         AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
-        _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(AccessibleFactory)], [-lqtaccessiblewidgets])
+        dnl AccessibleFactory was merged into Qt5Widgets in Qt 5.7; no separate lib needed.
         if test x$TARGET_OS == xwindows; then
           _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
         fi
@@ -368,7 +380,14 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
     if test x$qt_lib_path != x; then
       LIBS="-L$qt_lib_path"
     fi
-    AC_CHECK_LIB([${QT_LIB_PREFIX}Test],      [main],, have_qt_test=no)
+    dnl Use AC_LINK_IFELSE with C++ compiler for Qt (C++ library; AC_CHECK_LIB uses C compiler).
+    AC_LANG_PUSH([C++])
+    _qt_test_save_LIBS="$LIBS"
+    LIBS="$LIBS -l${QT_LIB_PREFIX}Test"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtTest>]],[[]])],
+      [:],[have_qt_test=no])
+    LIBS="$_qt_test_save_LIBS"
+    AC_LANG_POP([C++])
     AC_CHECK_HEADER([QTest],, have_qt_test=no)
     QT_TEST_LIBS="$LIBS"
     if test x$use_dbus != xno; then
@@ -376,7 +395,13 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
       if test x$qt_lib_path != x; then
         LIBS="-L$qt_lib_path"
       fi
-      AC_CHECK_LIB([${QT_LIB_PREFIX}DBus],      [main],, have_qt_dbus=no)
+      AC_LANG_PUSH([C++])
+      _qt_dbus_save_LIBS="$LIBS"
+      LIBS="$LIBS -l${QT_LIB_PREFIX}DBus"
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QtDBus>]],[[]])],
+        [:],[have_qt_dbus=no])
+      LIBS="$_qt_dbus_save_LIBS"
+      AC_LANG_POP([C++])
       AC_CHECK_HEADER([QtDBus],, have_qt_dbus=no)
       QT_DBUS_LIBS="$LIBS"
     fi

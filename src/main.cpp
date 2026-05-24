@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace boost::placeholders;
 
 #if defined(NDEBUG)
 # error "Offerings cannot be compiled without assertions."
