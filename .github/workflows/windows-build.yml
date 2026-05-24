@@ -183,6 +183,25 @@ jobs:
           # CBlockIndexWorkComparator in main.cpp has non-const operator().
           sed -i 's|bool operator()(CBlockIndex \*pa, CBlockIndex \*pb) {|bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {|g' src/main.cpp
 
+          # 7. Boost API drift in rpcserver.cpp:
+          # - deadline_timer no longer pulled in by <boost/asio.hpp>; add explicit include
+          # - is_complete() -> is_absolute() in filesystem::path
+          # - to_ulong() -> to_uint() on address_v4
+          # - socket_base::max_connections -> max_listen_connections
+          if [ -f src/rpcserver.cpp ]; then
+            # Add deadline_timer include if not already present
+            if ! grep -q 'boost/asio/deadline_timer.hpp' src/rpcserver.cpp; then
+              sed -i '/^#include <boost\/asio.hpp>/a #include <boost/asio/deadline_timer.hpp>' src/rpcserver.cpp
+            fi
+            sed -i 's|\.is_complete()|.is_absolute()|g' src/rpcserver.cpp src/util.cpp src/init.cpp 2>/dev/null || true
+            sed -i 's|\.to_ulong()|.to_uint()|g' src/rpcserver.cpp src/netbase.cpp 2>/dev/null || true
+            sed -i 's|socket_base::max_connections|socket_base::max_listen_connections|g' src/rpcserver.cpp src/net.cpp 2>/dev/null || true
+            # is_v4_compatible removed in Boost 1.71+ (the IPv4-compatible IPv6 format
+            # was deprecated by RFC 4291 itself). Treat as is_v4_mapped — only mapped
+            # form is actually in use in modern networks.
+            sed -i 's|is_v4_compatible()|is_v4_mapped()|g' src/rpcserver.cpp
+          fi
+
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
           grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' | head -10 || true
           echo '--- modified file checksums ---'
