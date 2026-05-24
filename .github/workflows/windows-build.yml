@@ -74,7 +74,10 @@ jobs:
           # (see offerings-build-recipe.md memory). ~5min compile, then cached.
           set -e
           cd $HOME
-          curl -sL https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz | tar xz
+          # openssl.org has reorganized; use the GitHub releases mirror.
+          curl -fsSL https://github.com/openssl/openssl/releases/download/OpenSSL_1_0_2u/openssl-1.0.2u.tar.gz -o openssl-1.0.2u.tar.gz
+          ls -la openssl-1.0.2u.tar.gz
+          tar xzf openssl-1.0.2u.tar.gz
           cd openssl-1.0.2u
           ./Configure mingw64 no-shared no-dso --prefix=$HOME/openssl-1.0.2 \
             --cross-compile-prefix=
