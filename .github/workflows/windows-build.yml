@@ -86,8 +86,9 @@ jobs:
             --prefix=$HOME/openssl-1.0.2 \
             -Wno-error -Wno-incompatible-pointer-types -Wno-deprecated-declarations -Wno-discarded-qualifiers
           make -j2 build_libs
-          make install_sw
-          ls $HOME/openssl-1.0.2/lib/
+          # install_sw expects openssl.exe (apps); we only built libs. install_dev = headers + libs only.
+          make install_dev
+          ls $HOME/openssl-1.0.2/lib/ $HOME/openssl-1.0.2/include/openssl/ | head -20
 
       - name: Patch broken AC_CHECK_LIB(Qt5, main) checks
         run: |
