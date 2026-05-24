@@ -79,8 +79,12 @@ jobs:
           ls -la openssl-1.0.2u.tar.gz
           tar xzf openssl-1.0.2u.tar.gz
           cd openssl-1.0.2u
-          ./Configure mingw64 no-shared no-dso --prefix=$HOME/openssl-1.0.2 \
-            --cross-compile-prefix=
+          # no-engine + no-asm: gcc 16 rejects engines/capi/e_capi.c (incompatible
+          # pointer types treated as errors). We don't need engines anyway.
+          # -Wno-error: gcc 16 promotes a host of OpenSSL-1.0.2 warnings to errors.
+          ./Configure mingw64 no-shared no-dso no-engine no-asm \
+            --prefix=$HOME/openssl-1.0.2 \
+            -Wno-error -Wno-incompatible-pointer-types -Wno-deprecated-declarations
           make -j2 build_libs
           make install_sw
           ls $HOME/openssl-1.0.2/lib/
