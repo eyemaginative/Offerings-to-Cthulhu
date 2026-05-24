@@ -63,6 +63,7 @@ jobs:
 
       - name: Diagnose toolchain
         run: |
+          set +e
           echo "PATH=$PATH"
           which gcc g++ ld ar
           gcc --version | head -1
@@ -71,11 +72,31 @@ jobs:
           echo 'int main(){return 0;}' > /tmp/hello.cpp
           g++ /tmp/hello.cpp -o /tmp/hello.exe && echo "BASIC LINK OK" || echo "BASIC LINK FAIL"
           echo "--- boost layout ---"
-          ls /mingw64/include/boost/version.hpp 2>&1 | head
-          ls /mingw64/lib/libboost_system* /mingw64/lib/libboost_thread* /mingw64/lib/libboost_filesystem* 2>&1 | head -10
+          ls /mingw64/include/boost/version.hpp
+          ls /mingw64/lib/libboost_*.a /mingw64/lib/libboost_*.dll.a 2>&1 | head -20
           echo "--- qt5 ---"
-          which qmake qmake-qt5 moc lrelease 2>&1
+          which qmake qmake-qt5 moc lrelease
           ls /mingw64/lib/libQt5*.dll.a 2>&1 | head -10
+          echo "(diagnose end; never fails the job)"
+
+      - name: Stub header-only boost libs
+        run: |
+          # MSYS2 Boost 1.91 dropped libboost_system (it's been header-only since 1.69).
+          # Bitcoin Core 0.10's autoconf still probes for -lboost_system. Provide
+          # empty stub archives so AX_BOOST_SYSTEM finds something to link against.
+          set -e
+          cd /mingw64/lib
+          if [ ! -e libboost_system-mt.a ]; then
+            echo "" > /tmp/empty.c
+            gcc -c /tmp/empty.c -o /tmp/empty.o
+            for suffix in '-mt.a' '-mt.dll.a' '.a' '.dll.a'; do
+              [ -e "libboost_system${suffix}" ] || ar rcs "libboost_system${suffix}" /tmp/empty.o
+            done
+            echo "Stubbed boost_system at /mingw64/lib/libboost_system{-mt,}{,.dll}.a"
+          else
+            echo "boost_system already present, no stub needed"
+          fi
+          ls libboost_system* 2>&1
 
       - name: configure
         env:
