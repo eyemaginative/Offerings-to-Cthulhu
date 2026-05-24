@@ -172,10 +172,11 @@ jobs:
 
           # 5. Boost.Filesystem: basename()/extension() free functions removed in
           # Boost 1.91; use path::stem() / path::extension() member methods.
+          # The arg may be a std::string, so wrap in boost::filesystem::path().
           for f in src/init.cpp src/util.cpp src/main.cpp src/wallet.cpp src/walletdb.cpp; do
             [ -f "$f" ] || continue
-            sed -i -E 's|boost::filesystem::basename\(([^)]+)\)|(\1).stem().string()|g' "$f"
-            sed -i -E 's|boost::filesystem::extension\(([^)]+)\)|(\1).extension().string()|g' "$f"
+            sed -i -E 's|boost::filesystem::basename\(([^)]+)\)|boost::filesystem::path(\1).stem().string()|g' "$f"
+            sed -i -E 's|boost::filesystem::extension\(([^)]+)\)|boost::filesystem::path(\1).extension().string()|g' "$f"
           done
 
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
