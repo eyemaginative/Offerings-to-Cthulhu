@@ -58,6 +58,22 @@ jobs:
           using namespace boost::placeholders;
           EOF
 
+      - name: Patch broken AC_CHECK_LIB(Qt5, main) checks
+        run: |
+          # OFF's bitcoin_qt.m4 manually probes -lQt5{Core,Gui,Network} with
+          # AC_CHECK_LIB using main as the function. AC_CHECK_LIB uses the C
+          # compiler by default; Qt5 libs are C++ — symbol mangling means the
+          # link test always fails. pkg-config already validated Qt5 at this
+          # point (line ~315 of bitcoin_qt.m4), so these manual checks are
+          # redundant. Comment them out so autogen regenerates a working
+          # configure.
+          set -e
+          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[z\]|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([z]|' src/m4/bitcoin_qt.m4
+          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[png\]|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([png]|' src/m4/bitcoin_qt.m4
+          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[\${QT_LIB_PREFIX}|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}|g' src/m4/bitcoin_qt.m4
+          echo "--- patched lines ---"
+          grep -n "dnl BITCOIN_QT_CHECK" src/m4/bitcoin_qt.m4 | head -10
+
       - name: autogen
         run: ./autogen.sh
 
