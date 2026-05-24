@@ -68,11 +68,12 @@ jobs:
           # redundant. Comment them out so autogen regenerates a working
           # configure.
           set -e
-          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[z\]|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([z]|' src/m4/bitcoin_qt.m4
-          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[png\]|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([png]|' src/m4/bitcoin_qt.m4
-          sed -i 's|^  BITCOIN_QT_CHECK(AC_CHECK_LIB(\[\${QT_LIB_PREFIX}|  dnl BITCOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}|g' src/m4/bitcoin_qt.m4
+          # Catch all BITCOIN_QT_CHECK(AC_CHECK_LIB(...)) lines regardless of indentation
+          sed -i -E 's|^([[:space:]]*)BITCOIN_QT_CHECK\(AC_CHECK_LIB|\1dnl BITCOIN_QT_CHECK(AC_CHECK_LIB|g' src/m4/bitcoin_qt.m4
+          # Also catch plain AC_CHECK_LIB([${QT_LIB_PREFIX}...] [main]) used for QtTest/QtDBus
+          sed -i -E 's|^([[:space:]]*)AC_CHECK_LIB\(\[\$\{QT_LIB_PREFIX\}|\1dnl AC_CHECK_LIB([${QT_LIB_PREFIX}|g' src/m4/bitcoin_qt.m4
           echo "--- patched lines ---"
-          grep -n "dnl BITCOIN_QT_CHECK" src/m4/bitcoin_qt.m4 | head -10
+          grep -nE "dnl (BITCOIN_QT_CHECK|AC_CHECK_LIB)" src/m4/bitcoin_qt.m4 | head -15
 
       - name: autogen
         run: ./autogen.sh
