@@ -200,6 +200,8 @@ jobs:
             # was deprecated by RFC 4291 itself). Treat as is_v4_mapped — only mapped
             # form is actually in use in modern networks.
             sed -i 's|is_v4_compatible()|is_v4_mapped()|g' src/rpcserver.cpp
+            # address_v6.to_v4() removed in Boost 1.74+. Use make_address_v4 with v4_mapped tag.
+            sed -i 's|address.to_v6().to_v4()|boost::asio::ip::make_address_v4(boost::asio::ip::v4_mapped, address.to_v6())|g' src/rpcserver.cpp
           fi
 
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
