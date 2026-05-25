@@ -50,6 +50,13 @@ jobs:
           echo "BOOST_PREFIX=${BOOST}" >> $GITHUB_ENV
           echo "QT5_PREFIX=${QT5}" >> $GITHUB_ENV
 
+      - name: Patch configure.ac for modern brew boost
+        run: |
+          # Old AX_BOOST_CHRONO m4 macro can't auto-detect brew's -mt-suffixed
+          # libs on macOS, so the boost-sleep link test fails even though
+          # modern boost has working sleep_for. Bypass: hardcode the define.
+          sed -i.bak 's|AC_MSG_ERROR(No working boost sleep implementation found.*|AC_DEFINE(HAVE_WORKING_BOOST_SLEEP_FOR, 1, [hardcoded for modern boost]) dnl|' configure.ac
+
       - name: autogen + configure
         run: |
           ./autogen.sh
