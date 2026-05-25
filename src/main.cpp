@@ -1215,7 +1215,7 @@ static const int64_t nInterval = nTargetTimespan / nTargetSpacing; // 20 blocks
 static int64_t RitualBonus(int nHeight)
 {
     if (!IsAfterRestorationFork(nHeight)) return 0;
-    const int64_t FIRST_FINALE = 1310666;   // first renewed finale
+    const int64_t FIRST_FINALE = 1141666;   // autumnal equinox 2026-09-22 (~block 1,141,666 at 60s blocks from genesis-time alignment)
     const int64_t PERIOD       = 263000;    // ~6 months at 60s blocks; multiple of 1000 keeps finales on xxx,666
     const int64_t DAY          = 1440;      // blocks per day at the 60s target
     if ((int64_t)nHeight < FIRST_FINALE - 28*DAY) return 0;
