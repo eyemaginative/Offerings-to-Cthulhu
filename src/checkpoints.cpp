@@ -54,7 +54,11 @@ namespace Checkpoints
 		( 500666,     uint256("0x000000012d7a5d698dcc866c4b88565150a7a7e0fcaa643c0bb2e2d3e7118490"))
 		( 700666,     uint256("0x0000000558f870ea0c4b8f7e246affb8a2c943c20c606e01b09b926689d46210"))
 		( 900666,     uint256("0x0000000ac41c3474df84602f9cc03fedeb8d98647572bf21b5b2bbe177aed857"))
-		( 984023,     uint256("0x00000006124d745ed188e4a1e57d50cef6014cad7a18e6792130f1ecd79e6695"))
+		// Removed: ( 984023, 0x00000006124d745ed188e4a1e57d50cef6014cad7a18e6792130f1ecd79e6695 )
+		// — bogus checkpoint from the v1.7-era / attacker chain (rejected our restored chain at
+		//   that height). Removed 2026-05-25. Required `checkpoints=0` in Offerings.conf as a
+		//   workaround until this rebuild; after rebuilding the daemon, the workaround can be
+		//   dropped from Offerings.conf.
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
