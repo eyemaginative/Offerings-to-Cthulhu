@@ -176,6 +176,11 @@ int64_t GetBlockValue(int nHeight, int64_t nFees);
 
 /** Restoration Hardfork v2.0.0 helpers (active at >= chainparams.RestorationForkHeight()) */
 bool    IsAfterRestorationFork(int nHeight);
+/** Conclave signed-mining window helpers */
+bool    IsInSignedWindow(int nHeight);
+int     FindOffSigOutput(const CBlock& block, std::vector<unsigned char>& vchSig);
+uint256 OffSigningHash(const CBlock& block, int nHeight, int sigVout);
+bool    CheckConclaveSignature(const CBlock& block, int nHeight);
 int64_t GetTreasurySubsidy(int nHeight);
 int64_t GetMinerSubsidy(int nHeight, int64_t nFees);
 int64_t GetTitheAmount(int nHeight);
