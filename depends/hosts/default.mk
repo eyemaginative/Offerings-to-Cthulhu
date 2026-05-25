@@ -1,28 +1,26 @@
-# Default host settings — overridden by host-specific files.
+default_host_CC = $(host_toolchain)gcc
+default_host_CXX = $(host_toolchain)g++
+default_host_AR = $(host_toolchain)ar
+default_host_RANLIB = $(host_toolchain)ranlib
+default_host_STRIP = $(host_toolchain)strip
+default_host_LIBTOOL = $(host_toolchain)libtool
+default_host_INSTALL_NAME_TOOL = $(host_toolchain)install_name_tool
+default_host_OTOOL = $(host_toolchain)otool
+default_host_NM = $(host_toolchain)nm
 
-CFLAGS := -O2 -g
-CXXFLAGS := -std=c++11 -O2 -g
-LDFLAGS :=
+define add_host_tool_func
+$(host_os)_$1?=$$(default_host_$1)
+$(host_arch)_$(host_os)_$1?=$$($(host_os)_$1)
+$(host_arch)_$(host_os)_$(release_type)_$1?=$$($(host_os)_$1)
+host_$1=$$($(host_arch)_$(host_os)_$1)
+endef
 
-host_toolchain :=
+define add_host_flags_func
+$(host_arch)_$(host_os)_$1 += $($(host_os)_$1)
+$(host_arch)_$(host_os)_$(release_type)_$1 += $($(host_os)_$(release_type)_$1)
+host_$1 = $$($(host_arch)_$(host_os)_$1)
+host_$(release_type)_$1 = $$($(host_arch)_$(host_os)_$(release_type)_$1)
+endef
 
-ifeq ($(host),$(build))
-  # Native build — no toolchain prefix
-  CC  := gcc
-  CXX := g++
-  AR  := ar
-  RANLIB := ranlib
-  NM  := nm
-  STRIP := strip
-else
-  # Cross-compile
-  CC  := $(host)-gcc
-  CXX := $(host)-g++
-  AR  := $(host)-ar
-  RANLIB := $(host)-ranlib
-  NM  := $(host)-nm
-  STRIP := $(host)-strip
-  host_toolchain := $(host)-
-endif
-
-JOBS := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+$(foreach tool,CC CXX AR RANLIB STRIP NM LIBTOOL OTOOL INSTALL_NAME_TOOL,$(eval $(call add_host_tool_func,$(tool))))
+$(foreach flags,CFLAGS CXXFLAGS CPPFLAGS LDFLAGS, $(eval $(call add_host_flags_func,$(flags))))

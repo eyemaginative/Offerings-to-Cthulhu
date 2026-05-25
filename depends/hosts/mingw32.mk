@@ -1,8 +1,10 @@
-# Windows (MinGW) cross-compile host settings
+mingw32_CFLAGS=-pipe
+mingw32_CXXFLAGS=$(mingw32_CFLAGS)
 
-CFLAGS   += -DWIN32 -D_WINDOWS -D_MT
-CXXFLAGS += -DWIN32 -D_WINDOWS -D_MT -DBOOST_THREAD_USE_LIB
-LDFLAGS  += -static -static-libgcc -static-libstdc++
+mingw32_release_CFLAGS=-O2
+mingw32_release_CXXFLAGS=$(mingw32_release_CFLAGS)
 
-# Static link for Windows: no runtime .dll dependency
-$(package)_config_opts_mingw32 += --host=$(host)
+mingw32_debug_CFLAGS=-O1
+mingw32_debug_CXXFLAGS=$(mingw32_debug_CFLAGS)
+
+mingw32_debug_CPPFLAGS=-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
