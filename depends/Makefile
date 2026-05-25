@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .NOTPARALLEL :
 
 SOURCES_PATH ?= $(BASEDIR)/sources
