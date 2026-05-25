@@ -39,7 +39,12 @@ HEADER_CSS = """
 .site-foot p{margin:.35em 0}
 .site-foot a{color:var(--accent,#5fd0a0);text-decoration:none;border:none}
 .site-foot a:hover{text-decoration:none;filter:brightness(1.1)}
-@media (max-width:640px){.site-foot{font-size:.74rem;margin-top:2em}}
+.site-foot .off-socials{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:1.4em;justify-content:center;margin:1.4em auto 0}
+.site-foot .off-socials li{margin:0;padding:0}
+.site-foot .off-socials a{display:inline-flex;align-items:center;border:0 !important;text-decoration:none}
+.site-foot .off-socials img{height:28px;width:28px;opacity:.82;transition:opacity .2s, transform .2s}
+.site-foot .off-socials a:hover img{opacity:1;transform:translateY(-1px)}
+@media (max-width:640px){.site-foot{font-size:.74rem;margin-top:2em}.site-foot .off-socials{gap:1em}.site-foot .off-socials img{height:22px;width:22px}}
 
 .title-row{display:flex;justify-content:center;align-items:center;gap:1.1em;flex-wrap:wrap;margin:.2em 0 .4em}
 .title-row h1{margin:0}
