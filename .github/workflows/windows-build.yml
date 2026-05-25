@@ -314,7 +314,12 @@ jobs:
             || { echo '=== config.log tail ==='; tail -200 config.log; exit 1; }
 
       - name: make
-        run: make -j2
+        run: |
+          echo "=== verify Makefile CXXFLAGS ==="
+          grep "^CXXFLAGS" src/Makefile src/qt/Makefile 2>/dev/null | head -4
+          # Force -std=c++17 explicitly at make time in case configure dropped it
+          export CXXFLAGS="-std=c++17 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          make -j2 CXXFLAGS="$CXXFLAGS"
 
       - name: Strip binaries
         run: strip --strip-all src/Offeringsd.exe src/Offerings-cli.exe src/qt/Offerings-qt.exe
