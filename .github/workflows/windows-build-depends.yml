@@ -1,0 +1,142 @@
+name: Build Windows Qt5 wallet (depends/ cross-compile)
+
+# Canonical Bitcoin Core depends/ cross-compile path. Runs on Linux,
+# uses mingw-w64 to cross-compile to Windows x86_64. depends/ builds
+# Boost/Qt5/OpenSSL/BDB/protobuf/qrencode from pinned source — controls
+# all dependency versions so we avoid MSYS2-style API drift.
+#
+# Parallel path to .github/workflows/windows-build.yml (MSYS2 approach).
+# Triggers: push to main when this file or depends/ changes, manual dispatch,
+# tag push (attaches to release).
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/windows-build-depends.yml'
+      - 'depends/**'
+      - 'configure.ac'
+      - 'src/m4/**'
+    tags: [ 'v*', 'wallet-*' ]
+  workflow_dispatch:
+
+jobs:
+  windows-cross:
+    name: Cthulhu Offerings — Windows x86_64 (depends/ cross)
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build deps + mingw-w64 toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake autoconf pkg-config \
+            bsdmainutils python3 curl ca-certificates faketime bison \
+            g++-mingw-w64-x86-64 mingw-w64-x86-64-dev nsis
+          # Use POSIX-thread variant (required for Qt5 / C++ threads)
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+
+      - name: Cache depends/ sources + built artifacts
+        id: cache-depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/sources
+            depends/built
+            depends/x86_64-w64-mingw32
+            depends/work
+          # Cache invalidates if any .mk file changes (version pins or build recipes).
+          key: depends-x86_64-w64-mingw32-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile', 'depends/funcs.mk') }}
+          restore-keys: |
+            depends-x86_64-w64-mingw32-
+
+      - name: Inventory depends/ state
+        run: |
+          echo "=== depends/ contents ==="
+          ls depends/ 2>&1 | head -30
+          echo
+          echo "=== depends/packages/ ==="
+          ls depends/packages/ 2>&1 | head -30
+          echo
+          echo "=== cache hit? ==="
+          [ -d depends/x86_64-w64-mingw32 ] && echo "depends/x86_64-w64-mingw32 present (cache hit)" || echo "no cache, will build from scratch"
+
+      - name: Build depends/ for x86_64-w64-mingw32
+        run: |
+          cd depends
+          # Bitcoin Core depends/ supports NO_QT, NO_UPNP, NO_ZMQ flags. We want Qt for the GUI wallet.
+          # First run is slow (~1-2 hr). Subsequent runs are cached.
+          make HOST=x86_64-w64-mingw32 -j$(nproc) NO_UPNP=1 || {
+            echo "=== depends/ build failed — last 80 lines ==="
+            tail -80 depends/work/build/x86_64-w64-mingw32/*/build.log 2>/dev/null || true
+            exit 1
+          }
+          echo "=== depends/ output ==="
+          ls depends/x86_64-w64-mingw32/lib/ 2>&1 | head -20
+          ls depends/x86_64-w64-mingw32/include/ 2>&1 | head -10
+
+      - name: autogen + configure
+        run: |
+          ./autogen.sh
+          # CONFIG_SITE is the bridge: tells configure to use the depends/ tree.
+          CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site \
+            ./configure \
+              --prefix=/ \
+              --disable-tests \
+              --disable-bench \
+              || { echo "=== config.log tail ==="; tail -150 config.log; exit 1; }
+
+      - name: make
+        run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
+
+      - name: Verify binaries
+        run: |
+          file src/Offeringsd src/Offerings-cli src/qt/Offerings-qt 2>&1 | head -10
+          ls -la src/Offeringsd* src/Offerings-cli* src/qt/Offerings-qt* 2>&1 | head
+
+      - name: Strip + package
+        run: |
+          # The .exe suffix is added automatically by the cross-build
+          BIN_D=src/Offeringsd.exe
+          BIN_C=src/Offerings-cli.exe
+          BIN_Q=src/qt/Offerings-qt.exe
+          # Fallback if no .exe suffix (some configs)
+          [ -f "$BIN_D" ] || BIN_D=src/Offeringsd
+          [ -f "$BIN_C" ] || BIN_C=src/Offerings-cli
+          [ -f "$BIN_Q" ] || BIN_Q=src/qt/Offerings-qt
+          x86_64-w64-mingw32-strip --strip-all "$BIN_D" "$BIN_C" "$BIN_Q"
+          mkdir -p dist
+          cp "$BIN_D" dist/Offeringsd.exe
+          cp "$BIN_C" dist/Offerings-cli.exe
+          cp "$BIN_Q" dist/Offerings-qt.exe
+          cd dist
+          sha256sum *.exe > SHA256SUMS
+          tar czf ../offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz *.exe SHA256SUMS
+          cd ..
+          ls -la offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz dist/SHA256SUMS
+          cat dist/SHA256SUMS
+
+      - name: Upload Windows Qt5 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cthulhu-offerings-windows-x86_64-qt5
+          path: |
+            offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
+            dist/SHA256SUMS
+          retention-days: 90
+
+      - name: Attach to release (if tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
+            dist/SHA256SUMS
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
