@@ -212,6 +212,12 @@ jobs:
           # Boost 1.74+. overwrite_if_exists renamed to overwrite_existing.
           sed -i 's|copy_option::overwrite_if_exists|copy_options::overwrite_existing|g' src/walletdb.cpp src/init.cpp 2>/dev/null || true
 
+          # 10. Dynamic exception specifications throw(SomeType) removed in C++17.
+          # Strip them from function declarations/definitions.
+          for f in src/leveldbwrapper.h src/leveldbwrapper.cpp src/allocators.h; do
+            [ -f "$f" ] && sed -i -E 's| throw\([a-zA-Z_:][a-zA-Z0-9_: ,]*\)||g' "$f"
+          done
+
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
           grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' | head -10 || true
           echo '--- modified file checksums ---'
@@ -291,7 +297,7 @@ jobs:
           export CPPFLAGS="-I$HOME/openssl-1.0.2/include $CPPFLAGS"
           export LDFLAGS="-L$HOME/openssl-1.0.2/lib $LDFLAGS"
           export PKG_CONFIG_PATH="$HOME/openssl-1.0.2/lib/pkgconfig:$PKG_CONFIG_PATH"
-          export CXXFLAGS="-std=c++17 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          export CXXFLAGS="-std=c++11 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
           export CFLAGS="-Wno-error -O2 -g"
           ./configure \
             --with-gui=qt5 \
