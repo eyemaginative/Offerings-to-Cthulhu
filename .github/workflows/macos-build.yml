@@ -1,0 +1,109 @@
+name: Build macOS wallet (native arm64)
+
+# Native build on GitHub macos-14 ARM64 runner. Uses brew-installed
+# Qt5, OpenSSL 1.1, berkeley-db@4. OFF is a Bitcoin Core 0.10 fork
+# (2014-era) so we deliberately pin to OpenSSL 1.1 (CBigNum subclasses
+# OpenSSL's BIGNUM struct, broken in 3.0).
+#
+# Triggers: push to main when this file or configure.ac changes,
+# manual dispatch, tag push (attaches to release).
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/macos-build.yml'
+      - 'configure.ac'
+      - 'src/m4/**'
+    tags: [ 'v*', 'wallet-*' ]
+  workflow_dispatch:
+
+jobs:
+  macos-native:
+    name: Cthulhu Offerings — macOS arm64 (native build)
+    runs-on: macos-14
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build deps via Homebrew
+        run: |
+          brew update
+          brew install \
+            automake autoconf libtool pkg-config \
+            boost openssl@1.1 qt@5 libevent qrencode \
+            protobuf berkeley-db@4 ccache
+          # Expose qt5 binaries (qmake, macdeployqt)
+          echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
+
+      - name: Set env (PKG_CONFIG_PATH, CPPFLAGS, LDFLAGS)
+        run: |
+          OPENSSL=$(brew --prefix openssl@1.1)
+          BDB=$(brew --prefix berkeley-db@4)
+          QT5=$(brew --prefix qt@5)
+          BOOST=$(brew --prefix boost)
+          echo "PKG_CONFIG_PATH=${OPENSSL}/lib/pkgconfig:${BDB}/lib/pkgconfig:${QT5}/lib/pkgconfig" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I${OPENSSL}/include -I${BDB}/include -I${BOOST}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${OPENSSL}/lib -L${BDB}/lib -L${BOOST}/lib" >> $GITHUB_ENV
+          echo "BOOST_PREFIX=${BOOST}" >> $GITHUB_ENV
+          echo "QT5_PREFIX=${QT5}" >> $GITHUB_ENV
+
+      - name: autogen + configure
+        run: |
+          ./autogen.sh
+          ./configure \
+            --disable-tests \
+            --disable-bench \
+            --with-boost-libdir=${BOOST_PREFIX}/lib \
+            --with-gui=qt5 \
+            || { echo "=== config.log tail ==="; tail -200 config.log; exit 1; }
+
+      - name: make
+        run: make -j$(sysctl -n hw.ncpu) || { echo "=== make failed ==="; exit 1; }
+
+      - name: Verify binaries
+        run: |
+          file src/Offeringsd src/Offerings-cli src/qt/Offerings-qt 2>&1 | head -10
+          ls -la src/Offeringsd src/Offerings-cli src/qt/Offerings-qt 2>&1 | head
+
+      - name: Bundle .app
+        run: |
+          cd src/qt
+          mkdir -p Offerings-Qt.app/Contents/MacOS Offerings-Qt.app/Contents/Resources
+          cp Offerings-qt Offerings-Qt.app/Contents/MacOS/Offerings-Qt
+          # macdeployqt copies Qt frameworks into the bundle
+          ${QT5_PREFIX}/bin/macdeployqt Offerings-Qt.app
+          cd ../..
+          mkdir -p dist
+          # GUI wallet bundle
+          cd src/qt
+          tar czf ../../dist/offerings-cthulhu-wallet-macos-arm64.tar.gz Offerings-Qt.app
+          cd ../..
+          # Daemon + CLI
+          tar czf dist/offerings-cthulhu-daemon-macos-arm64.tar.gz -C src Offeringsd Offerings-cli
+          cd dist
+          shasum -a 256 *.tar.gz > SHA256SUMS
+          ls -la
+          cat SHA256SUMS
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cthulhu-offerings-macos-arm64
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          retention-days: 90
+
+      - name: Attach to release (if tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
