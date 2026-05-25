@@ -1,0 +1,127 @@
+{
+ "anchor": 1000001,
+ "chunk": 48,
+ "total": 2267867,
+ "books": [
+  {
+   "title": "Proem \u2014 The Conclave's Invocation",
+   "body_start": 37,
+   "body_len": 453
+  },
+  {
+   "title": "The call of Cthulhu",
+   "body_start": 511,
+   "body_len": 71203
+  },
+  {
+   "title": "The silver key",
+   "body_start": 71730,
+   "body_len": 28681
+  },
+  {
+   "title": "The Dunwich horror",
+   "body_start": 100431,
+   "body_len": 101607
+  },
+  {
+   "title": "The colour out of space",
+   "body_start": 202063,
+   "body_len": 69997
+  },
+  {
+   "title": "He",
+   "body_start": 272064,
+   "body_len": 24492
+  },
+  {
+   "title": "The festival",
+   "body_start": 296570,
+   "body_len": 20750
+  },
+  {
+   "title": "The lurking fear",
+   "body_start": 317338,
+   "body_len": 48582
+  },
+  {
+   "title": "The last test",
+   "body_start": 365935,
+   "body_len": 112169
+  },
+  {
+   "title": "At the mountains of madness",
+   "body_start": 478133,
+   "body_len": 245791
+  },
+  {
+   "title": "Medusa's coil",
+   "body_start": 723939,
+   "body_len": 90140
+  },
+  {
+   "title": "The curse of Yig",
+   "body_start": 814097,
+   "body_len": 39770
+  },
+  {
+   "title": "Through the gates of the silver key",
+   "body_start": 853904,
+   "body_len": 85551
+  },
+  {
+   "title": "The horror at Red Hook",
+   "body_start": 939479,
+   "body_len": 50263
+  },
+  {
+   "title": "Cool air",
+   "body_start": 989752,
+   "body_len": 20450
+  },
+  {
+   "title": "The shadow over Innsmouth",
+   "body_start": 1010229,
+   "body_len": 96913
+  },
+  {
+   "title": "The quest of Iranon",
+   "body_start": 1107163,
+   "body_len": 14997
+  },
+  {
+   "title": "The thing on the door-step",
+   "body_start": 1122188,
+   "body_len": 61758
+  },
+  {
+   "title": "The haunter of the dark",
+   "body_start": 1183971,
+   "body_len": 55638
+  },
+  {
+   "title": "The trap",
+   "body_start": 1239619,
+   "body_len": 51366
+  },
+  {
+   "title": "The case of Charles Dexter Ward",
+   "body_start": 1291018,
+   "body_len": 264228
+  },
+  {
+   "title": "The horror in the burying-ground",
+   "body_start": 1555280,
+   "body_len": 33526
+  },
+  {
+   "title": "The Shunned House",
+   "body_start": 1588825,
+   "body_len": 64044
+  },
+  {
+   "title": "Writings in the United Amateur, 1915-1922",
+   "body_start": 1652912,
+   "body_len": 614955
+  }
+ ]
+}
