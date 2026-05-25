@@ -1,57 +1,44 @@
-# Boost 1.74.0
-#
-# Version rationale:
-# - Boost 1.66+: io_context, executor_work_guard, modern resolver::resolve()
-#   (the OFF source now uses these — see src/rpcprotocol.h, rpcserver.cpp)
-# - Boost 1.74: stable, widely tested for mingw cross-compile, has all APIs we need
-# - Boost 1.75+: added deprecation warnings; 1.91 removed boost::_1 etc.
-# - Boost 1.74 is the sweet spot: modern enough, clean for our compat patches.
-#
-# If dobbscoin-source pins a different version, use theirs (check packages/boost.mk
-# on vps3:~/claude/dobbscoin-source/depends/).
-
 package=boost
-$(package)_version=1_74_0
-$(package)_version_dot=1.74.0
-$(package)_download_path=https://boostorg.jfrog.io/artifactory/main/release/$($(package)_version_dot)/source
-$(package)_file_name=boost_$($(package)_version).tar.bz2
-$(package)_sha256_hash=83bfc1507731a0906e387fc28b7ef5417d591429e51e788417bf532b7371524
-
-$(package)_toolset_$(host_os):=gcc
-$(package)_toolset_darwin:=clang
-
-$(package)_config_libraries=chrono,filesystem,program_options,system,thread
+$(package)_version=1_55_0
+$(package)_download_path=http://sourceforge.net/projects/boost/files/boost/1.55.0
+$(package)_file_name=$(package)_$($(package)_version).tar.bz2
+$(package)_sha256_hash=fff00023dd79486d444c8e29922f4072e1d451fc5a4d2b6075852ead7f2b7b52
+$(package)_patches=darwin_boost_atomic-1.patch darwin_boost_atomic-2.patch
 
 define $(package)_set_vars
-  $(package)_config_opts_release=variant=release
-  $(package)_config_opts_debug=variant=debug
-  $(package)_config_opts=--layout=tagged --build-type=complete
-  $(package)_config_opts+=--without-python --without-mpi --without-context
-  $(package)_config_opts+=threading=multi link=static runtime-link=static
-  $(package)_config_opts_mingw32=target-os=windows threadapi=win32
-  $(package)_config_opts_linux=target-os=linux
-  $(package)_config_opts_darwin=target-os=darwin
+$(package)_config_opts_release=variant=release
+$(package)_config_opts_debug=variant=debug
+$(package)_config_opts=--layout=tagged --build-type=complete --user-config=user-config.jam
+$(package)_config_opts+=threading=multi link=static -sNO_BZIP2=1 -sNO_ZLIB=1
+$(package)_config_opts_linux=threadapi=pthread runtime-link=shared
+$(package)_config_opts_darwin=--toolset=darwin-4.2.1 runtime-link=shared
+$(package)_config_opts_mingw32=binary-format=pe target-os=windows threadapi=win32 runtime-link=static
+$(package)_config_opts_x86_64_mingw32=address-model=64
+$(package)_config_opts_i686_mingw32=address-model=32
+$(package)_config_opts_i686_linux=address-model=32 architecture=x86
+$(package)_toolset_$(host_os)=gcc
+$(package)_archiver_$(host_os)=$($(package)_ar)
+$(package)_toolset_darwin=darwin
+$(package)_archiver_darwin=$($(package)_libtool)
+$(package)_config_libraries=chrono,filesystem,program_options,system,thread,test
+$(package)_cxxflags=-fvisibility=hidden
+$(package)_cxxflags_linux=-fPIC
 endef
 
 define $(package)_preprocess_cmds
-  echo "using gcc : mingw : $(host_prefix)/bin/$(host)-g++ ;" > user-config.jam
+  patch -p2 < $($(package)_patch_dir)/darwin_boost_atomic-1.patch && \
+  patch -p2 < $($(package)_patch_dir)/darwin_boost_atomic-2.patch && \
+  echo "using $(boost_toolset_$(host_os)) : : $($(package)_cxx) : <cxxflags>\"$($(package)_cxxflags) $($(package)_cppflags)\" <linkflags>\"$($(package)_ldflags)\" <archiver>\"$(boost_archiver_$(host_os))\" <striper>\"$(host_STRIP)\"  <ranlib>\"$(host_RANLIB)\" <rc>\"$(host_WINDRES)\" : ;" > user-config.jam
 endef
 
 define $(package)_config_cmds
-  ./bootstrap.sh \
-    --without-icu \
-    --with-libraries=$($(package)_config_libraries)
+  ./bootstrap.sh --without-icu --with-libraries=$(boost_config_libraries)
 endef
 
 define $(package)_build_cmds
-  ./b2 -d2 -j2 \
-    toolset=$($(package)_toolset_$(host_os)) \
-    $($(package)_config_opts) \
-    $($(package)_config_opts_$(host_os)) \
-    --prefix=$(host_prefix) \
-    install 2>&1 | tail -20
+  ./b2 -d2 -j2 -d1 --prefix=$($(package)_staging_prefix_dir) $($(package)_config_opts) stage
 endef
 
 define $(package)_stage_cmds
-  true  # b2 install already placed files in $(host_prefix)
+  ./b2 -d0 -j4 --prefix=$($(package)_staging_prefix_dir) $($(package)_config_opts) install
 endef

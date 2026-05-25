@@ -1,21 +1,23 @@
-# OFF wallet — depends package list
-# Included by depends/Makefile.
+packages:=boost openssl
+native_packages := native_ccache native_comparisontool
 
-# Core packages always built
-packages := boost openssl bdb protobuf qrencode
+qt_native_packages = native_protobuf
+qt_packages = qrencode protobuf zlib
 
-# Qt GUI
-packages += qt
+qt46_linux_packages = qt46 expat dbus libxcb xcb_proto libXau xproto freetype libX11 xextproto libXext xtrans libICE libSM
+qt5_linux_packages= qt expat dbus libxcb xcb_proto libXau xproto freetype fontconfig libX11 xextproto libXext xtrans
 
-# Optional: miniupnpc
-ifeq ($(NO_UPNP),)
-packages += miniupnpc
-endif
+qt_darwin_packages=qt
+qt_mingw32_packages=qt
 
-# Packages that require a native (build-machine) build first
-# (e.g. Qt's moc, protoc)
-native_packages := native_protobuf
+qt_linux_$(USE_LINUX_STATIC_QT5):=$(qt5_linux_packages)
+qt_linux_:=$(qt46_linux_packages)
+qt_linux_packages:=$(qt_linux_$(USE_LINUX_STATIC_QT5))
 
-ifneq ($(filter qt,$(packages)),)
-  native_packages += native_qt
+wallet_packages=bdb
+
+upnp_packages=miniupnpc
+
+ifneq ($(build_os),darwin)
+darwin_native_packages=native_libuuid native_openssl native_cctools native_cdrkit native_libdmg-hfsplus
 endif
