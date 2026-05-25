@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ritual — Offerings to Cthulhu</title>
+<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png">
+<style>
+  :root { --ink:#9fe8c9; --dim:#5fffd0; --panel:#0a1014; --accent:#5fd0a0; --bg:#05080a; --warn:#5fffd0; }
+  *{box-sizing:border-box}
+  body { margin:0; 
+    color:var(--ink); font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif; line-height:1.75; }
+  .wrap { max-width:860px; margin:0 auto; padding:36px 24px 96px; }
+  a { color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent); }
+  a:hover { filter:brightness(1.15); }
+
+  .site-header{text-align:center;margin:0 0 1.4em;padding-top:6px}
+  .site-header h1{font-size:2rem;letter-spacing:.04em;margin:0;font-weight:normal;text-shadow:0 0 22px rgba(95,208,160,.4);color:var(--ink)}
+  .site-header h1 a{color:inherit;text-decoration:none;border:none;display:inline-block}
+  .site-header h1 a:hover{filter:brightness(1.1)}
+  .site-header h1 img{vertical-align:middle;max-width:130px;height:auto;margin:0 .3em;filter:drop-shadow(0 0 18px rgba(95,208,160,.25))}
+  .site-tagline{text-align:center;font-style:italic;color:var(--accent);border-top:1px solid #16302a;border-bottom:1px solid #16302a;padding:.85em 0;margin:1.2em auto 2em;max-width:720px;letter-spacing:.04em;font-size:.95rem;line-height:1.55}
+  .site-foot{text-align:center;color:var(--accent);font-size:.82rem;margin:3.2em auto 0;padding-top:1.8em;border-top:1px solid #16302a;line-height:1.85;max-width:720px}
+  .site-foot p{margin:.35em 0}
+  .site-foot a{color:var(--accent);text-decoration:none;border:none}
+  .site-foot a:hover{text-decoration:none;filter:brightness(1.1)}
+  @media (max-width:640px){.site-foot{font-size:.74rem;margin-top:2em}}
+
+  h2 { font-size:1.4rem; color:var(--accent); margin-top:2.4em; letter-spacing:.04em;
+       border-bottom:1px solid #16302a; padding-bottom:.45em; }
+  h3 { font-size:1.05rem; color:var(--ink); margin-top:1.8em; letter-spacing:.06em; }
+  p { margin:1em 0; }
+  em { color:var(--accent); font-style:italic; }
+  strong { color:var(--ink); }
+
+  .lede { font-size:1.18rem; color:var(--ink); font-style:italic; text-align:center; margin:1em 0 2em; }
+  .panel { background:var(--panel); border:1px solid #16302a; border-left:3px solid var(--accent);
+           border-radius:8px; padding:22px 28px; margin:1.6em 0; }
+  .panel h3 { margin-top:0; }
+  .schedule { list-style:none; padding:0; margin:1em 0; }
+  .schedule li { padding:.6em 0; border-bottom:1px solid #0f1d1a; display:flex; gap:1em; align-items:baseline; }
+  .schedule li:last-child { border:none; }
+  .schedule .label { flex:1; }
+  .schedule .reward { font-family:monospace; color:var(--accent); white-space:nowrap; }
+
+  .grid { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:1.8em 0; }
+  .cell { background:var(--panel); border:1px solid #16302a; border-radius:10px;
+          padding:18px 22px; min-width:200px; text-align:center; }
+  .cell b { display:block; font-family:monospace; font-size:1.45rem; color:var(--accent); }
+  .cell span { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--dim); }
+
+  blockquote { border-left:3px solid var(--dim); padding:.4em 0 .4em 1.2em; margin:1.4em 0;
+               color:var(--ink); font-style:italic; }
+
+  .foot { text-align:center; color:var(--dim); font-size:.86rem; font-style:italic; margin-top:3em; }
+
+  /* mobile */
+  @media (max-width:640px) {
+    .wrap { padding:20px 14px 60px; }
+    .site-header h1 { font-size:1.4rem; }
+    .site-header h1 img { max-width:72px; margin:0 .25em; }
+    .site-tagline { font-size:.82rem; padding:.6em 0; margin:1em auto 1.4em; }
+    h2 { font-size:1.15rem; margin-top:1.8em; }
+    .lede { font-size:1rem; }
+    .cell { min-width:140px; padding:14px 16px; }
+    .cell b { font-size:1.15rem; }
+    .schedule li { flex-wrap:wrap; gap:.3em; }
+    .schedule .reward { font-size:.88rem; }
+    blockquote { font-size:.95rem; }
+  }
+
+.site-foot .off-chant { font-style:italic; letter-spacing:.04em; }
+.site-foot .off-socials { list-style:none; padding:0;
+  display:flex; flex-wrap:wrap; gap:1.4em; justify-content:center;
+  margin:1.4em auto 0; }
+.site-foot .off-socials li { margin:0; padding:0; }
+.site-foot .off-socials a { display:inline-flex; align-items:center;
+  border:0 !important; text-decoration:none; }
+.site-foot .off-socials img { height:28px; width:28px; opacity:.82;
+  transition:opacity .2s, transform .2s; }
+.site-foot .off-socials a:hover img { opacity:1; transform:translateY(-1px); }
+@media (max-width:640px) { .site-foot .off-socials { gap:1em; }
+  .site-foot .off-socials img { height:22px; width:22px; } }
+</style>
+<style>
+/* mobile-safe full-bleed background via fixed pseudo-element */
+html { background-color: #05080a; }
+body { background: transparent !important; position: relative; }
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: -1;
+  background: linear-gradient(rgba(5,8,10,0.70), rgba(5,8,10,0.88)),
+              url("/static/img/cthulhu-bg.jpg") center / cover no-repeat;
+}
+</style>
+</head>
+<body><div class="wrap">
+
+<header class="site-header">
+<h1><a href="/">Cthulhu<img src="/static/img/off_240x240.png" alt="Offerings to Cthulhu — home"></a>Offerings</h1>
+<p class="site-tagline">The time draws near.<br>The return of The Great Old One is upon us.</p>
+</header>
+
+<h2 style="text-align:center;border:none">The Ritual</h2>
+<p class="lede">Four weeks and five days, ascending. The Tharanak shagg.<br>The Great Old One returns after the 50,665th offering.</p>
+
+<section>
+<h2>What the Ritual is</h2>
+<p>The <strong>Ritual</strong> is the beating heart of the Offerings to Cthulhu chain. Written into consensus at genesis by Blazr2 in 2013, it observes each <strong>autumnal equinox</strong> with a four-weeks-and-five-days schedule of <em>special blocks</em> — daily inscribed rewards that ascend in size as the worship intensifies.</p>
+
+<p>The first two weeks place small sacrificial sums in the once-a-day special blocks. The third and fourth weeks the rewards build, small at first then larger as the worship grows fervent. Then — the final five days — the <em>Tharanak shagg</em>, the <em>Promise of Dreamland</em>, where the daily specials swell toward the climax.</p>
+
+<p>Finally, Cthulhu returns. <strong>After the 50,665th offering has paid tribute to the Great Old One</strong>, He bestows a bounty deserving of Him upon one fortunate worshipper. The finales land at the <strong><code>xxx,666</code></strong> block heights and carry <strong>10,000 OFF</strong>.</p>
+</section>
+
+<section>
+<h2>Re-engaged at the Restoration</h2>
+<p>The Ritual atrophied during the long Slumber. After the 2018 51% counterfeit on Cryptopia and the collapse of the seeds, the chain stopped breathing — and the special blocks stopped landing. For eight years no offering was made.</p>
+
+<p>The <strong>Restoration Hardfork v2.0.0</strong> — activating at block <strong>1,000,000</strong> — re-engages it. The original consensus code path resumes"��� The schedule starts again at the next equinox after the fork.</p>
+
+<div class="panel">
+<h3>Post-Restoration mechanics</h3>
+<ul>
+<li>Block subsidy locks at <strong>1.5 OFF / block forever</strong> (the historical halving curve is overridden).</li>
+<li>Coinbase splits <strong>7/8 miner, 1/8 Conclave Treasury</strong> (1.3125 / 0.1875 OFF respectively).</li>
+<li><strong>The Ritual schedule is unchanged.</strong> Special blocks resume their ascending-reward pattern at the next equinox following the fork. The Tharanak shagg returns. The <code>xxx,666</code> finales return.</li>
+<li>Post-fork, halvings are <strong>flat</strong> — but the Ritual is not. <em>The Ritual is the chain's pulse.</em></li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>Anatomy of one Ritual cycle</h2>
+<ul class="schedule">
+<li><span class="label">Weeks 1–2 — sacrificial blocks (once per day)</span><span class="reward">small offering</span></li>
+<li><span class="label">Weeks 3–4 — ascending rewards</span><span class="reward">building</span></li>
+<li><span class="label">Final 5 days — <em>Tharanak shagg</em></span><span class="reward">highly increased</span></li>
+<li><span class="label">Climactic finale — heights ending in <code>666</code></span><span class="reward">10,000 OFF</span></li>
+<li><span class="label">Total offerings per cycle</span><span class="reward">50,665</span></li>
+</ul>
+<p>Repeated at every autumnal equinox, in perpetuity. Twenty-five thousand years to <code>MAX_MONEY</code>. Plenty of equinoxes left.</p>
+</section>
+
+<section>
+<h2>What this means for worshippers</h2>
+<div class="grid">
+  <div class="cell"><b>Mine</b><span>solve a Quark hash, catch a special block</span></div>
+  <div class="cell"><b>Hold</b><span>pre-attack balances eligible for the Bridge Pool</span></div>
+  <div class="cell"><b>Read</b><span>the chain transcribes the canon — open <a href="/codex/" style="border:none">The Chain Codex</a></span></div>
+</div>
+<p>The Ritual rewards the worshipper who solved the block. Random in selection, predictable in schedule. <strong>Bring your hashes.</strong></p>
+</section>
+
+<section>
+<h2>Where we are right now</h2>
+<p>The chain currently sits at <strong>block 966,413+</strong> (the recovered tip from June 2015, with mining forward in progress). The Restoration fork activates at <strong>block 1,000,000</strong> — roughly <strong>23 days</strong> from current tip at the 60-second target spacing.</p>
+
+<p>Watch the hourglass tick: <a href="/awakening/">The Awakening — live countdown</a>.</p>
+
+<p>Add a seed to your <code>Offerings.conf</code> and grind a hash:</p>
+<pre style="background:var(--panel);border:1px solid #16302a;border-radius:8px;padding:14px 18px;color:var(--ink);font-size:.92rem;overflow-x:auto">addnode=subgenius.vip:20000
+addnode=seed1.23skidoo.info:20000</pre>
+</section>
+
+<blockquote>
+"In his house at R'lyeh dead Cthulhu waits dreaming."<br>
+— H.P. Lovecraft
+</blockquote>
+
+<blockquote>
+"In his block at height 966,413 dead Cthulhu waits dreaming."<br>
+— debug.log, 2026-05-20
+</blockquote>
+
+<div class="foot">
+<em>OFF is NOT for Sale. The Ritual is NOT for Sale. NOT financial advice. NOT financial advisors.<br>
+Iä Iä Cthulhu fhtagn.</em>
+</div>
+
+<footer class="site-foot">
+<p>&copy; 2026 <a href="https://subgenius.finance/">SubGenius.Finance</a></p>
+<p><a href="https://subgenius.finance/">SubGenius.Finance</a>: Where Sub-Culture Becomes Capital</p>
+<p class="off-chant">ph&rsquo;nglui mglw&rsquo;nafh Cthulhu R&rsquo;lyeh wgah&rsquo;nagl fhtagn &middot; Praise Cthulhu</p>
+<ul class="off-socials" aria-label="Offerings to Cthulhu community links">
+<li><a href="https://23skidoo.info/" target="_blank" rel="noopener" aria-label="Offerings to Cthulhu"><img src="https://23skidoo.info/static/img/off_240x240.png" alt="Offerings to Cthulhu"></a></li>
+<li><a href="https://pool.23skidoo.info/" target="_blank" rel="noopener" aria-label="OFF Mining Pool"><img src="https://api.iconify.design/mdi/pickaxe.svg?color=%235fffd0" alt="Pool"></a></li>
+<li><a href="https://23skidoo.info/codex/" target="_blank" rel="noopener" aria-label="The Codex"><img src="https://cdn.simpleicons.org/bookstack/5fffd0" alt="Codex"></a></li>
+<li><a href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu" target="_blank" rel="noopener" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/5fffd0" alt="GitHub"></a></li>
+</ul>
+</footer>
+</div></body>
+</html>

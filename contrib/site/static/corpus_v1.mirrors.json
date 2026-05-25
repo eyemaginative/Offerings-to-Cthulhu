@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "sha256": "1c808560eebab87f9e8c5032e5157821f1fbdae2bafc6ea68b6f4310a2d6d82f",
+  "size_bytes": 2267867,
+  "chunk_size": 48,
+  "anchor_height": 1000001,
+  "urls": [
+    "https://23skidoo.info/static/corpus_v1.bin"
+  ],
+  "note": "Pinned in chainparams.cpp as kCorpusSha256. Immutable; future versions require hardfork."
+}

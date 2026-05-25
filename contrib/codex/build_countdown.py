@@ -41,8 +41,8 @@ FOOTER_CSS = """
 
 .site-foot .off-chant { font-style:italic; letter-spacing:.04em; }
 .site-foot .off-socials { list-style:none; padding:0;
-  display:flex; flex-wrap:wrap; gap:1.4em; justify-content:center;
-  margin:1.4em auto 0; }
+  display:flex; flex-wrap:wrap; gap:1.4em;
+  position:fixed; bottom:1.2em; right:1.2em; z-index:100; margin:0; }
 .site-foot .off-socials li { margin:0; padding:0; }
 .site-foot .off-socials a { display:inline-flex; align-items:center;
   border:0 !important; text-decoration:none; }
