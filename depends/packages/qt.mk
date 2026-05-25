@@ -137,7 +137,6 @@ define $(package)_preprocess_cmds
   cp -f qtbase/mkspecs/macx-clang/Info.plist.app qtbase/mkspecs/macx-clang-linux/ &&\
   cp -f qtbase/mkspecs/macx-clang/qplatformdefs.h qtbase/mkspecs/macx-clang-linux/ &&\
   cp -f $($(package)_patch_dir)/mac-qmake.conf qtbase/mkspecs/macx-clang-linux/qmake.conf && \
-  patch -p1 < $($(package)_patch_dir)/fix_qt_pkgconfig.patch && \
   patch -p1 < $($(package)_patch_dir)/fix-cocoahelpers-macos.patch && \
   patch -p1 < $($(package)_patch_dir)/qfixed-coretext.patch && \
   echo "!host_build: QMAKE_CFLAGS     += $($(package)_cflags) $($(package)_cppflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
