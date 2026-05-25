@@ -131,7 +131,8 @@ define $(package)_preprocess_cmds
   sed -i.old "1i #include <limits>" qtbase/src/corelib/global/qendian.h && \
   sed -i.old "1i #include <limits>" qtbase/src/corelib/global/qfloat16.h && \
   sed -i.old "1i #include <limits>" qtbase/src/corelib/tools/qbytearraymatcher.h && \
-  sed -i.old "1i #include <limits>" qttools/src/qdoc/generator.cpp
+  sed -i.old "1i #include <limits>" qttools/src/qdoc/generator.cpp && \
+  sed -i.old "1i #include <limits>" qtbase/src/tools/moc/generator.cpp
 
 endef
 
