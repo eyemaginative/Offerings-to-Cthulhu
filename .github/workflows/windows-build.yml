@@ -181,11 +181,11 @@ jobs:
 
           # 11. C++17 added std::filesystem; with both 'using namespace boost' and
           # 'using namespace std' active, bare 'filesystem::' is ambiguous.
-          # Qualify references to boost::filesystem:: explicitly. Extends to all
-          # files in src/*.cpp that show the ambiguity.
+          # Qualify references to boost::filesystem:: explicitly across all
+          # src/*.cpp (and rpcserver.cpp, etc — glob to avoid whack-a-mole).
           # Use # delimiter so the | in (^|...) alternation does not collide.
-          for f in src/init.cpp src/main.cpp src/util.cpp src/wallet.cpp src/walletdb.cpp src/db.cpp; do
-            [ -f "$f" ] && sed -i -E 's#(^|[^a-zA-Z0-9_:])filesystem::#\1boost::filesystem::#g' "$f"
+          for f in src/*.cpp; do
+            sed -i -E 's#(^|[^a-zA-Z0-9_:])filesystem::#\1boost::filesystem::#g' "$f"
           done
 
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
