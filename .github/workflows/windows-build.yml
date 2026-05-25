@@ -204,6 +204,10 @@ jobs:
             sed -i 's|address.to_v6().to_v4()|boost::asio::ip::make_address_v4(boost::asio::ip::v4_mapped, address.to_v6())|g' src/rpcserver.cpp
           fi
 
+          # 8. BDB 6.x has multiple DbEnv() overloads; bare int literal is ambiguous.
+          # Cast to u_int32_t explicitly.
+          sed -i 's|DbEnv(0)\.remove|DbEnv((u_int32_t)0).remove|g' src/db.cpp
+
           echo '--- remaining filesystem::basename/extension (should be 0) ---'
           grep -c 'filesystem::basename\|filesystem::extension' src/*.cpp src/*.h 2>/dev/null | grep -v ':0$' | head -10 || true
           echo '--- modified file checksums ---'
