@@ -580,3 +580,114 @@ CITATIONS
   #698 (zeewolf,     2018-09-19)   — zeewolfik/offerings v1.7 salvage repo
   #474 (TentacleMan, 2015-06-05)   — "Blazr2 gone" canonical datestamp
   Full scrape:  research/bct-thread-scrape-2026-05-20.md
+
+
+================================================================================
+HUNK 10 — src/main.cpp   (The Ritual Renewed — post-Restoration cycle)
+================================================================================
+Added 2026-05-25 to mirror what was actually built into the running v2.0.0
+binary. Without this hunk the Restoration silently kills the Ritual at fork
+height (the flat-1.5 lock overrides everything). With it, the Ritual recurs
+every ~6 months forever, twice yearly, anchored on xxx,666 finales.
+
+Design choice (additive bonus, NOT replacement subsidy): the bonus is added on
+top of the locked 1.5 OFF base. The Conclave Treasury's 1/8 share is computed
+on the 1.5 base only and is unaffected — so the coinbase shape stays identical
+between Ritual and ordinary blocks (no ConnectBlock exception, no miner.cpp
+exception). The full bounty goes to the lucky worshipper who mines the block.
+
+10a) Add the RitualBonus helper to src/main.cpp, just before GetBlockValue
+     (immediately after the nInterval definition near line 1190).
+
++ // The Ritual Renewed (post-Restoration). The original ritual died at the fork when the
++ // subsidy locked to a flat 1.5 OFF. This restores it: a recurring 29-day rite of once-a-day
++ // special blocks with escalating bounties, culminating in a 10,000 OFF finale at an xxx,666
++ // height paid in full to the worshipper who mines it. Recurs every ~6 months. The bounty is
++ // ADDITIVE on top of the locked 1.5 OFF base, and goes entirely to the miner; the Conclave
++ // Treasury's 1/8 share is computed on the base only and is unaffected. Returns 0 for every
++ // ordinary block, and for everything below the first cycle, so it is inert (chain-identical
++ // to the un-patched binary) until ~block 1,270,346.
++ static int64_t RitualBonus(int nHeight)
++ {
++     if (!IsAfterRestorationFork(nHeight)) return 0;
++     const int64_t FIRST_FINALE = 1141666;   // autumnal equinox 2026-09-22 (~block 1,141,666 at 60s blocks from genesis-time alignment)
++     const int64_t PERIOD       = 263000;    // ~6 months at 60s blocks; multiple of 1000 keeps finales on xxx,666
++     const int64_t DAY          = 1440;      // blocks per day at the 60s target
++     if ((int64_t)nHeight < FIRST_FINALE - 28*DAY) return 0;
++     int64_t off = (int64_t)nHeight - FIRST_FINALE;
++     int64_t k   = (off + PERIOD/2) / PERIOD;          // nearest cycle
++     if (k < 0) k = 0;
++     int64_t F = FIRST_FINALE + k*PERIOD;              // this cycle's finale height
++     int64_t d = F - (int64_t)nHeight;                 // blocks until the finale
++     if (d < 0 || d > 28*DAY) return 0;                // outside this cycle's 29-day rite
++     if (d % DAY != 0) return 0;                       // only the once-a-day special blocks
++     int day = (int)(d / DAY);                         // 0 = finale, 1..28 = run-up
++     if (day == 0)  return 10000 * COIN;               // the finale - a bounty for one worshipper
++     if (day <= 5)  return 1000  * COIN;               // final five days - the Tharanak shagg
++     if (day <= 12) return 100   * COIN;               // fourth week - fervor
++     if (day <= 19) return 10    * COIN;               // third week  - greed
++     if (day <= 26) return 1     * COIN;               // second week - acceptance
++     return 0;                                         // first days  - sacrifice (base reward only)
++ }
+
+10b) Amend HUNK 4's post-fork override inside GetBlockValue. The line written
+     by HUNK 4 reads:
+
+       nSubsidy = Params().PostForkSubsidy();           // 1.5 OFF
+
+     Change it to:
+
+       nSubsidy = Params().PostForkSubsidy() + RitualBonus(nHeight);   // 1.5 OFF + ritual
+
+     And update the surrounding comment:
+
+       // Restoration Hardfork — lock to 1.5 OFF/block forever at fork height,
+       // plus the renewed Ritual bounty on its special blocks.
+
+10c) Amend HUNK 4's GetMinerSubsidy. The line written by HUNK 4 reads:
+
+       return nSubsidy - GetTreasurySubsidy(nHeight) + nFees;   // 1.3125 OFF + fees
+
+     Change it to:
+
+       // 1.3125 OFF + the full ritual bounty (to the lucky worshipper) + fees
+       return nSubsidy - GetTreasurySubsidy(nHeight) + RitualBonus(nHeight) + nFees;
+
+     The Treasury share is intentionally NOT adjusted — Treasury keeps its
+     0.1875 OFF cut on the base 1.5 every block including Ritual blocks. The
+     coinbase's two-output shape (miner + Treasury) is preserved on every
+     block; no ConnectBlock or miner.cpp changes are needed.
+
+EMISSION PER CYCLE (Ritual bonus only, above the 1.5 base):
+  day  0    finale          10,000 OFF       (xxx,666)
+  days 1-5  Tharanak shagg   5 × 1,000 = 5,000 OFF
+  days 6-12 fervor           7 × 100   =   700 OFF
+  days 13-19 greed           7 × 10    =    70 OFF
+  days 20-26 acceptance      7 × 1     =     7 OFF
+  days 27-28 sacrifice       0 OFF
+  ─────────────────────────────────────────────────────
+  total bonus per cycle:                15,777 OFF
+  at ~2 cycles/year:                    ~31,554 OFF/year additional inflation
+
+The base 1.5 OFF × 525,600 blocks/year = 788,400 OFF/year. Ritual adds ~4% on
+top. Treasury share unchanged at 0.1875 × 525,600 = 98,550 OFF/year.
+
+FINALE SCHEDULE (first 10 cycles past fork):
+  cycle 1   1,141,666   (~14 weeks past fork; targets autumnal equinox 2026-09-22)
+  cycle 2   1,404,666
+  cycle 3   1,667,666
+  cycle 4   1,930,666
+  cycle 5   2,193,666
+  cycle 6   2,456,666
+  cycle 7   2,719,666
+  cycle 8   2,982,666
+  cycle 9   3,245,666
+  cycle 10  3,508,666
+
+Cadence is anchored to block height, not wall-clock. 263,000 blocks at the 60s
+target = 182.64 days, vs. the astronomical half-year of 182.62-182.87 days, so
+finales stay near the equinoxes for many years before retarget noise accumulates
+into a meaningful drift. The 263,000-block period keeps every finale on an
+xxx,666 height by construction (263,000 is a multiple of 1,000 and the first
+finale is xxx,666). First Ritual special block (the "sacrifice" day): block
+1,101,346 (FIRST_FINALE − 28×1440 = 1,141,666 − 40,320). Inert before that.
