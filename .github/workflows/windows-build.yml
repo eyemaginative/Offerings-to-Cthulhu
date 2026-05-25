@@ -291,7 +291,7 @@ jobs:
           export CPPFLAGS="-I$HOME/openssl-1.0.2/include $CPPFLAGS"
           export LDFLAGS="-L$HOME/openssl-1.0.2/lib $LDFLAGS"
           export PKG_CONFIG_PATH="$HOME/openssl-1.0.2/lib/pkgconfig:$PKG_CONFIG_PATH"
-          export CXXFLAGS="-std=c++11 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          export CXXFLAGS="-std=c++17 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
           export CFLAGS="-Wno-error -O2 -g"
           ./configure \
             --with-gui=qt5 \
