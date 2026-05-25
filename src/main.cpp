@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace boost::placeholders;
 
 #if defined(NDEBUG)
 # error "Offerings cannot be compiled without assertions."
@@ -1203,6 +1204,37 @@ static const int64_t nTargetTimespan = 20 * 60; // 10 minutes
 static const int64_t nTargetSpacing = 60; // 30 seconds
 static const int64_t nInterval = nTargetTimespan / nTargetSpacing; // 20 blocks
 
+// The Ritual Renewed (post-Restoration). The original ritual died at the fork when the
+// subsidy locked to a flat 1.5 OFF. This restores it: a recurring 29-day rite of once-a-day
+// special blocks with escalating bounties, culminating in a 10,000 OFF finale at an xxx,666
+// height paid in full to the worshipper who mines it. Recurs every ~6 months. The bounty is
+// ADDITIVE on top of the locked 1.5 OFF base, and goes entirely to the miner; the Conclave
+// Treasury's 1/8 share is computed on the base only and is unaffected. Returns 0 for every
+// ordinary block, and for everything below the first cycle, so it is inert (chain-identical
+// to the un-patched binary) until ~block 1,270,346.
+static int64_t RitualBonus(int nHeight)
+{
+    if (!IsAfterRestorationFork(nHeight)) return 0;
+    const int64_t FIRST_FINALE = 1310666;   // first renewed finale
+    const int64_t PERIOD       = 263000;    // ~6 months at 60s blocks; multiple of 1000 keeps finales on xxx,666
+    const int64_t DAY          = 1440;      // blocks per day at the 60s target
+    if ((int64_t)nHeight < FIRST_FINALE - 28*DAY) return 0;
+    int64_t off = (int64_t)nHeight - FIRST_FINALE;
+    int64_t k   = (off + PERIOD/2) / PERIOD;          // nearest cycle
+    if (k < 0) k = 0;
+    int64_t F = FIRST_FINALE + k*PERIOD;              // this cycle's finale height
+    int64_t d = F - (int64_t)nHeight;                 // blocks until the finale
+    if (d < 0 || d > 28*DAY) return 0;                // outside this cycle's 29-day rite
+    if (d % DAY != 0) return 0;                       // only the once-a-day special blocks
+    int day = (int)(d / DAY);                         // 0 = finale, 1..28 = run-up
+    if (day == 0)  return 10000 * COIN;               // the finale - a bounty for one worshipper
+    if (day <= 5)  return 1000  * COIN;               // final five days - the Tharanak shagg
+    if (day <= 12) return 100   * COIN;               // fourth week - fervor
+    if (day <= 19) return 10    * COIN;               // third week  - greed
+    if (day <= 26) return 1     * COIN;               // second week - acceptance
+    return 0;                                         // first days  - sacrifice (base reward only)
+}
+
 int64_t GetBlockValue(int nHeight, int64_t nFees)
 {
 	int64_t nSubsidy = nBlockRewardStartCoin;
@@ -1386,9 +1418,10 @@ int64_t GetBlockValue(int nHeight, int64_t nFees)
     nSubsidy >>= (nHeight / 259200);
     if (nSubsidy < nBlockRewardMinimumCoin) {nSubsidy = nBlockRewardMinimumCoin;}
 
-    // Restoration Hardfork — lock to 1.5 OFF/block forever at fork height.
+    // Restoration Hardfork — lock to 1.5 OFF/block forever at fork height,
+    // plus the renewed Ritual bounty on its special blocks.
     if (IsAfterRestorationFork(nHeight)) {
-        nSubsidy = Params().PostForkSubsidy();           // 1.5 OFF
+        nSubsidy = Params().PostForkSubsidy() + RitualBonus(nHeight);   // 1.5 OFF + ritual
     }
 
     // One-time Restoration Tithe at the exact fork block.
@@ -1402,6 +1435,75 @@ int64_t GetBlockValue(int nHeight, int64_t nFees)
 bool IsAfterRestorationFork(int nHeight)
 {
     return nHeight >= Params().RestorationForkHeight();
+}
+
+// ---- Conclave signed-mining window -----------------------------------------
+// During [RestorationForkHeight .. OpenMiningHeight] a block is valid only if it
+// carries a signature from one of the Conclave keys, so only the home signer(s)
+// can mine while the canon is transcribed. At OpenMiningHeight the gate lifts and
+// Quark mining is permissionless again.
+bool IsInSignedWindow(int nHeight)
+{
+    return nHeight >= Params().RestorationForkHeight()
+        && nHeight <= Params().OpenMiningHeight();
+}
+
+static const unsigned char OFFSIG_MAGIC[6] = { 'O','F','F','S','I','G' };
+
+// Locate the coinbase OP_RETURN output carrying the Conclave signature. Returns
+// its vout index (or -1 if absent); on success fills vchSig with the raw sig.
+int FindOffSigOutput(const CBlock& block, std::vector<unsigned char>& vchSig)
+{
+    if (block.vtx.empty()) return -1;
+    const CTransaction& cb = block.vtx[0];
+    for (unsigned int i = 0; i < cb.vout.size(); i++) {
+        const CScript& spk = cb.vout[i].scriptPubKey;
+        if (spk.size() < 1 || spk[0] != OP_RETURN) continue;
+        CScript::const_iterator pc = spk.begin();
+        opcodetype op;
+        if (!spk.GetOp(pc, op)) continue;           // OP_RETURN
+        std::vector<unsigned char> data;
+        if (!spk.GetOp(pc, op, data)) continue;     // pushed payload
+        if (data.size() <= sizeof(OFFSIG_MAGIC)) continue;
+        if (!std::equal(OFFSIG_MAGIC, OFFSIG_MAGIC + sizeof(OFFSIG_MAGIC), data.begin())) continue;
+        vchSig.assign(data.begin() + sizeof(OFFSIG_MAGIC), data.end());
+        return (int)i;
+    }
+    return -1;
+}
+
+// The message the Conclave signs. Commits to the chain tip, the height, and all
+// block content EXCEPT the signature itself: the signature output's scriptPubKey
+// is blanked before the merkle root is recomputed, so a published signature can
+// never be lifted onto a different block.
+uint256 OffSigningHash(const CBlock& block, int nHeight, int sigVout)
+{
+    CBlock tmp = block;
+    if (!tmp.vtx.empty() && sigVout >= 0 && sigVout < (int)tmp.vtx[0].vout.size())
+        tmp.vtx[0].vout[sigVout].scriptPubKey = CScript();
+    uint256 merkleSansSig = tmp.BuildMerkleTree();
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << block.hashPrevBlock;
+    ss << nHeight;
+    ss << merkleSansSig;
+    return ss.GetHash();
+}
+
+// True iff the block carries a valid signature from one of the Conclave keys.
+bool CheckConclaveSignature(const CBlock& block, int nHeight)
+{
+    std::vector<unsigned char> vchSig;
+    int sigVout = FindOffSigOutput(block, vchSig);
+    if (sigVout < 0 || vchSig.empty())
+        return false;
+    uint256 h = OffSigningHash(block, nHeight, sigVout);
+    const std::vector<std::vector<unsigned char> >& keys = Params().ConclaveKeys();
+    for (unsigned int i = 0; i < keys.size(); i++) {
+        CPubKey pub(keys[i]);
+        if (pub.IsValid() && pub.Verify(h, vchSig))
+            return true;
+    }
+    return false;
 }
 
 int64_t GetTreasurySubsidy(int nHeight)
@@ -1418,7 +1520,8 @@ int64_t GetMinerSubsidy(int nHeight, int64_t nFees)
         return GetBlockValue(nHeight, nFees);            // pre-fork: unchanged
     }
     int64_t nSubsidy = Params().PostForkSubsidy();
-    return nSubsidy - GetTreasurySubsidy(nHeight) + nFees;   // 1.3125 OFF + fees
+    // 1.3125 OFF + the full ritual bounty (to the lucky worshipper) + fees
+    return nSubsidy - GetTreasurySubsidy(nHeight) + RitualBonus(nHeight) + nFees;
 }
 
 int64_t GetTitheAmount(int nHeight)
@@ -2086,6 +2189,14 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 error("ConnectBlock() : missing/wrong Conclave Treasury output (height=%d, required=%d)",
                       pindex->nHeight, nRequiredTreasury),
                 REJECT_INVALID, "bad-cb-treasury");
+
+        // Conclave signed-mining window: until OpenMiningHeight, only blocks
+        // signed by a Conclave key are valid (the home signer mines the canon).
+        if (IsInSignedWindow(pindex->nHeight) && !CheckConclaveSignature(block, pindex->nHeight))
+            return state.DoS(100,
+                error("ConnectBlock() : block in signed window lacks a valid Conclave signature (height=%d)",
+                      pindex->nHeight),
+                REJECT_INVALID, "bad-conclave-sig");
 
         // Reject any tx in the block that pays a banned attacker script.
         const std::set<CScript>& banned = Params().BannedAttackerScripts();

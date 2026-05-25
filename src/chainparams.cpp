@@ -156,6 +156,16 @@ public:
             setBannedAttackers.insert(s);
         }
 
+        // ---- Conclave signed-mining window ----
+        // From the Restoration fork until OpenMiningHeight, a block is only valid
+        // if it carries a signature from one of the Conclave keys below. This lets
+        // the home signer(s) mine the canon transcription unmolested; at
+        // OpenMiningHeight the gate lifts and Quark mining is permissionless again
+        // (~1 week after the Dreaming begins).
+        nOpenMiningHeight = 1057329;
+        vConclaveKeys.push_back(ParseHex(
+            "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // chaos
+
         // Convert the pnSeeds array into usable address objects.
         for (unsigned int i = 0; i < ARRAYLEN(pnSeed); i++)
         {
