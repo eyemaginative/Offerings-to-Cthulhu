@@ -12,6 +12,11 @@
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
+#include <cstring>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
 //////////////////////////////////////////////////////////////////////////////
 //
 // BitcoinMiner
@@ -333,6 +338,17 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             treasuryOut.nValue       = GetTreasurySubsidy(nNewHeight) + GetTitheAmount(nNewHeight);
             treasuryOut.scriptPubKey = Params().TreasuryScript();
             pblock->vtx[0].vout.push_back(treasuryOut);
+
+            // Reserve a placeholder OP_RETURN output for the Conclave signature;
+            // it is filled in by SignBlockIfNeeded() once the merkle is settled.
+            if (IsInSignedWindow(nNewHeight)) {
+                CTxOut sigOut;
+                sigOut.nValue = 0;
+                std::vector<unsigned char> placeholder(6 + 72, 0);
+                memcpy(&placeholder[0], "OFFSIG", 6);
+                sigOut.scriptPubKey = CScript() << OP_RETURN << placeholder;
+                pblock->vtx[0].vout.push_back(sigOut);
+            }
         } else {
             // Pre-fork: unchanged
             pblock->vtx[0].vout[0].nValue = GetBlockValue(nNewHeight, nFees);
@@ -359,6 +375,145 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     return pblocktemplate.release();
 }
 
+// ---- OFF Chain Codex --------------------------------------------------------
+// Embed an ever-evolving transcription into the coinbase scriptSig of every block
+// we mine. Pure data (not consensus-validated beyond the 100-byte coinbase cap),
+// readable back via getblock. Phase A ("The Library"): transcribe the public-domain
+// Lovecraft canon, one ~48-byte fragment per block, looping for now. Phase B
+// ("The Dreaming"): once the canon is exhausted, swap CODEX_TEXT for a hash-seeded
+// R'lyehian generator so the chain speaks unique incantations forever.
+//
+// Fragment wire format (single data push): "OFF1" | uint32 LE chunk-index | text.
+// Built-in fallback used only if the corpus file is missing.
+static const char* CODEX_TEXT =
+    "That is not dead which can eternal lie, and with strange aeons even death may die. "
+    "Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn. "
+    "In his house at R'lyeh dead Cthulhu waits dreaming. Ia! Ia! Cthulhu fhtagn!";
+static const unsigned int CODEX_ANCHOR        = 1000001;  // canon transcription begins right after the Awakening
+static const unsigned int CODEX_DESCENT_START = 999991;   // ten ceremonial verses (999991..1000000) lead in to the Awakening
+static const unsigned int CODEX_CHUNK         = 48;       // bytes of text per block
+
+// The corpus to transcribe, loaded once from <datadir>/codex_corpus.txt. Records are
+// separated by 0x1E ("RS"); each record is a work title, then its body. Readers split
+// on 0x1E to build a table of contents. Falls back to CODEX_TEXT if the file is absent.
+static const std::string& CodexCorpus()
+{
+    static std::string corpus;
+    static bool loaded = false;
+    if (!loaded) {
+        loaded = true;
+        try {
+            boost::filesystem::path p = GetDataDir() / "codex_corpus.txt";
+            std::ifstream f(p.string().c_str(), std::ios::binary);
+            if (f) {
+                std::stringstream ss;
+                ss << f.rdbuf();
+                corpus = ss.str();
+            }
+        } catch (...) {}
+        if (corpus.empty())
+            corpus = CODEX_TEXT;
+    }
+    return corpus;
+}
+
+// The Descent: the ten blocks 999991..1000000 carry a hardcoded invocation, one
+// escalating line per block, culminating in the Awakening proclamation permanently
+// inscribed in the fork block's coinbase. Marked with index 0xFFFFFFFF so readers
+// render them as milestone verses rather than ordinary transcription.
+static const unsigned int CODEX_MILESTONE = 0xFFFFFFFFu;
+static const unsigned int CODEX_DREAMING  = 0xFFFFFFFEu;  // Phase B marker: post-canon R'lyehian
+static const char* DescentLine(unsigned int nHeight)
+{
+    switch (nHeight) {
+        case  999991: return "The angles turn wrong in the deep. He stirs.";
+        case  999992: return "Pressure mounts; the black seas blacken further.";
+        case  999993: return "The Conclave gathers, candles guttering green.";
+        case  999994: return "R'lyeh's drowned spires breach the surface.";
+        case  999995: return "That is not dead which can eternal lie,";
+        case  999996: return "and with strange aeons even death may die.";
+        case  999997: return "The stars come right.";
+        case  999998: return "Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.";
+        case  999999: return "He dreams no longer.";
+        case 1000000: return "IA! IA! CTHULHU FHTAGN! Block 1000000: the Restoration is come.";
+    }
+    return NULL;
+}
+
+static void PushEgg(std::vector<unsigned char>& egg, uint32_t idx, const char* text, size_t n)
+{
+    const unsigned char magic[4] = { 'O', 'F', 'F', '1' };
+    egg.insert(egg.end(), magic, magic + 4);
+    egg.push_back((unsigned char)( idx        & 0xff));
+    egg.push_back((unsigned char)((idx >> 8)  & 0xff));
+    egg.push_back((unsigned char)((idx >> 16) & 0xff));
+    egg.push_back((unsigned char)((idx >> 24) & 0xff));
+    for (size_t i = 0; i < n; i++)
+        egg.push_back((unsigned char)text[i]);
+}
+
+// Phase B — The Dreaming. Once the canon is fully transcribed the chain stops
+// reciting our books and speaks Cthulhu's own dead tongue: a unique, deterministic
+// R'lyehian verse seeded by the block height, so every block is a never-repeating
+// incantation that any reader can reproduce. Capped to maxBytes so the coinbase
+// stays under the 100-byte limit.
+static std::string RlyehianVerse(unsigned int seed, size_t maxBytes)
+{
+    static const char* L[] = {
+        "ph'nglui","mglw'nafh","Cthulhu","R'lyeh","wgah'nagl","fhtagn","ya","nafl",
+        "hupadgh","n'gha","k'yarnak","ngah","gof'nn","syha'h","gnaiih","ftaghu",
+        "ehye","lloig","ilyaa","ron","throd","uaaah","ooboshu","vulgtlagln",
+        "ya-na-kadishtu","ep","goka","ah","ee","nog","kadishtu","ng"
+    };
+    const size_t N = sizeof(L) / sizeof(L[0]);
+    uint32_t s = seed * 2654435761u + 0x9E3779B9u;
+    std::string out;
+    for (;;) {
+        s = s * 1103515245u + 12345u;
+        const char* w = L[(s >> 16) % N];
+        size_t add = out.empty() ? strlen(w) : strlen(w) + 1;
+        if (out.size() + add > maxBytes)
+            break;
+        if (!out.empty())
+            out += ' ';
+        out += w;
+    }
+    if (out.empty())
+        out = "fhtagn";
+    if (out[0] >= 'a' && out[0] <= 'z')
+        out[0] = (char)(out[0] - 'a' + 'A');
+    return out;
+}
+
+static std::vector<unsigned char> CodexFragment(unsigned int nHeight)
+{
+    std::vector<unsigned char> egg;
+    if (nHeight < CODEX_DESCENT_START)
+        return egg;
+    const char* descent = DescentLine(nHeight);
+    if (descent) {                       // milestone verse
+        PushEgg(egg, CODEX_MILESTONE, descent, strlen(descent));
+        return egg;
+    }
+    const std::string& corpus = CodexCorpus();
+    size_t corpusLen = corpus.size();
+    size_t totalChunks = (corpusLen + CODEX_CHUNK - 1) / CODEX_CHUNK;
+    if (totalChunks == 0)
+        return egg;
+    size_t passIdx = (size_t)(nHeight - CODEX_ANCHOR);
+    if (passIdx >= totalChunks) {
+        // The canon is read in full; the Dreaming begins. R'lyehian forever.
+        std::string verse = RlyehianVerse(nHeight, CODEX_CHUNK);
+        PushEgg(egg, CODEX_DREAMING, verse.data(), verse.size());
+        return egg;
+    }
+    uint32_t idx = (uint32_t)passIdx;            // Phase A: single pass, no wrap
+    size_t start = (size_t)idx * CODEX_CHUNK;
+    size_t n = std::min((size_t)CODEX_CHUNK, corpusLen - start);
+    PushEgg(egg, idx, corpus.data() + start, n);
+    return egg;
+}
+
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
 {
     // Update nExtraNonce
@@ -370,10 +525,52 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     }
     ++nExtraNonce;
     unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
-    pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CBigNum(nExtraNonce)) + COINBASE_FLAGS;
+    std::vector<unsigned char> codex = CodexFragment(nHeight);
+    if (!codex.empty())
+        pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CBigNum(nExtraNonce) << codex) + COINBASE_FLAGS;
+    else
+        pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CBigNum(nExtraNonce)) + COINBASE_FLAGS;
     assert(pblock->vtx[0].vin[0].scriptSig.size() <= 100);
 
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+}
+
+// Fill the reserved OFFSIG output with a Conclave signature when mining inside the
+// signed window. Returns false if we are in the window but hold no authorized key
+// (caller should then not mine this block). Must run AFTER IncrementExtraNonce, as
+// it depends on (and rewrites) the merkle root.
+static bool SignBlockIfNeeded(CBlock* pblock, int nHeight, CWallet* pwallet)
+{
+    if (!IsInSignedWindow(nHeight))
+        return true;
+
+    const std::vector<std::vector<unsigned char> >& keys = Params().ConclaveKeys();
+    CKey signingKey;
+    bool haveKey = false;
+    for (unsigned int i = 0; i < keys.size() && !haveKey; i++) {
+        CPubKey pub(keys[i]);
+        if (pub.IsValid() && pwallet->GetKey(pub.GetID(), signingKey))
+            haveKey = true;
+    }
+    if (!haveKey)
+        return false;
+
+    std::vector<unsigned char> dummy;
+    int sigVout = FindOffSigOutput(*pblock, dummy);
+    if (sigVout < 0)
+        return false;
+
+    uint256 h = OffSigningHash(*pblock, nHeight, sigVout);
+    std::vector<unsigned char> vchSig;
+    if (!signingKey.Sign(h, vchSig))
+        return false;
+
+    std::vector<unsigned char> payload(6, 0);
+    memcpy(&payload[0], "OFFSIG", 6);
+    payload.insert(payload.end(), vchSig.begin(), vchSig.end());
+    pblock->vtx[0].vout[sigVout].scriptPubKey = CScript() << OP_RETURN << payload;
+    pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+    return true;
 }
 
 
@@ -497,13 +694,14 @@ void static BitcoinMiner(CWallet *pwallet)
     
     CBlockIndex* pindexPrev = NULL;
         
-    if (Params().NetworkID() != CChainParams::REGTEST) 
+    if (Params().NetworkID() != CChainParams::REGTEST)
     {
-        // wait for start
+        // Wait for peers, but don't block on tip-not-advancing for the Restoration
+        // bootstrap: the chain has been stalled since 2015 and there is no upstream
+        // miner to break the deadlock. Once peers are present we proceed; the main
+        // loop has its own 5-minute stale-tip timeout to avoid wasting cycles.
         pindexPrev = chainActive.Tip();
-        while ( vNodes.empty() ||
-                IsInitialBlockDownload() ||
-                pindexPrev == chainActive.Tip() )
+        while (vNodes.empty())
         {
             MilliSleep(1000);
             boost::this_thread::interruption_point();
@@ -512,28 +710,16 @@ void static BitcoinMiner(CWallet *pwallet)
     
     try { while (true) {
                     
-        if (Params().NetworkID() != CChainParams::REGTEST) 
+        if (Params().NetworkID() != CChainParams::REGTEST)
         {
-            // Busy-wait for the network to come online so we don't waste time mining
-            // on an obsolete chain. In regtest mode we expect to fly solo.
-            int nTimeOut = 0;
-            bool bDownloading;
-            while ( (bDownloading = (
-                        vNodes.empty() ||
-                        IsInitialBlockDownload() ||
-                        (pindexPrev != chainActive.Tip())
-                        )) 
-                    ||
-                    (GetTime() - pindexPrev->GetBlockTime() > 5 * 60) )
+            // Restoration bootstrap: the original guard waited on
+            // IsInitialBlockDownload() and a 5-minute fresh-tip window. Both are wrong
+            // for a chain dead since 2015 sitting BELOW its own hardcoded checkpoint
+            // (984023), where IBD never clears and no surviving peer can serve the
+            // missing blocks. We only pause while peers feed us a strictly newer tip.
+            while ( vNodes.empty() ||
+                    (pindexPrev != chainActive.Tip()) )
             {
-                if (bDownloading)
-                    nTimeOut = 0;
-                else
-                {
-                    nTimeOut++;
-                    if (nTimeOut > 5 * 60)
-                        break;
-                }
                 pindexPrev = chainActive.Tip();
                 MilliSleep(1000);
                 boost::this_thread::interruption_point();
@@ -544,13 +730,18 @@ void static BitcoinMiner(CWallet *pwallet)
         // Create new block
         //
         unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        pindexPrev = chainActive.Tip();
+        { LOCK(cs_main); pindexPrev = chainActive.Tip(); }
 
         auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey));
         if (!pblocktemplate.get())
             return;
         CBlock *pblock = &pblocktemplate->block;
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
+        if (!SignBlockIfNeeded(pblock, pindexPrev->nHeight + 1, pwallet)) {
+            LogPrintf("OfferingsMiner: in Conclave signed window but no authorized key (wallet locked?); pausing\n");
+            MilliSleep(5000);
+            continue;
+        }
 
         LogPrintf("Running OfferingsMiner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
@@ -620,8 +811,22 @@ void static BitcoinMiner(CWallet *pwallet)
                 break;
             if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
                 break;
-            if (pindexPrev != chainActive.Tip())
-                break;
+            // Detect a tip change so we abandon stale work — but NEVER read
+            // chainActive unlocked. The connection thread reallocates chainActive's
+            // internal vector under cs_main when a block connects; an unlocked read
+            // here races and segfaults (CChain::Tip()). TRY_LOCK keeps the miner
+            // non-blocking: if the connection thread holds cs_main we simply skip
+            // this check for one iteration instead of reading freed memory.
+            {
+                bool fTipChanged = false;
+                {
+                    TRY_LOCK(cs_main, lockMain);
+                    if (lockMain)
+                        fTipChanged = (pindexPrev != chainActive.Tip());
+                }
+                if (fTipChanged)
+                    break;
+            }
 
             // Update nTime every few seconds
             UpdateTime(*pblock, pindexPrev);
