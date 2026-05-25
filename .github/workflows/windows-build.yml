@@ -101,55 +101,16 @@ jobs:
           # source to use modern APIs.
 
           # 1. Rewrite rpcprotocol.h:connect() entirely — resolver API was redesigned.
-          python3 - <<'PYEOF'
-          path = 'src/rpcprotocol.h'
-          src = open(path).read()
-          old = '''    bool connect(const std::string& server, const std::string& port)
-              {
-                  boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));
-                  boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
-                  boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-                  boost::asio::ip::tcp::resolver::iterator end;
-                  boost::system::error_code error = boost::asio::error::host_not_found;
-                  while (error && endpoint_iterator != end)
-                  {
-                      stream.lowest_layer().close();
-                      stream.lowest_layer().connect(*endpoint_iterator++, error);
-                  }
-                  if (error)
-                      return false;
-                  return true;
-              }'''
-          new = '''    bool connect(const std::string& server, const std::string& port)
-              {
-                  boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_executor());
-                  boost::system::error_code error = boost::asio::error::host_not_found;
-                  try {
-                      auto endpoints = resolver.resolve(server, port);
-                      for (const auto& ep : endpoints) {
-                          stream.lowest_layer().close();
-                          stream.lowest_layer().connect(ep, error);
-                          if (!error) break;
-                      }
-                  } catch (const boost::system::system_error&) {
-                      return false;
-                  }
-                  return !error;
-              }'''
-          # Tolerate whitespace differences:
-          import re
-          def norm(s): return re.sub(r'\s+', ' ', s).strip()
-          src_norm = norm(src)
-          if norm(old) in src_norm:
-              # Reconstruct: find old block tolerating whitespace and replace verbatim
-              pat = re.escape(old).replace(r'\ ', r'\s+')
-              src = re.sub(pat, new, src, count=1)
-              open(path, 'w').write(src)
-              print('OK: rewrote connect() in rpcprotocol.h')
-          else:
-              print('ERROR: connect() block not found in expected form')
-              raise SystemExit(1)
-          PYEOF
+          # Use targeted sed line replacements instead of a multi-line python block
+          # to avoid YAML heredoc indentation issues.
+          # Replace the broken resolver constructor + query setup with modern overload.
+          sed -i 's|boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));|boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_executor());|' src/rpcprotocol.h
+          # Replace the query+iterator setup with a single modern resolve call.
+          sed -i 's|boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());|auto _ep_results = resolver.resolve(server, port);|' src/rpcprotocol.h
+          sed -i 's|boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);|auto endpoint_iterator = _ep_results.begin();|' src/rpcprotocol.h
+          sed -i 's|boost::asio::ip::tcp::resolver::iterator end;|auto end = _ep_results.end();|' src/rpcprotocol.h
+          echo '--- rpcprotocol.h connect() after patch ---'
+          sed -n '104,120p' src/rpcprotocol.h
 
           # 2. rpcserver.cpp: get_executor().context() → drop .context() (Boost 1.91 removed it),
           #    pass executor directly to constructors that accept it.
