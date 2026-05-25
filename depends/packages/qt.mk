@@ -130,7 +130,8 @@ define $(package)_preprocess_cmds
   sed -i.old "s|QMAKE_CXXFLAGS          = |!host_build: QMAKE_CXXFLAGS            = $($(package)_cxxflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "1i #include <limits>" qtbase/src/corelib/global/qendian.h && \
   sed -i.old "1i #include <limits>" qtbase/src/corelib/global/qfloat16.h && \
-  sed -i.old "1i #include <limits>" qtbase/src/corelib/tools/qbytearraymatcher.h
+  sed -i.old "1i #include <limits>" qtbase/src/corelib/tools/qbytearraymatcher.h && \
+  sed -i.old "1i #include <limits>" qttools/src/qdoc/generator.cpp
 
 endef
 
