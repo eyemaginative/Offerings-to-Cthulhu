@@ -1,6 +1,6 @@
-name: Build macOS wallet (native arm64)
+name: Build macOS wallet (native x86_64)
 
-# Native build on GitHub macos-14 ARM64 runner. Uses brew-installed
+# Native build on GitHub macos-13 Intel x86_64 runner. Uses brew-installed
 # Qt5, OpenSSL 1.1, berkeley-db@4. OFF is a Bitcoin Core 0.10 fork
 # (2014-era) so we deliberately pin to OpenSSL 1.1 (CBigNum subclasses
 # OpenSSL's BIGNUM struct, broken in 3.0).
@@ -20,8 +20,8 @@ on:
 
 jobs:
   macos-native:
-    name: Cthulhu Offerings — macOS arm64 (native build)
-    runs-on: macos-14
+    name: Cthulhu Offerings — macOS x86_64 (native build)
+    runs-on: macos-13
     timeout-minutes: 180
 
     steps:
@@ -49,11 +49,7 @@ jobs:
           file openssl-1.0.2u.tar.gz
           tar xzf openssl-1.0.2u.tar.gz
           cd openssl-1.0.2u
-          # Apple Silicon target: use generic darwin64 with -arch arm64
           ./Configure darwin64-x86_64-cc no-shared no-asm \
-            --prefix=$HOME/openssl-1.0.2 \
-            -mmacosx-version-min=11.0 -arch arm64 || \
-          ./Configure darwin-common no-shared no-asm \
             --prefix=$HOME/openssl-1.0.2
           make depend
           make -j$(sysctl -n hw.ncpu)
@@ -130,10 +126,10 @@ jobs:
           mkdir -p dist
           # GUI wallet bundle
           cd src/qt
-          tar czf ../../dist/offerings-cthulhu-wallet-macos-arm64.tar.gz Offerings-Qt.app
+          tar czf ../../dist/offerings-cthulhu-wallet-macos-x86_64.tar.gz Offerings-Qt.app
           cd ../..
           # Daemon + CLI
-          tar czf dist/offerings-cthulhu-daemon-macos-arm64.tar.gz -C src Offeringsd Offerings-cli
+          tar czf dist/offerings-cthulhu-daemon-macos-x86_64.tar.gz -C src Offeringsd Offerings-cli
           cd dist
           shasum -a 256 *.tar.gz > SHA256SUMS
           ls -la
@@ -142,7 +138,7 @@ jobs:
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cthulhu-offerings-macos-arm64
+          name: cthulhu-offerings-macos-x86_64
           path: |
             dist/*.tar.gz
             dist/SHA256SUMS
