@@ -38,7 +38,7 @@ jobs:
           # Expose qt5 binaries (qmake, macdeployqt)
           echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
 
-      - name: Set env (PKG_CONFIG_PATH, CPPFLAGS, LDFLAGS)
+      - name: Set env (PKG_CONFIG_PATH, CPPFLAGS, LDFLAGS, BOOST_LIBS)
         run: |
           OPENSSL=$(brew --prefix openssl@1.1)
           BDB=$(brew --prefix berkeley-db@4)
@@ -50,6 +50,18 @@ jobs:
           # Modern brew boost 1.85+ requires C++17 (uses alignas, constexpr,
           # nested >> templates); OFF defaults to C++03. Bump for the world.
           echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+          # Detect boost lib name suffix (brew sometimes ships -mt variant).
+          echo "=== boost libs ==="
+          ls ${BOOST}/lib/libboost_system* 2>&1 || true
+          if [ -f "${BOOST}/lib/libboost_system-mt.dylib" ]; then SFX="-mt"; else SFX=""; fi
+          echo "BOOST_LIB_SUFFIX=$SFX (detected)"
+          # AX_BOOST_* macros fail to determine these on modern brew layouts,
+          # so set explicitly.
+          echo "BOOST_SYSTEM_LIB=-lboost_system${SFX}" >> $GITHUB_ENV
+          echo "BOOST_THREAD_LIB=-lboost_thread${SFX}" >> $GITHUB_ENV
+          echo "BOOST_CHRONO_LIB=-lboost_chrono${SFX}" >> $GITHUB_ENV
+          echo "BOOST_FILESYSTEM_LIB=-lboost_filesystem${SFX}" >> $GITHUB_ENV
+          echo "BOOST_PROGRAM_OPTIONS_LIB=-lboost_program_options${SFX}" >> $GITHUB_ENV
           echo "BOOST_PREFIX=${BOOST}" >> $GITHUB_ENV
           echo "QT5_PREFIX=${QT5}" >> $GITHUB_ENV
 
