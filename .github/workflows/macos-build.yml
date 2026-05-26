@@ -58,25 +58,27 @@ jobs:
           ls $BOOST/lib/ 2>&1 | grep -i boost | head -20 || ls $BOOST/lib/ 2>&1 | head -10
           echo "--- find boost libs ---"
           find /opt/homebrew -name "libboost_system*" 2>/dev/null | head -5
-          # Pick lib suffix based on what actually exists.
-          if ls /opt/homebrew -name "libboost_system-mt.dylib" 2>/dev/null | grep -q .; then SFX="-mt"; else SFX=""; fi
-          echo "BOOST_LIB_SUFFIX=$SFX (detected)"
-          # AX_BOOST_* macros fail to determine these on modern brew layouts,
-          # so set explicitly.
-          echo "BOOST_SYSTEM_LIB=-lboost_system${SFX}" >> $GITHUB_ENV
-          echo "BOOST_THREAD_LIB=-lboost_thread${SFX}" >> $GITHUB_ENV
-          echo "BOOST_CHRONO_LIB=-lboost_chrono${SFX}" >> $GITHUB_ENV
-          echo "BOOST_FILESYSTEM_LIB=-lboost_filesystem${SFX}" >> $GITHUB_ENV
-          echo "BOOST_PROGRAM_OPTIONS_LIB=-lboost_program_options${SFX}" >> $GITHUB_ENV
+          # Modern brew boost has no -mt suffix and no libboost_system at all
+          # (boost::system header-only since 1.69). Set the other lib names
+          # explicitly so AX_BOOST_* macros don't have to autodetect.
+          echo "BOOST_SYSTEM_LIB=" >> $GITHUB_ENV
+          echo "BOOST_THREAD_LIB=-lboost_thread" >> $GITHUB_ENV
+          echo "BOOST_CHRONO_LIB=-lboost_chrono" >> $GITHUB_ENV
+          echo "BOOST_FILESYSTEM_LIB=-lboost_filesystem" >> $GITHUB_ENV
+          echo "BOOST_PROGRAM_OPTIONS_LIB=-lboost_program_options" >> $GITHUB_ENV
           echo "BOOST_PREFIX=${BOOST}" >> $GITHUB_ENV
           echo "QT5_PREFIX=${QT5}" >> $GITHUB_ENV
 
-      - name: Patch configure.ac for modern brew boost
+      - name: Patch source for modern brew boost
         run: |
-          # Old AX_BOOST_CHRONO m4 macro can't auto-detect brew's -mt-suffixed
-          # libs on macOS, so the boost-sleep link test fails even though
-          # modern boost has working sleep_for. Bypass: hardcode the define.
+          # 1) Bypass boost sleep_for check (modern boost has it; m4 detection
+          #    fails because of -L stripping bugs that the upstream m4 has).
           sed -i.bak 's|AC_MSG_ERROR(No working boost sleep implementation found.*|AC_DEFINE(HAVE_WORKING_BOOST_SLEEP_FOR, 1, [hardcoded for modern boost]) dnl|' configure.ac
+          # 2) boost::system has been header-only since Boost 1.69 (2018).
+          #    Modern brew boost does not ship libboost_system at all.
+          #    Bypass the link check; the HAVE_BOOST_SYSTEM define is already
+          #    set earlier in the macro.
+          sed -i.bak 's|AC_MSG_ERROR(Could not find a version of the boost_system library!)|AC_MSG_NOTICE([boost_system is header-only in modern boost])|' src/m4/ax_boost_system.m4
 
       - name: autogen + configure
         run: |
