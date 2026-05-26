@@ -33,14 +33,33 @@ jobs:
           brew update
           brew install \
             automake autoconf libtool pkg-config \
-            boost openssl@1.1 qt@5 libevent qrencode \
+            boost qt@5 libevent qrencode \
             protobuf berkeley-db@4 ccache
           # Expose qt5 binaries (qmake, macdeployqt)
           echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
 
+      - name: Build OpenSSL 1.0.2u from source
+        run: |
+          # OFF's CBigNum inherits from OpenSSL's BIGNUM struct, which became
+          # opaque in OpenSSL 1.1.0 (2016). Brew dropped openssl@1.0 years
+          # ago. Build 1.0.2u from source.
+          cd /tmp
+          curl -sL https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz -o openssl-1.0.2u.tar.gz
+          tar xzf openssl-1.0.2u.tar.gz
+          cd openssl-1.0.2u
+          # Apple Silicon target: use generic darwin64 with -arch arm64
+          ./Configure darwin64-x86_64-cc no-shared no-asm \
+            --prefix=$HOME/openssl-1.0.2 \
+            -mmacosx-version-min=11.0 -arch arm64 || \
+          ./Configure darwin-common no-shared no-asm \
+            --prefix=$HOME/openssl-1.0.2
+          make depend
+          make -j$(sysctl -n hw.ncpu)
+          make install_sw
+
       - name: Set env (PKG_CONFIG_PATH, CPPFLAGS, LDFLAGS, BOOST_LIBS)
         run: |
-          OPENSSL=$(brew --prefix openssl@1.1)
+          OPENSSL=$HOME/openssl-1.0.2
           BDB=$(brew --prefix berkeley-db@4)
           QT5=$(brew --prefix qt@5)
           BOOST=$(brew --prefix boost)
