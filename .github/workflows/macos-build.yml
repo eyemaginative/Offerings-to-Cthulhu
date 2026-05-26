@@ -50,10 +50,16 @@ jobs:
           # Modern brew boost 1.85+ requires C++17 (uses alignas, constexpr,
           # nested >> templates); OFF defaults to C++03. Bump for the world.
           echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
-          # Detect boost lib name suffix (brew sometimes ships -mt variant).
-          echo "=== boost libs ==="
-          ls ${BOOST}/lib/libboost_system* 2>&1 || true
-          if [ -f "${BOOST}/lib/libboost_system-mt.dylib" ]; then SFX="-mt"; else SFX=""; fi
+          # Diagnose where brew actually put boost libs.
+          echo "=== brew boost layout ==="
+          echo "BOOST prefix: $BOOST"
+          ls -la $BOOST/ 2>&1 | head -10
+          echo "--- $BOOST/lib ---"
+          ls $BOOST/lib/ 2>&1 | grep -i boost | head -20 || ls $BOOST/lib/ 2>&1 | head -10
+          echo "--- find boost libs ---"
+          find /opt/homebrew -name "libboost_system*" 2>/dev/null | head -5
+          # Pick lib suffix based on what actually exists.
+          if ls /opt/homebrew -name "libboost_system-mt.dylib" 2>/dev/null | grep -q .; then SFX="-mt"; else SFX=""; fi
           echo "BOOST_LIB_SUFFIX=$SFX (detected)"
           # AX_BOOST_* macros fail to determine these on modern brew layouts,
           # so set explicitly.
