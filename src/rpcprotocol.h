@@ -14,6 +14,7 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/version.hpp>
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_utils.h"
@@ -103,7 +104,11 @@ public:
     }
     bool connect(const std::string& server, const std::string& port)
     {
+#if BOOST_VERSION >= 106600
         boost::asio::ip::tcp::resolver resolver(static_cast<boost::asio::io_service&>(stream.lowest_layer().get_executor().context()));
+#else
+        boost::asio::ip::tcp::resolver resolver(stream.lowest_layer().get_io_service());
+#endif
         boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
         boost::asio::ip::tcp::resolver::iterator end;
