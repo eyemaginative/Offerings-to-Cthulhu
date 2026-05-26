@@ -40,17 +40,22 @@ FOOTER_CSS = """
 @media (max-width:640px){.site-foot{font-size:.74rem;margin-top:2em}}
 
 .site-foot .off-chant { font-style:italic; letter-spacing:.04em; }
-.site-foot .off-socials { list-style:none; padding:0;
-  display:flex; flex-wrap:wrap; gap:1.4em;
-  position:fixed; bottom:1.2em; right:1.2em; z-index:100; margin:0; }
-.site-foot .off-socials li { margin:0; padding:0; }
-.site-foot .off-socials a { display:inline-flex; align-items:center;
-  border:0 !important; text-decoration:none; }
-.site-foot .off-socials img { height:28px; width:28px; opacity:.82;
-  transition:opacity .2s, transform .2s; }
-.site-foot .off-socials a:hover img { opacity:1; transform:translateY(-1px); }
-@media (max-width:640px) { .site-foot .off-socials { gap:1em; }
-  .site-foot .off-socials img { height:22px; width:22px; } }
+.site-foot .off-socials, ul.off-socials {
+  position:fixed; bottom:14px; right:14px; z-index:25;
+  display:flex; gap:10px; list-style:none; padding:0; margin:0;
+  align-items:center; flex-wrap:nowrap; justify-content:flex-end; }
+.site-foot .off-socials li, ul.off-socials li { margin:0; padding:0; }
+.site-foot .off-socials a, ul.off-socials a {
+  display:inline-flex; width:32px; height:32px;
+  align-items:center; justify-content:center;
+  border-radius:50%; background:rgba(20,20,20,.85);
+  backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+  border:0 !important; text-decoration:none;
+  transition:transform .15s, background .15s; }
+.site-foot .off-socials a:hover, ul.off-socials a:hover {
+  transform:translateY(-2px); background:rgba(40,40,40,.95); }
+.site-foot .off-socials img, ul.off-socials img {
+  width:18px; height:18px; display:block; border-radius:50%; opacity:1; }
 """
 
 MQ_COUNTDOWN = "@media (max-width:640px){h1{font-size:1.5rem}.chant{font-size:.9rem;margin-bottom:1em}.countdown{padding:.85em 1em;gap:.3em;border-radius:36px;width:100%}.cd-blocks{font-size:1.35rem;letter-spacing:.06em;white-space:nowrap}.cd-tick{font-size:.82rem;letter-spacing:.16em;white-space:nowrap}.eta{font-size:.86rem;margin-bottom:.9em}.grid{gap:6px}.cell{min-width:0;padding:9px 11px;flex:1 1 90px}.cell b{font-size:1rem}.rules{padding:12px 16px;font-size:.9rem}}"
