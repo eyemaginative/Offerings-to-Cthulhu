@@ -77,7 +77,7 @@ AC_DEFUN([AX_BOOST_CHRONO],
 			AC_SUBST(BOOST_CPPFLAGS)
 
 			AC_DEFINE(HAVE_BOOST_CHRONO,,[define if the Boost::Chrono library is available])
-            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/@<:@^\/@:>@*//'`
+            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e "s/^-L//"`
 
 			LDFLAGS_SAVE=$LDFLAGS
             if test "x$ax_boost_user_chrono_lib" = "x"; then

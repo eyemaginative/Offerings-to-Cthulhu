@@ -79,7 +79,7 @@ AC_DEFUN([AX_BOOST_FILESYSTEM],
 		])
 		if test "x$ax_cv_boost_filesystem" = "xyes"; then
 			AC_DEFINE(HAVE_BOOST_FILESYSTEM,,[define if the Boost::Filesystem library is available])
-            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/@<:@^\/@:>@*//'`
+            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e "s/^-L//"`
             ax_lib=
             if test "x$ax_boost_user_filesystem_lib" = "x"; then
                 for libextension in `ls -r $BOOSTLIBDIR/libboost_filesystem* 2>/dev/null | sed 's,.*/lib,,' | sed 's,\..*,,'` ; do
