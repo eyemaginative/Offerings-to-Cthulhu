@@ -14,7 +14,7 @@ on:
     paths:
       - '.github/workflows/macos-build.yml'
       - 'configure.ac'
-      - 'src/m4/**'
+      - 'src/**'
     tags: [ 'v*', 'wallet-*' ]
   workflow_dispatch:
 
