@@ -104,7 +104,7 @@ page = f"""<!DOCTYPE html>
 <meta http-equiv="refresh" content="60">
 <title>The Awakening &mdash; Offerings to Cthulhu</title>
 <style>
-  :root {{ --ink:#9fe8c9; --dim:#5fffd0; --panel:#0a1014; --accent:#5fd0a0; --warn:#5fffd0; }}
+  :root {{ --ink:#9fe8c9; --dim:#5fffd0; --panel:#0a1014; --accent:#5fd0a0; --warn:#5fffd0; --gold:#FFD700; }}
   *{{box-sizing:border-box}}
   html {{ background-color:#05080a; }}
   body {{ margin:0; min-height:100vh; background:transparent; position:relative;
@@ -125,8 +125,8 @@ page = f"""<!DOCTYPE html>
     font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; }}
   .cd-blocks {{ font-size:2.2rem; color:var(--accent); letter-spacing:.10em; line-height:1;
     text-shadow:0 0 18px rgba(95,208,160,.55); }}
-  .cd-tick {{ font-size:1.05rem; color:var(--ink); letter-spacing:.22em; line-height:1;
-    opacity:.9; }}
+  .cd-tick {{ font-size:1.05rem; color:var(--gold); letter-spacing:.22em; line-height:1;
+    text-shadow:0 0 14px rgba(255,215,0,.55), 0 0 4px rgba(255,215,0,.4); opacity:.95; }}
   .eta {{ color:var(--warn); font-size:1.05rem; margin-bottom:1.8em; }}
   .bar {{ height:14px; background:#0c1714; border:1px solid #16302a; border-radius:8px; overflow:hidden; margin:1.4em 0 .4em; }}
   .bar > i {{ display:block; height:100%; width:{win_prog:.3f}%;
