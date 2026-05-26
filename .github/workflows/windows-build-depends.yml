@@ -95,6 +95,7 @@ jobs:
               --build=x86_64-pc-linux-gnu \
               --disable-tests \
               --disable-bench \
+              --with-boost=${DEPENDS_PREFIX} \
               || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
       - name: make
