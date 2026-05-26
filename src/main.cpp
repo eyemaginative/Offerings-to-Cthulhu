@@ -27,7 +27,10 @@
 
 using namespace std;
 using namespace boost;
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106000
 using namespace boost::placeholders;
+#endif
 
 #if defined(NDEBUG)
 # error "Offerings cannot be compiled without assertions."
