@@ -68,7 +68,7 @@ jobs:
             --disable-bench \
             --with-boost-libdir=${BOOST_PREFIX}/lib \
             --with-gui=qt5 \
-            || { echo "=== config.log tail ==="; tail -200 config.log; exit 1; }
+            || { echo "=== config.log tail (500) ==="; tail -500 config.log; echo "=== boost test trace ==="; grep -B 2 -A 10 "boost_system\|BOOST_SYSTEM\|-lboost" config.log | tail -80; exit 1; }
 
       - name: make
         run: make -j$(sysctl -n hw.ncpu) || { echo "=== make failed ==="; exit 1; }

@@ -87,9 +87,11 @@ jobs:
           CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site \
             ./configure \
               --prefix=/ \
+              --host=x86_64-w64-mingw32 \
+              --build=x86_64-pc-linux-gnu \
               --disable-tests \
               --disable-bench \
-              || { echo "=== config.log tail ==="; tail -150 config.log; exit 1; }
+              || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
       - name: make
         run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
