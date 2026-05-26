@@ -44,7 +44,9 @@ jobs:
           # opaque in OpenSSL 1.1.0 (2016). Brew dropped openssl@1.0 years
           # ago. Build 1.0.2u from source.
           cd /tmp
-          curl -sL https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz -o openssl-1.0.2u.tar.gz
+          curl -fsSL https://github.com/openssl/openssl/releases/download/OpenSSL_1_0_2u/openssl-1.0.2u.tar.gz -o openssl-1.0.2u.tar.gz
+          ls -la openssl-1.0.2u.tar.gz
+          file openssl-1.0.2u.tar.gz
           tar xzf openssl-1.0.2u.tar.gz
           cd openssl-1.0.2u
           # Apple Silicon target: use generic darwin64 with -arch arm64
