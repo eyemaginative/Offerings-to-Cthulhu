@@ -128,30 +128,6 @@ jobs:
               --with-boost=${DEPENDS_PREFIX} \
               || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
-      - name: Materialize Qt host tools at expected build path
-        run: |
-          # depends/ cache restores Qt install but discards work/build dir.
-          # OFF's qmake-generated Makefiles still look at qt/X.Y.Z-HASH/qtbase/bin/
-          # for rcc/uic/moc/lupdate. Recreate that dir and symlink from native install.
-          NATIVE=$PWD/depends/x86_64-w64-mingw32/native/bin
-          echo "=== native bin ==="
-          ls -la $NATIVE/ 2>&1 | grep -E "rcc|uic|moc|lupdate|lrelease|lconvert" || true
-          # Find expected qt build dir from Makefile references
-          QT_PATH=$(find . -name Makefile -path "*src/qt*" -exec grep -h "qt/5\." {} \; 2>/dev/null | grep -oE "depends/work/build/[^/]+/qt/[^/]+" | head -1)
-          if [ -z "$QT_PATH" ]; then
-            QT_PATH="depends/work/build/x86_64-w64-mingw32/qt/5.12.11-bbbdca62463"
-          fi
-          echo "Materializing host tools in $QT_PATH/qtbase/bin/"
-          mkdir -p "$QT_PATH/qtbase/bin"
-          for tool in rcc moc uic lupdate lrelease lconvert qmake; do
-            if [ -f "$NATIVE/${tool}-qt5" ]; then
-              ln -sf "$NATIVE/${tool}-qt5" "$QT_PATH/qtbase/bin/$tool"
-            elif [ -f "$NATIVE/${tool}" ]; then
-              ln -sf "$NATIVE/${tool}" "$QT_PATH/qtbase/bin/$tool"
-            fi
-          done
-          ls -la "$QT_PATH/qtbase/bin/"
-
       - name: make
         run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
 
