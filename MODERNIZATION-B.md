@@ -10,3 +10,4 @@
 2026-05-27T19:09:26Z | PHASE 1 SUCCESS — next phase ready | Boost 1.74 builds; configure detects boostlib>=1.20 + links System/Filesystem/Program_Options/Thread/Chrono; openssl 1.0.2u + qrencode + qt5.12 all build & cache in depends; daemon+cli link OK. Remaining CI red is PHASE 2 (Qt): src configure reports "QtCore headers missing; bitcoin-qt frontend will not be built" -> src/qt/Offerings-qt.exe absent -> workflow strip step exits 1. NOTE: main branch ALSO failing identically. | branch=modernize-depends
 2026-05-27T20:07:28Z | FIRE START | model=claude-opus-4-7
 2026-05-27T20:09:47Z | PHASE 2 | qt.mk 5.12.11->5.15.16: version, download_path archive/qt/5.15, suffix everywhere-opensource-src, sha256 qtbase=b048150.../qttools=1cab118.../qttranslations=415dbbb... (downloaded from official mirror, xz -t verified) | branch=modernize-depends
+2026-05-27T21:06:39Z | FIRE START | model=claude-opus-4-7
