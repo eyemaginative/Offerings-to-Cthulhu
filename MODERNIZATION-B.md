@@ -12,3 +12,4 @@
 2026-05-27T20:09:47Z | PHASE 2 | qt.mk 5.12.11->5.15.16: version, download_path archive/qt/5.15, suffix everywhere-opensource-src, sha256 qtbase=b048150.../qttools=1cab118.../qttranslations=415dbbb... (downloaded from official mirror, xz -t verified) | branch=modernize-depends
 2026-05-27T21:06:39Z | FIRE START | model=claude-opus-4-7
 2026-05-27T21:08:14Z | PHASE 2 | qt preprocess fix: qbytearraymatcher.h moved corelib/tools->corelib/text in Qt5.15 (sed couldn't find file -> .stamp_preprocessed Error 2). Verified other sed targets (moc/generator.cpp, qendian.h, qfloat16.h, qttools generator.cpp) still exist via raw.githubusercontent v5.15.16-lts-lgpl | branch=modernize-depends
+2026-05-27T22:07:02Z | FIRE START | model=claude-opus-4-7
