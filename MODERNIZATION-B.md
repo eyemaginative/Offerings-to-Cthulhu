@@ -7,3 +7,4 @@
 2026-05-27T12:24:24Z | PHASE 1+ | drop no-idea from openssl 1.0.2u config_opts (e_idea.o requires idea.h) | branch=modernize-depends
 2026-05-27T12:52:00Z | PHASE 1+ | drop ALL no-X feature flags from openssl 1.0.2u
 2026-05-27T19:06:19Z | FIRE START | model=claude-opus-4-7
+2026-05-27T19:09:26Z | PHASE 1 SUCCESS — next phase ready | Boost 1.74 builds; configure detects boostlib>=1.20 + links System/Filesystem/Program_Options/Thread/Chrono; openssl 1.0.2u + qrencode + qt5.12 all build & cache in depends; daemon+cli link OK. Remaining CI red is PHASE 2 (Qt): src configure reports "QtCore headers missing; bitcoin-qt frontend will not be built" -> src/qt/Offerings-qt.exe absent -> workflow strip step exits 1. NOTE: main branch ALSO failing identically. | branch=modernize-depends
