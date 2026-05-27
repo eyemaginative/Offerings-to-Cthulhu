@@ -6,3 +6,4 @@
 2026-05-27T15:11:05Z | FIX add libpng to depends (Qt detects yes but PNG check fails; bundled qt-libpng not exposed as pkg-config)
 2026-05-27T16:09:25Z | FIX add Qt plugin -L paths to LDFLAGS (platforms/accessible/imageformats/styles); libqwindows.a et al exist but were not on search path
 2026-05-27T16:32:57Z | FIX skip qtaccessiblewidgets static plugin check for Qt5 (plugin removed in Qt5)
+2026-05-27T16:55:37Z | FIX skip qwindows configure pre-check; just append -lqwindows to QT_LIBS so compile-time Q_IMPORT_PLUGIN works
