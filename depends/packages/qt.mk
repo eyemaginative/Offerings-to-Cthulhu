@@ -52,7 +52,8 @@ $(package)_config_opts += -no-use-gold-linker
 $(package)_config_opts += -nomake examples
 $(package)_config_opts += -nomake tests
 $(package)_config_opts += -opensource
-$(package)_config_opts += -no-openssl
+$(package)_config_opts += -openssl-linked
+$(package)_config_opts += OPENSSL_LIBS="-L$(host_prefix)/lib -lssl -lcrypto -lws2_32 -lgdi32 -lcrypt32"
 $(package)_config_opts += -optimized-qmake
 $(package)_config_opts += -pch
 $(package)_config_opts += -pkg-config
