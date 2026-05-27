@@ -13,3 +13,4 @@
 2026-05-27T21:06:39Z | FIRE START | model=claude-opus-4-7
 2026-05-27T21:08:14Z | PHASE 2 | qt preprocess fix: qbytearraymatcher.h moved corelib/tools->corelib/text in Qt5.15 (sed couldn't find file -> .stamp_preprocessed Error 2). Verified other sed targets (moc/generator.cpp, qendian.h, qfloat16.h, qttools generator.cpp) still exist via raw.githubusercontent v5.15.16-lts-lgpl | branch=modernize-depends
 2026-05-27T22:07:02Z | FIRE START | model=claude-opus-4-7
+2026-05-27T22:08:14Z | PHASE 2 | qt corelib build past preprocessing+tools; fix qlocale_win.cpp std::size error (GCC13 needs <iterator>) via preprocess sed. qrencode 404 is non-fatal (bitcoincore.org mirror fallback OK). | branch=modernize-depends
