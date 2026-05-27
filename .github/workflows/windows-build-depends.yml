@@ -89,6 +89,7 @@ jobs:
           CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
           LDFLAGS="-L${DEPENDS_PREFIX}/lib" \
           PKG_CONFIG_PATH="${DEPENDS_PREFIX}/lib/pkgconfig" \
+          CXXFLAGS="-std=gnu++14" \
             ./configure \
               --prefix=/ \
               --host=x86_64-w64-mingw32 \
