@@ -52,8 +52,6 @@ $(package)_config_opts += -no-use-gold-linker
 $(package)_config_opts += -nomake examples
 $(package)_config_opts += -nomake tests
 $(package)_config_opts += -opensource
-$(package)_config_opts += -openssl-linked
-$(package)_config_opts += OPENSSL_LIBS="-L$(host_prefix)/lib -lssl -lcrypto -lws2_32 -lgdi32 -lcrypt32"
 $(package)_config_opts += -optimized-qmake
 $(package)_config_opts += -pch
 $(package)_config_opts += -pkg-config
@@ -85,6 +83,7 @@ $(package)_config_opts_linux += -no-opengl
 $(package)_config_opts_arm_linux  = -platform linux-g++ -xplatform $(host)
 $(package)_config_opts_i686_linux  = -xplatform linux-g++-32
 $(package)_config_opts_mingw32  = -no-opengl -xplatform win32-g++ -device-option CROSS_COMPILE="$(host)-"
+$(package)_config_opts_mingw32 += -schannel
 $(package)_build_env  = QT_RCC_TEST=1
 endef
 
