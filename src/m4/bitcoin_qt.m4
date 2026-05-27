@@ -349,6 +349,9 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
         _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(AccessibleFactory)], [-lqtaccessiblewidgets])
         if test x$TARGET_OS == xwindows; then
           _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
+          dnl Qt5 built with harfbuzz-ng (e.g. depends/ cross-build) needs libqtharfbuzz
+          AC_CHECK_LIB([qtharfbuzz],[hb_buffer_create],
+            [QT_LIBS="-lqtharfbuzz $QT_LIBS"],[],[$QT_LIBS $LIBS])
         fi
       fi
     else
