@@ -4,3 +4,4 @@
 2026-05-27T12:23:50Z | FIX move Qt host tools symlink BEFORE autogen+configure (qmake runs in configure)
 2026-05-27T13:22:19Z | FIX explicit --with-qt-incdir/libdir/plugindir/bindir to configure (QtCore headers missing warning)
 2026-05-27T15:11:05Z | FIX add libpng to depends (Qt detects yes but PNG check fails; bundled qt-libpng not exposed as pkg-config)
+2026-05-27T16:09:25Z | FIX add Qt plugin -L paths to LDFLAGS (platforms/accessible/imageformats/styles); libqwindows.a et al exist but were not on search path
