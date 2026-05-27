@@ -346,12 +346,9 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
       _BITCOIN_QT_IS_STATIC
       if test x$bitcoin_cv_static_qt == xyes; then 
         AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
-        _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(AccessibleFactory)], [-lqtaccessiblewidgets])
+        dnl AccessibleFactory plugin merged into platform plugin in Qt 5; check skipped
         if test x$TARGET_OS == xwindows; then
-          _BITCOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
-          dnl Qt5 built with harfbuzz-ng (e.g. depends/ cross-build) needs libqtharfbuzz
-          AC_CHECK_LIB([qtharfbuzz],[hb_buffer_create],
-            [QT_LIBS="-lqtharfbuzz $QT_LIBS"],[],[$QT_LIBS $LIBS])
+          QT_LIBS="-lqtharfbuzz -lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5WindowsUIAutomationSupport -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool $QT_LIBS"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
         fi
       fi
     else

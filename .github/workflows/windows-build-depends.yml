@@ -80,6 +80,33 @@ jobs:
           ls x86_64-w64-mingw32/lib/ 2>&1 | head -20
           ls x86_64-w64-mingw32/include/ 2>&1 | head -10
 
+      - name: Materialize Qt host tools at expected build path
+        run: |
+          # depends/ cache restores Qt install but discards work/build dir.
+          # OFF's pre-generated qmake config embeds qt/X.Y.Z-HASH/qtbase/bin/
+          # for rcc/uic/moc/lupdate. Recreate that dir and symlink from native install.
+          # MUST run BEFORE autogen+configure because configure invokes qmake.
+          NATIVE=$PWD/depends/x86_64-w64-mingw32/native/bin
+          echo "=== native bin ==="
+          ls -la $NATIVE/ 2>&1 | grep -E "rcc|uic|moc|lupdate|lrelease|lconvert|qmake" || true
+          # Find the qt hash dir (deterministic from qt.mk hash)
+          QT_HASH_DIR=$(ls -d depends/work/build/x86_64-w64-mingw32/qt/5.12.11-* 2>/dev/null | head -1)
+          if [ -z "$QT_HASH_DIR" ]; then
+            # Compute the expected hash dir name by inspecting the qt.mk recipe hash
+            # If still empty, fall back to known dir from prior logs
+            QT_HASH_DIR="depends/work/build/x86_64-w64-mingw32/qt/5.12.11-bbbdca62463"
+          fi
+          echo "Materializing host tools in $QT_HASH_DIR/qtbase/bin/"
+          mkdir -p "$QT_HASH_DIR/qtbase/bin"
+          for tool in rcc moc uic lupdate lrelease lconvert qmake; do
+            if [ -f "$NATIVE/${tool}-qt5" ]; then
+              ln -sf "$NATIVE/${tool}-qt5" "$QT_HASH_DIR/qtbase/bin/$tool"
+            elif [ -f "$NATIVE/${tool}" ]; then
+              ln -sf "$NATIVE/${tool}" "$QT_HASH_DIR/qtbase/bin/$tool"
+            fi
+          done
+          ls -la "$QT_HASH_DIR/qtbase/bin/"
+
       - name: autogen + configure
         run: |
           ./autogen.sh
@@ -89,7 +116,7 @@ jobs:
           PATH="${DEPENDS_PREFIX}/native/bin:${PATH}" \
           CONFIG_SITE=$DEPENDS_PREFIX/share/config.site \
           CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
-          LDFLAGS="-L${DEPENDS_PREFIX}/lib" \
+          LDFLAGS="-L${DEPENDS_PREFIX}/lib -L${DEPENDS_PREFIX}/plugins/platforms -L${DEPENDS_PREFIX}/plugins/accessible -L${DEPENDS_PREFIX}/plugins/imageformats -L${DEPENDS_PREFIX}/plugins/styles" \
           PKG_CONFIG_PATH="${DEPENDS_PREFIX}/lib/pkgconfig" \
           CXXFLAGS="-std=gnu++14" \
             ./configure \
@@ -99,6 +126,10 @@ jobs:
               --disable-tests \
               --disable-bench \
               --with-boost=${DEPENDS_PREFIX} \
+              --with-qt-incdir=${DEPENDS_PREFIX}/include \
+              --with-qt-libdir=${DEPENDS_PREFIX}/lib \
+              --with-qt-plugindir=${DEPENDS_PREFIX}/plugins \
+              --with-qt-bindir=${DEPENDS_PREFIX}/native/bin \
               || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
       - name: make
