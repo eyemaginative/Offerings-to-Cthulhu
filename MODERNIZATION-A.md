@@ -10,3 +10,4 @@
 2026-05-27T17:54:13Z | FIX qt -no-openssl -> -openssl-linked + OPENSSL_LIBS (paymentserver.cpp needs QSslError)
 2026-05-27T18:09:40Z | FIRE START | model=claude-sonnet-4-6
 2026-05-27T18:09:50Z | WAITING for run 26528881825
+2026-05-27T18:13:34Z | FIX bump openssl 1.0.1k->1.0.2u + drop no-X flags (Qt 5.12 needs X509_STORE_CTX_get0_store)
