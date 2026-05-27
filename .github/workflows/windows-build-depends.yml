@@ -126,6 +126,10 @@ jobs:
               --disable-tests \
               --disable-bench \
               --with-boost=${DEPENDS_PREFIX} \
+              --with-qt-incdir=${DEPENDS_PREFIX}/include \
+              --with-qt-libdir=${DEPENDS_PREFIX}/lib \
+              --with-qt-plugindir=${DEPENDS_PREFIX}/plugins \
+              --with-qt-bindir=${DEPENDS_PREFIX}/native/bin \
               || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
       - name: make
