@@ -77,14 +77,16 @@ jobs:
             exit 1
           }
           echo "=== depends/ output ==="
-          ls depends/x86_64-w64-mingw32/lib/ 2>&1 | head -20
-          ls depends/x86_64-w64-mingw32/include/ 2>&1 | head -10
+          ls x86_64-w64-mingw32/lib/ 2>&1 | head -20
+          ls x86_64-w64-mingw32/include/ 2>&1 | head -10
 
       - name: autogen + configure
         run: |
           ./autogen.sh
           # CONFIG_SITE is the bridge: tells configure to use the depends/ tree.
           DEPENDS_PREFIX=$PWD/depends/x86_64-w64-mingw32
+          # native/bin holds protoc and other build-host tools built by depends/
+          PATH="${DEPENDS_PREFIX}/native/bin:${PATH}" \
           CONFIG_SITE=$DEPENDS_PREFIX/share/config.site \
           CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
           LDFLAGS="-L${DEPENDS_PREFIX}/lib" \
