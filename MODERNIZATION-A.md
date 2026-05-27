@@ -9,3 +9,4 @@
 2026-05-27T16:55:37Z | FIX skip qwindows configure pre-check; just append -lqwindows to QT_LIBS so compile-time Q_IMPORT_PLUGIN works
 2026-05-27T17:54:13Z | FIX qt -no-openssl -> -openssl-linked + OPENSSL_LIBS (paymentserver.cpp needs QSslError)
 2026-05-27T18:09:40Z | FIRE START | model=claude-sonnet-4-6
+2026-05-27T18:09:50Z | WAITING for run 26528881825
