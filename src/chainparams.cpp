@@ -87,11 +87,11 @@ public:
         vSeeds.push_back(CDNSSeedData("seed9.23skidoo.info", "seed9.23skidoo.info"));
         vSeeds.push_back(CDNSSeedData("seed10.23skidoo.info", "seed10.23skidoo.info"));
 
-        base58Prefixes[PUBKEY_ADDRESS] = list_of(58);
-        base58Prefixes[SCRIPT_ADDRESS] = list_of(9);
-        base58Prefixes[SECRET_KEY] =     list_of(186);
-        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x88)(0xB2)(0x1E);
-        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x88)(0xAD)(0xE4);
+        base58Prefixes[PUBKEY_ADDRESS] = list_of(58).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[SCRIPT_ADDRESS] = list_of(9).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[SECRET_KEY] = list_of(186).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x88)(0xB2)(0x1E).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x88)(0xAD)(0xE4).convert_to_container<std::vector<unsigned char> >();
 
         // ===== Restoration Hardfork v2.0.0 — BtcBob / SubGenius.Finance, 2026 =====
         // Fork activates at block 1,000,000. From that height forward:
@@ -222,11 +222,11 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        base58Prefixes[PUBKEY_ADDRESS] = list_of(119);
-        base58Prefixes[SCRIPT_ADDRESS] = list_of(199);
-        base58Prefixes[SECRET_KEY]     = list_of(247);
-        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x35)(0x87)(0xCF);
-        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x35)(0x83)(0x94);
+        base58Prefixes[PUBKEY_ADDRESS] = list_of(119).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[SCRIPT_ADDRESS] = list_of(199).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[SECRET_KEY] = list_of(247).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
     }
     virtual Network NetworkID() const { return CChainParams::TESTNET; }
 };
