@@ -11,3 +11,4 @@
 2026-05-27T18:09:40Z | FIRE START | model=claude-sonnet-4-6
 2026-05-27T18:09:50Z | WAITING for run 26528881825
 2026-05-27T18:13:34Z | FIX bump openssl 1.0.1k->1.0.2u + drop no-X flags (Qt 5.12 needs X509_STORE_CTX_get0_store)
+2026-05-27T18:43:54Z | FIX remove Qt5 AccessibleFactory Q_IMPORT_PLUGIN + add Qt5*Support + Windows SDK libs to QT_LIBS for static plugin link
