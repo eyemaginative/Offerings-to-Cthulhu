@@ -22,3 +22,4 @@
 2026-05-28T01:07:49Z | PHASE 2 | qtbase corelib std::less<>{} (qabstractitemmodel.cpp:218) failed as 'wrong number of template args' — transparent comparator needs C++14+ but qt.mk forced -c++std c++11. Bumped to c++17 (Qt5.15 supports/requires it). qlocale std::size fix from prior firing confirmed working. | branch=modernize-depends
 2026-05-28T06:30:31Z | FIRE START | model=opus-4-7
 2026-05-28T06:32:17Z | PHASE 2 | qtbase fails linking xdgdesktopportal platformtheme plugin (needs libQt5DBus.a but only -dbus-runtime set). Added -no-dbus + -no-feature-xdgdesktopportal to config_opts_mingw32 (xdgdesktopportal is Linux-XDG-only; Windows target shouldn't build it). | branch=modernize-depends
+2026-05-28T10:20:17Z | PHASE 2 | drop invalid -no-feature-xdgdesktopportal (Qt5.15 unknown feature name); -no-dbus alone should skip the xdgdesktopportal platformtheme | branch=modernize-depends
