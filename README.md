@@ -200,6 +200,54 @@ Portal: **https://23skidoo.info/bridge/** (URL slug kept for SEO continuity — 
 
 **Excluded:** the 8 attacker addresses from msg #699, plus any output descended from them.
 
+### Funding & payout cadence
+
+**The 1.5M OFF is a policy ceiling, not a pre-existing pile.** There is no on-chain `Reclamation_Pool` constant — the cap is enforced socially against the Conclave Treasury's actual UTXO balance, which accumulates over time from two on-chain sources:
+
+| Source | Block height | Amount |
+|---|---|---|
+| Restoration Tithe | 1,000,000 (fork block, one-shot) | 150,000 OFF |
+| Coinbase 1/8 split | every block, post-fork, forever | 0.1875 OFF |
+
+At 60-second blocks the Treasury accrues **98,550 OFF per year** from the coinbase split. Funding the 1.5M ceiling from scratch:
+
+| Block height | Time post-fork | Treasury accumulated |
+|---|---|---|
+| 1,000,000 | day 0 (tithe drops) | 150,000 OFF |
+| 1,525,600 | +1 year | 248,550 OFF |
+| 2,051,200 | +2 years | 347,100 OFF |
+| ~7,200,000 | ~13.7 years | 1,500,000 OFF |
+
+In practice claims are paid as they arrive, drawing down current Treasury balance alongside other obligations (hosting, ritual rewards, dev pay, exchange listings). "Stays open until exhausted" means: Reclamation accepts claims until cumulative payouts hit the 1.5M cap. If claims trickle, the Treasury can outpace them and the program stays funded indefinitely.
+
+### Payouts are not automatic
+
+The portal does **verification + logging only** — it never holds key material. From `/api/submit`:
+
+```python
+@app.post("/api/submit")
+def submit(req):
+    v = verify(req)                       # re-check ECDSA signature
+    if not v.ok: return logged=False
+    record = { ts, tier, addr, amount_off, destination, ... }
+    with CLAIMS_LOG.open('a') as f:
+        f.write(json.dumps(record) + "\n")
+    return logged=True
+```
+
+That's the whole submit path — a verified claim becomes a JSON line in `claims.jsonl`. **Zero coins move.**
+
+Actual payout happens off-portal: the Treasury is a **2-of-3 multisig P2SH**. Two of three Conclave signers, on air-gapped machines, periodically:
+
+1. Review the `claims.jsonl` queue against current Treasury UTXO balance
+2. Construct a batched payout transaction
+3. Each signs their share offline
+4. The fully-signed tx is broadcast to the network
+
+This is the security boundary. If the portal could sign automatically, the multisig private keys would have to live on a public-facing FastAPI server — which is how every shitcoin custodial bridge gets drained. The portal generates trust signal; the multisig is the gate.
+
+The `/api/state` endpoint reports the public queue depth + remaining ceiling so claimants can see their position before the next signing cadence catches up.
+
 ---
 
 ## Build Modernization — what changed for v2.0.0-rc1
