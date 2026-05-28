@@ -25,3 +25,4 @@
 2026-05-28T10:20:17Z | PHASE 2 | drop invalid -no-feature-xdgdesktopportal (Qt5.15 unknown feature name); -no-dbus alone should skip the xdgdesktopportal platformtheme | branch=modernize-depends
 2026-05-28T11:39:24Z | FIX add boost::placeholders to bitcoingui+clientmodel | branch=modernize-depends
 2026-05-28T12:09:11Z | FIX boost::placeholders in splashscreen.cpp | branch=modernize-depends
+2026-05-28T12:40:07Z | FIX paymentserver.cpp foreach(PAIRTYPE) -> range-for (Qt 5.15 macro breaks on std::pair comma)
