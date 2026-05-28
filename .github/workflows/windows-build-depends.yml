@@ -132,6 +132,19 @@ jobs:
               --with-qt-bindir=${DEPENDS_PREFIX}/native/bin \
               || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
 
+      - name: Pre-build LevelDB (generate build_config.mk)
+        run: |
+          # Parallel make races on $(shell ./build_detect_platform); pre-build
+          # leveldb sequentially so build_config.mk exists before main make.
+          cd src/leveldb
+          TARGET_OS=OS_WINDOWS_CROSSCOMPILE \
+          CC=x86_64-w64-mingw32-gcc \
+          CXX=x86_64-w64-mingw32-g++ \
+          AR=x86_64-w64-mingw32-ar \
+            ./build_detect_platform build_config.mk ./
+          ls -la build_config.mk
+          head -5 build_config.mk
+
       - name: make
         run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
 

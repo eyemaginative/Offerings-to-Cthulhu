@@ -34,3 +34,4 @@
 2026-05-28T15:44:55Z | FIX move -lqtharfbuzz to AFTER $QT_LIBS (same link-order issue as secur32; Qt5Gui references hb_* symbols) | branch=modernize-depends
 2026-05-28T16:16:17Z | FIX add -lqtpcre2 (Qt5.15 switched from PCRE to PCRE2 for QRegularExpression) | branch=modernize-depends
 2026-05-28T16:45:57Z | FIX move ALL Windows SDK libs (netapi32/version/winmm/etc) to AFTER $QT_LIBS so they resolve Qt5Core unresolved refs; also add -luserenv for GetUserProfileDirectoryW | branch=modernize-depends
+2026-05-28T17:16:03Z | FIX add pre-make LevelDB step to generate build_config.mk (parallel make races on $(shell ./build_detect_platform)) | branch=modernize-depends
