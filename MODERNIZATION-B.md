@@ -30,3 +30,4 @@
 2026-05-28T13:45:01Z | FIX boost::placeholders in walletmodel.cpp | branch=modernize-depends
 2026-05-28T14:14:19Z | FIX add -lsecur32 -lcrypt32 to QT_LIBS for Qt5 SChannel TLS backend | branch=modernize-depends
 2026-05-28T14:44:43Z | FIX move -lsecur32 -lcrypt32 AFTER $QT_LIBS (linker needs them last for Qt5Network unresolved refs) | branch=modernize-depends
+2026-05-28T15:16:00Z | FIX add -lbcrypt for Qt5Network SChannel BCryptOpenAlgorithmProvider et al | branch=modernize-depends
