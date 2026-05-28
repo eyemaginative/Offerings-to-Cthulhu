@@ -16,3 +16,4 @@
 2026-05-27T22:08:14Z | PHASE 2 | qt corelib build past preprocessing+tools; fix qlocale_win.cpp std::size error (GCC13 needs <iterator>) via preprocess sed. qrencode 404 is non-fatal (bitcoincore.org mirror fallback OK). | branch=modernize-depends
 2026-05-27T23:06:52Z | FIRE START | model=claude-opus-4-7
 2026-05-27T23:09:15Z | PHASE 2 | qt configure failed: 'openssl-linked' precondition fails (Qt5.15 needs OpenSSL>=1.1.1, depends still on 1.0.2u from Phase1). Dropped unconditional -openssl-linked + OPENSSL_LIBS; mingw32 now uses native -schannel SSL backend (Windows is the only CI target). Defers OpenSSL bump to Phase 3. | branch=modernize-depends
+2026-05-28T00:09:18Z | FIRE START | model=claude-opus-4-7
