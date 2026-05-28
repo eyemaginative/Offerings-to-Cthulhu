@@ -348,7 +348,7 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
         AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
         dnl AccessibleFactory plugin merged into platform plugin in Qt 5; check skipped
         if test x$TARGET_OS == xwindows; then
-          QT_LIBS="-lqtharfbuzz -lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5WindowsUIAutomationSupport -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool $QT_LIBS"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
+          QT_LIBS="-lqtharfbuzz -lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5WindowsUIAutomationSupport -lwtsapi32 -lsecur32 -lcrypt32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool $QT_LIBS"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
         fi
       fi
     else

@@ -28,3 +28,4 @@
 2026-05-28T12:40:07Z | FIX paymentserver.cpp foreach(PAIRTYPE) -> range-for (Qt 5.15 macro breaks on std::pair comma)
 2026-05-28T13:15:51Z | FIX batch replace foreach/BOOST_FOREACH(PAIRTYPE(...)) with C++17 range-for (5 files) | branch=modernize-depends
 2026-05-28T13:45:01Z | FIX boost::placeholders in walletmodel.cpp | branch=modernize-depends
+2026-05-28T14:14:19Z | FIX add -lsecur32 -lcrypt32 to QT_LIBS for Qt5 SChannel TLS backend | branch=modernize-depends
