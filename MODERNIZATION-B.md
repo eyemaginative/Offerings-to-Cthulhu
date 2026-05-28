@@ -24,3 +24,4 @@
 2026-05-28T06:32:17Z | PHASE 2 | qtbase fails linking xdgdesktopportal platformtheme plugin (needs libQt5DBus.a but only -dbus-runtime set). Added -no-dbus + -no-feature-xdgdesktopportal to config_opts_mingw32 (xdgdesktopportal is Linux-XDG-only; Windows target shouldn't build it). | branch=modernize-depends
 2026-05-28T10:20:17Z | PHASE 2 | drop invalid -no-feature-xdgdesktopportal (Qt5.15 unknown feature name); -no-dbus alone should skip the xdgdesktopportal platformtheme | branch=modernize-depends
 2026-05-28T11:39:24Z | FIX add boost::placeholders to bitcoingui+clientmodel | branch=modernize-depends
+2026-05-28T12:09:11Z | FIX boost::placeholders in splashscreen.cpp | branch=modernize-depends
