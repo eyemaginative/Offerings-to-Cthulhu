@@ -35,6 +35,32 @@ Any v1.6.2 or v2.0.0 wallet binary, anywhere on Earth, will find the network on 
 
 ---
 
+## Wallets
+
+### Windows — shipping now
+
+**v2.0.0-rc1-windows** — first Windows binary carrying the Restoration Hardfork consensus rules. Auto-routes through the fork at block 1,000,000; no second download required.
+
+🔗 **Release:** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.0-rc1-windows
+
+| File | Purpose | SHA256 |
+|---|---|---|
+| `Offerings-qt.exe` | Qt GUI wallet | `9a1318f6f9d5070fa03ed950680e46309011b462f31f37279d5bbaea85bd056b` |
+| `Offeringsd.exe` | Headless full node daemon | `63165fd6ff8fb8c35f9f50af7d1b96ca7e2574a16adffc3e22911d519d1c451e` |
+| `Offerings-cli.exe` | RPC client | `b92190f3e944a1eb160d3b466325f63d2f187c2aa72e83ea286dd64226194fa0` |
+
+Statically linked. Native Windows TLS (SChannel/BCrypt) — no OpenSSL DLL hell. 22 MB tarball, three .exe binaries inside.
+
+### Linux — build from source
+
+Recipe in [`doc/build-unix.md`](doc/build-unix.md). See **Build & Run** below.
+
+### macOS — in flight
+
+Native macOS-13 Intel build via CI. Once it lands clean, an `.app` bundle will appear alongside the Windows release. Apple Silicon support deferred pending the OpenSSL-3 / `bignum.h` modernization work.
+
+---
+
 ## The Restoration Hardfork — Block 1,000,000
 
 **This IS a fork. We are not pretending it isn't.** At block 1,000,000 of the OFF chain — roughly 33,587 blocks past the current recovered tip, ~23 days of mining at the 60-second target spacing — four consensus rules engage:
@@ -144,6 +170,31 @@ Verification: ECDSA-sign a challenge string posted in the BCT thread; we verify 
 Excluded: the 8 attacker addresses from msg #699, plus outputs of any transaction descended from them.
 
 **Unclaimed remainder reverts to the Treasury after Month 13.** If you held OFF and forgot, you have until **2027-05-21** to remember.
+
+---
+
+## Build Modernization — what changed for v2.0.0-rc1
+
+OFF was a 2013 codebase. To get it cross-compiling to Windows in 2026, the entire dependency stack was bumped:
+
+| Dependency | Before | After (v2.0.0-rc1) |
+|---|---|---|
+| Boost | 1.55.0 | **1.74.0** |
+| Qt | 5.12.11 | **5.15.16 LTS** |
+| OpenSSL | 1.0.1k | **1.0.2u** (last 1.0.x; keeps `bignum.h` compat) |
+| C++ standard | C++11 | **C++17** |
+| Windows TLS | OpenSSL | **SChannel + BCrypt** (native, statically linked) |
+
+Source-side, the modernization sweep replaced:
+
+- `foreach(PAIRTYPE(A,B)& v, c)` and `BOOST_FOREACH(PAIRTYPE(A,B)& v, c)` → C++17 range-for (Qt 5.15 macro tokenizer can't parse the `std::pair` comma)
+- `boost::placeholders` includes added to every `_1/_2/_3`-using file (modern Boost moved them out of global namespace)
+- `acceptor->get_executor()` guarded with `BOOST_VERSION` checks
+- Qt 5.15-incompatible features (`xdgdesktopportal` Linux-only platformtheme, the Qt-4-era `qtaccessiblewidgets` plugin check) skipped
+- LevelDB `build_config.mk` pre-generated to avoid a parallel-make race in `$(shell ./build_detect_platform)`
+- Static Qt plugin link order fixed: `-lqtharfbuzz`, `-lqtpcre2`, `-lsecur32`, `-lcrypt32`, `-lbcrypt`, `-luserenv` placed AFTER `$QT_LIBS` so the linker keeps unresolved refs around long enough
+
+The `depends/` cross-compile is reproducible end-to-end via `.github/workflows/windows-build-depends.yml`. A clean CI run produces the v2.0.0-rc1-windows tarball in ~28 minutes.
 
 ---
 
