@@ -20,3 +20,4 @@
 2026-05-28T00:11:19Z | PHASE 2 | qlocale_win.cpp std::size error: <iterator> include alone insufficient (std::size is C++17-guarded, qtbase compiles this TU pre-C++17). Replaced int(std::size(buf)) -> int(sizeof(buf)/sizeof(buf[0])) via preprocess sed (buf is wchar_t[255]); header/standard-independent. | branch=modernize-depends
 2026-05-28T01:06:43Z | FIRE START | model=claude-opus-4-7
 2026-05-28T01:07:49Z | PHASE 2 | qtbase corelib std::less<>{} (qabstractitemmodel.cpp:218) failed as 'wrong number of template args' — transparent comparator needs C++14+ but qt.mk forced -c++std c++11. Bumped to c++17 (Qt5.15 supports/requires it). qlocale std::size fix from prior firing confirmed working. | branch=modernize-depends
+2026-05-28T06:30:31Z | FIRE START | model=opus-4-7
