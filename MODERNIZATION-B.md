@@ -18,3 +18,4 @@
 2026-05-27T23:09:15Z | PHASE 2 | qt configure failed: 'openssl-linked' precondition fails (Qt5.15 needs OpenSSL>=1.1.1, depends still on 1.0.2u from Phase1). Dropped unconditional -openssl-linked + OPENSSL_LIBS; mingw32 now uses native -schannel SSL backend (Windows is the only CI target). Defers OpenSSL bump to Phase 3. | branch=modernize-depends
 2026-05-28T00:09:18Z | FIRE START | model=claude-opus-4-7
 2026-05-28T00:11:19Z | PHASE 2 | qlocale_win.cpp std::size error: <iterator> include alone insufficient (std::size is C++17-guarded, qtbase compiles this TU pre-C++17). Replaced int(std::size(buf)) -> int(sizeof(buf)/sizeof(buf[0])) via preprocess sed (buf is wchar_t[255]); header/standard-independent. | branch=modernize-depends
+2026-05-28T01:06:43Z | FIRE START | model=claude-opus-4-7
