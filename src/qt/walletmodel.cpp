@@ -3,6 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "walletmodel.h"
+#include <boost/version.hpp>
+#include <boost/bind/placeholders.hpp>
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 
 #include "addresstablemodel.h"
 #include "guiconstants.h"
