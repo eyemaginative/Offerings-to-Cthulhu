@@ -32,3 +32,4 @@
 2026-05-28T14:44:43Z | FIX move -lsecur32 -lcrypt32 AFTER $QT_LIBS (linker needs them last for Qt5Network unresolved refs) | branch=modernize-depends
 2026-05-28T15:16:00Z | FIX add -lbcrypt for Qt5Network SChannel BCryptOpenAlgorithmProvider et al | branch=modernize-depends
 2026-05-28T15:44:55Z | FIX move -lqtharfbuzz to AFTER $QT_LIBS (same link-order issue as secur32; Qt5Gui references hb_* symbols) | branch=modernize-depends
+2026-05-28T16:16:17Z | FIX add -lqtpcre2 (Qt5.15 switched from PCRE to PCRE2 for QRegularExpression) | branch=modernize-depends
