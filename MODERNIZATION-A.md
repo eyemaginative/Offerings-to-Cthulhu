@@ -29,3 +29,4 @@
 2026-05-28T00:13:36Z | WAITING for run 26546385908
 2026-05-28T18:09:29Z | FIRE START | model=claude-sonnet-4-6
 2026-05-28T18:09:40Z | WAITING for run 26592408230
+2026-05-28T19:10:33Z | INFRA-FAILURE depends/openssl configure error for run 26596279241 | OpenSSL 3.0.15 rejects 'no-docs' option (introduced by f5b0a15) | depends/ is off-limits, needs human
