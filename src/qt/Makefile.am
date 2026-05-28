@@ -126,6 +126,7 @@ QT_MOC_CPP = \
   moc_optionsdialog.cpp \
   moc_optionsmodel.cpp \
   moc_overviewpage.cpp \
+  moc_codexpage.cpp \
   moc_paymentserver.cpp \
   moc_qvalidatedlineedit.cpp \
   moc_qvaluecombobox.cpp \
@@ -189,6 +190,7 @@ BITCOIN_QT_H = \
   optionsdialog.h \
   optionsmodel.h \
   overviewpage.h \
+  codexpage.h \
   paymentrequestplus.h \
   paymentserver.h \
   qvalidatedlineedit.h \
@@ -292,6 +294,7 @@ BITCOIN_QT_CPP += \
   editaddressdialog.cpp \
   openuridialog.cpp \
   overviewpage.cpp \
+  codexpage.cpp \
   paymentrequestplus.cpp \
   paymentserver.cpp \
   receivecoinsdialog.cpp \
