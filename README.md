@@ -159,17 +159,46 @@ Eventually a **Codex tab** will land in the wallet GUI itself — Table of Conte
 
 ---
 
-## Honest Holder Bridge — 12-month claim window
+## The Reclamation — for Worshippers of the Old Faith
 
 Our recovered chainstate is from June 2015. Between then and the May 2018 attack, **honest miners earned roughly 1.3 million OFF** under the historical halving curve. Our fork point invalidates that mining alongside the attacker print — which is not the social contract we want to leave standing.
 
-So: a **Bridge Pool of 1,500,000 OFF** is reserved in the Conclave Treasury at fork activation. For **twelve months** from the BCT announcement post date, any holder who can `signmessage` from a pre-attack OFF address that held a non-zero balance before **May 1, 2018** (height ≈1,800,000 on the original chain) can claim an equivalent balance on the restored chain.
+So: **1,500,000 OFF** is reserved in the Conclave Treasury for **The Reclamation** — a recognition program for Worshippers of the Old Faith. **No calendar deadline.** The Reclamation stays open until the 1.5M OFF ceiling is exhausted. If you held OFF and forgot — when you remember, you can still come home.
 
-Verification: ECDSA-sign a challenge string posted in the BCT thread; we verify against the Wayback explorer snapshots and the zeewolfik/offerings chainstate (msg #698).
+### Worshipper Recognition tiers
 
-Excluded: the 8 attacker addresses from msg #699, plus outputs of any transaction descended from them.
+**WR-A — Indexed addresses (in the recovered chainstate):**
 
-**Unclaimed remainder reverts to the Treasury after Month 13.** If you held OFF and forgot, you have until **2027-05-21** to remember.
+```
+recognition_OFF = 100 × earliness × depth
+
+earliness:  block 0–999     ×5.0  (genesis)
+            1K–50K          ×3.0
+            50K–241K        ×2.0
+            241K–483K       ×1.0
+            483K–724K       ×0.6
+            724K–966K       ×0.3
+
+depth = min(1 + log10(n_appearances), 5.0)
+        # 1→1.0, 10→2.0, 100→3.0, 1K→4.0, 10K+→5.0 (capped)
+```
+
+Range: **30 OFF** (late one-shot) → **2,500 OFF** (genesis heavy miner cap).
+
+**WR-B — Gap-era holders (post-2015, pre-attack):** flat **250 OFF** until a v1.7+ chainstate from 2015–2018 surfaces. If anyone produces such a fragment, the Conclave mounts it on an air-gapped wallet and re-processes WR-B claims at the upgraded formula amount.
+
+**ALREADY-WHOLE:** if your pre-attack address still has a positive UTXO balance in the recovered chainstate, that balance is yours on the restored chain regardless of Reclamation status. The Reclamation is additive recognition, not replacement.
+
+### How to claim
+
+Portal: **https://23skidoo.info/bridge/** (URL slug kept for SEO continuity — the program inside is The Reclamation).
+
+1. Visit `/bridge/claim/` — the wizard issues a challenge string of the form `Conclave-Reclamation-<YYYYMMDDw>-<addr>-<amount>`.
+2. From an OFF wallet (legacy or restored) `signmessage` your pre-attack address against the challenge.
+3. Paste the signature back. The portal verifies via pure-Python ECDSA against the indexed chainstate + Wayback explorer snapshots + the zeewolfik/offerings recovered state (msg #698).
+4. Claim is queued; recognition pays out from the Treasury multisig.
+
+**Excluded:** the 8 attacker addresses from msg #699, plus any output descended from them.
 
 ---
 
