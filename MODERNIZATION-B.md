@@ -26,3 +26,4 @@
 2026-05-28T11:39:24Z | FIX add boost::placeholders to bitcoingui+clientmodel | branch=modernize-depends
 2026-05-28T12:09:11Z | FIX boost::placeholders in splashscreen.cpp | branch=modernize-depends
 2026-05-28T12:40:07Z | FIX paymentserver.cpp foreach(PAIRTYPE) -> range-for (Qt 5.15 macro breaks on std::pair comma)
+2026-05-28T13:15:51Z | FIX batch replace foreach/BOOST_FOREACH(PAIRTYPE(...)) with C++17 range-for (5 files) | branch=modernize-depends

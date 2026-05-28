@@ -464,7 +464,7 @@ static void ShowProgress(WalletModel *walletmodel, const std::string &title, int
     if (nProgress == 100)
     {
         fQueueNotifications = false;
-        BOOST_FOREACH(const PAIRTYPE(uint256, ChangeType)& notification, vQueueNotifications)
+        for (const auto& notification : vQueueNotifications)
             NotifyTransactionChanged(walletmodel, NULL, notification.first, notification.second);
         std::vector<std::pair<uint256, ChangeType> >().swap(vQueueNotifications); // clear
     }
@@ -613,8 +613,8 @@ void WalletModel::listLockedCoins(std::vector<COutPoint>& vOutpts)
 void WalletModel::loadReceiveRequests(std::vector<std::string>& vReceiveRequests)
 {
     LOCK(wallet->cs_wallet);
-    BOOST_FOREACH(const PAIRTYPE(CTxDestination, CAddressBookData)& item, wallet->mapAddressBook)
-        BOOST_FOREACH(const PAIRTYPE(std::string, std::string)& item2, item.second.destdata)
+    for (const auto& item : wallet->mapAddressBook)
+        for (const auto& item2 : item.second.destdata)
             if (item2.first.size() > 2 && item2.first.substr(0,2) == "rr") // receive request
                 vReceiveRequests.push_back(item2.second);
 }
