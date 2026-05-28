@@ -12,7 +12,7 @@
 
 **Offerings to Cthulhu (OFF)** is a Quark-Hash9 altcoin that began with the 2013 autumnal equinox and went silent in May 2018 after a 51% counterfeit attack on Cryptopia. For eleven years it slept beneath the waves. The DNS seeds fell. The Public Altar (faucet) crumbled. The block crawler at 23skidoo.info dissolved into the abyss. The dreamers forgot. The unworthy never knew.
 
-The **SubGenius.Finance Conclave** has been listening at the door.
+The Conclave has been listening at the door.
 
 This repository is the **community takeover** and **Restoration** of OFF — source resurrected, chain recovered, infrastructure rebuilt, and a hardfork (**v2.0.0-Restoration**) ready to engage at block 1,000,000.
 
@@ -25,10 +25,10 @@ This repository is the **community takeover** and **Restoration** of OFF — sou
 - **The source compiles in 2026.** Five environment workarounds, three Boost.Asio patches, one local OpenSSL 1.0.2 build to dodge OpenSSL-3's BIGNUM exorcism. **v2.0.0-Restoration** ELF, ~108 MB.
 - **The chain has been recovered.** A 385 MB tar.bz2 blockchain archive extracted from the Wayback Machine's 2015-09-13 capture of 23skidoo.info (SHA256 `5c5a48d85873c820baeba4279d0b9295555adf1eba7a64699583fee18cab8745`). The daemon now sits at height **966,413** (block time 2015-06-17 05:30:14 UTC, difficulty 13.02, UTXO supply **2,423,396.53 OFF**). This snapshot **predates the May 2018 51% counterfeit by ~870,000 blocks** — the 533,983 OFF the attacker minted (msg #699) do not exist in this chainstate.
 - **23skidoo.info has been reacquired.** Bought back from the squatter who weaponized it after the original expiry (we are aware of msg #592). DNS, nginx, certbot, all under Conclave custody. The original seeds `seed1.23skidoo.info` through `seed10.23skidoo.info` now resolve to infrastructure we run.
-- **A public seed is live** at `subgenius.vip:20000`. Drop into your `Offerings.conf`:
+- **A public seed is live** at `seed1.23skidoo.info:20000`. Drop into your `Offerings.conf`:
   ```
-  addnode=subgenius.vip:20000
   addnode=seed1.23skidoo.info:20000
+  addnode=seed2.23skidoo.info:20000
   ```
 
 Any v1.6.2 or v2.0.0 wallet binary, anywhere on Earth, will find the network on first start.
@@ -242,8 +242,8 @@ make -j$(nproc)
 Then `Offerings.conf`:
 
 ```
-addnode=subgenius.vip:20000
 addnode=seed1.23skidoo.info:20000
+addnode=seed2.23skidoo.info:20000
 ```
 
 Run:
@@ -304,3 +304,7 @@ The daemon will reach the seeds, sync to the recovered tip (~966,413), and conti
 > *The Conclave is hot. The Slumbering Squid stirs.*
 >
 > *The Book begins at block one million.*
+
+---
+
+<sub>OFF is one chain in the **SubGenius.Finance** ecosystem — alongside Dobbscoin (BOB), wBOB on Gnosis, the Discord tipbot, and adjacent infrastructure. Stewardship + dev coordination via the Conclave at SubGenius.Finance. Where culture becomes capital. Where Slack becomes consensus. **Praise "Bob."**</sub>
