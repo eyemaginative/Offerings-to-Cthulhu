@@ -539,7 +539,9 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
 // signed window. Returns false if we are in the window but hold no authorized key
 // (caller should then not mine this block). Must run AFTER IncrementExtraNonce, as
 // it depends on (and rewrites) the merkle root.
-static bool SignBlockIfNeeded(CBlock* pblock, int nHeight, CWallet* pwallet)
+// Non-static as of v2.0.0-rc3: also called from rpcmining.cpp::getblocktemplate
+// so Miningcore/pool templates carry a valid OFFSIG signature.
+bool SignBlockIfNeeded(CBlock* pblock, int nHeight, CWallet* pwallet)
 {
     if (!IsInSignedWindow(nHeight))
         return true;

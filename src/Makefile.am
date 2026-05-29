@@ -33,6 +33,7 @@ BITCOIN_CORE_H = \
   chainparams.h \
   checkpoints.h \
   checkqueue.h \
+  pow.h \
   clientversion.h \
   coincontrol.h \
   coins.h \
@@ -100,6 +101,7 @@ libbitcoin_server_a_SOURCES = \
   alert.cpp \
   bloom.cpp \
   checkpoints.cpp \
+  pow.cpp \
   coins.cpp \
   init.cpp \
   keystore.cpp \

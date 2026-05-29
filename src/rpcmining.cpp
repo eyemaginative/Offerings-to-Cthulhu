@@ -522,6 +522,21 @@ Value getblocktemplate(const Array& params, bool fHelp)
     UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
+    // v2.0.0-rc3: sign the template's OFFSIG output if we're in the Conclave
+    // signed-mining window. The signature is now extranonce-invariant (see
+    // OffSigningHash in main.cpp), so a pool can serve this signed template
+    // to multiple workers searching different extranonce ranges without
+    // invalidating the signature. Skip if the daemon doesn't hold the key
+    // (block will be unsignable and rejected at ConnectBlock — that's the
+    // correct behavior: this daemon shouldn't be serving GBT in the window).
+    if (!SignBlockIfNeeded(pblock, pindexPrev->nHeight + 1, pwalletMain)) {
+        LogPrintf("getblocktemplate: in Conclave signed window but no "
+                  "authorized signing key in wallet — template will be "
+                  "rejected on submit\n");
+        // Continue anyway — the pool may have a stale fork to mine; reject
+        // happens at submitblock/ConnectBlock, which is the right surface.
+    }
+
     Array transactions;
     map<uint256, int64_t> setTxIndex;
     int i = 0;
