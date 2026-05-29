@@ -23,7 +23,7 @@ using namespace boost::assign;
 
 unsigned int pnSeed[] =
 {
-    // subgenius.vip — public OFF revival seed, BtcBob (@dobbscoin), 2026-05-20.
+    // seed1.23skidoo.info IP at v2.0.0-rc3 build time — fixed-seed fallback.
     // 159.198.79.74:20000 — packed little-endian uint32 below decodes via
     // memcpy into in_addr bytes 159,198,79,74 (network byte order).
     0x4A4FC69F,
@@ -74,8 +74,6 @@ public:
         assert(hashGenesisBlock == hashMainGenesisBlock);
         assert(genesis.hashMerkleRoot == uint256("0xb3f4e4e9bbae6f63a0693661c510a33dca69489bfff65a88aaeb85f30d30b485"));
 
-        // subgenius.vip — revival seed (BtcBob/@dobbscoin, 2026-05-20)
-        vSeeds.push_back(CDNSSeedData("subgenius.vip", "subgenius.vip"));
         vSeeds.push_back(CDNSSeedData("seed1.23skidoo.info", "seed1.23skidoo.info"));
         vSeeds.push_back(CDNSSeedData("seed2.23skidoo.info", "seed2.23skidoo.info"));
         vSeeds.push_back(CDNSSeedData("seed3.23skidoo.info", "seed3.23skidoo.info"));
