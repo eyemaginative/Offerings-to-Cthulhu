@@ -16,7 +16,7 @@
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
-#include <QGraphicsColorizeEffect>
+#include <QGraphicsDropShadowEffect>
 #include <QPropertyAnimation>
 #include <QColor>
 
@@ -129,18 +129,21 @@ OverviewPage::OverviewPage(QWidget *parent) :
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 
-    // Heartbeat pulse on the Elder Sign label (label_2): orange colorize
-    // effect whose strength animates 0 -> 0.7 -> 0 every time a new block
-    // arrives. Visual proof the node is alive + on tip.
-    heartbeatEffect = new QGraphicsColorizeEffect(this);
-    heartbeatEffect->setColor(QColor(255, 140, 0));  // #FF8C00 dark orange
-    heartbeatEffect->setStrength(0.0);
+    // Heartbeat pulse on the Elder Sign label (label_2): an outer orange
+    // drop-shadow glow whose blur radius animates 0 -> peak -> 0 every
+    // time a new block arrives. The PNG already carries a static orange
+    // border at rest; this effect adds the expanding glow during a pulse.
+    // Skipped entirely while the chain is still syncing (see pulseHeartbeat).
+    heartbeatEffect = new QGraphicsDropShadowEffect(this);
+    heartbeatEffect->setColor(QColor(255, 140, 0));  // #FF8C00
+    heartbeatEffect->setOffset(0, 0);
+    heartbeatEffect->setBlurRadius(0.0);
     ui->label_2->setGraphicsEffect(heartbeatEffect);
 
-    heartbeatAnim = new QPropertyAnimation(heartbeatEffect, "strength", this);
-    heartbeatAnim->setDuration(600);
+    heartbeatAnim = new QPropertyAnimation(heartbeatEffect, "blurRadius", this);
+    heartbeatAnim->setDuration(800);
     heartbeatAnim->setKeyValueAt(0.0, 0.0);
-    heartbeatAnim->setKeyValueAt(0.4, 0.7);
+    heartbeatAnim->setKeyValueAt(0.35, 16.0);
     heartbeatAnim->setKeyValueAt(1.0, 0.0);
     heartbeatAnim->setEasingCurve(QEasingCurve::OutCubic);
 }
@@ -201,14 +204,13 @@ void OverviewPage::pulseHeartbeat(int count)
 
     if (!heartbeatAnim || !heartbeatEffect) return;
 
-    // Dim the pulse during initial sync to ~30%; full intensity once at tip.
-    // ClientModel exposes no direct "at tip" boolean here, so we proxy:
-    // if labelWalletStatus is hidden (sync warning off), we're at tip.
-    qreal peak = ui->labelWalletStatus->isVisible() ? 0.25 : 0.7;
+    // Skip pulses entirely during initial sync — the years-counting catch-up
+    // would otherwise pulse-spam the overview page. The PNG's static orange
+    // border still shows; only the heartbeat glow waits for tip.
+    // labelWalletStatus is visible iff the "(out of sync)" warning is on.
+    if (ui->labelWalletStatus->isVisible()) return;
+
     heartbeatAnim->stop();
-    heartbeatAnim->setKeyValueAt(0.0, 0.0);
-    heartbeatAnim->setKeyValueAt(0.4, peak);
-    heartbeatAnim->setKeyValueAt(1.0, 0.0);
     heartbeatAnim->start();
 }
 

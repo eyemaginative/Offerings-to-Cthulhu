@@ -11,7 +11,7 @@ class ClientModel;
 class TransactionFilterProxy;
 class TxViewDelegate;
 class WalletModel;
-class QGraphicsColorizeEffect;
+class QGraphicsDropShadowEffect;
 class QPropertyAnimation;
 
 namespace Ui {
@@ -53,7 +53,7 @@ private:
     TransactionFilterProxy *filter;
 
     // Block-driven heartbeat pulse on the Elder-Sign label
-    QGraphicsColorizeEffect *heartbeatEffect;
+    QGraphicsDropShadowEffect *heartbeatEffect;
     QPropertyAnimation *heartbeatAnim;
     int lastSeenBlockCount;
 
