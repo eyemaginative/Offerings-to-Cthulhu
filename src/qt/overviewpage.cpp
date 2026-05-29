@@ -16,9 +16,6 @@
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
-#include <QGraphicsDropShadowEffect>
-#include <QPropertyAnimation>
-#include <QColor>
 
 #define DECORATION_SIZE 64
 #define NUM_ITEMS 3
@@ -107,10 +104,7 @@ OverviewPage::OverviewPage(QWidget *parent) :
     currentUnconfirmedBalance(-1),
     currentImmatureBalance(-1),
     txdelegate(new TxViewDelegate()),
-    filter(0),
-    heartbeatEffect(0),
-    heartbeatAnim(0),
-    lastSeenBlockCount(-1)
+    filter(0)
 {
     ui->setupUi(this);
 
@@ -128,24 +122,6 @@ OverviewPage::OverviewPage(QWidget *parent) :
 
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
-
-    // Heartbeat pulse on the Elder Sign label (label_2): an outer orange
-    // drop-shadow glow whose blur radius animates 0 -> peak -> 0 every
-    // time a new block arrives. The PNG already carries a static orange
-    // border at rest; this effect adds the expanding glow during a pulse.
-    // Skipped entirely while the chain is still syncing (see pulseHeartbeat).
-    heartbeatEffect = new QGraphicsDropShadowEffect(this);
-    heartbeatEffect->setColor(QColor(255, 140, 0));  // #FF8C00
-    heartbeatEffect->setOffset(0, 0);
-    heartbeatEffect->setBlurRadius(0.0);
-    ui->label_2->setGraphicsEffect(heartbeatEffect);
-
-    heartbeatAnim = new QPropertyAnimation(heartbeatEffect, "blurRadius", this);
-    heartbeatAnim->setDuration(800);
-    heartbeatAnim->setKeyValueAt(0.0, 0.0);
-    heartbeatAnim->setKeyValueAt(0.35, 16.0);
-    heartbeatAnim->setKeyValueAt(1.0, 0.0);
-    heartbeatAnim->setEasingCurve(QEasingCurve::OutCubic);
 }
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
@@ -185,33 +161,7 @@ void OverviewPage::setClientModel(ClientModel *model)
         // Show warning if this is a prerelease version
         connect(model, SIGNAL(alertsChanged(QString)), this, SLOT(updateAlerts(QString)));
         updateAlerts(model->getStatusBarWarnings());
-
-        // Drive the Elder-Sign heartbeat off block-tip updates
-        connect(model, SIGNAL(numBlocksChanged(int)), this, SLOT(pulseHeartbeat(int)));
     }
-}
-
-void OverviewPage::pulseHeartbeat(int count)
-{
-    // Skip the very first signal — that's just the initial-height notification,
-    // not a new block. After that, every increment triggers a pulse.
-    if (lastSeenBlockCount < 0) {
-        lastSeenBlockCount = count;
-        return;
-    }
-    if (count <= lastSeenBlockCount) return;
-    lastSeenBlockCount = count;
-
-    if (!heartbeatAnim || !heartbeatEffect) return;
-
-    // Skip pulses entirely during initial sync — the years-counting catch-up
-    // would otherwise pulse-spam the overview page. The PNG's static orange
-    // border still shows; only the heartbeat glow waits for tip.
-    // labelWalletStatus is visible iff the "(out of sync)" warning is on.
-    if (ui->labelWalletStatus->isVisible()) return;
-
-    heartbeatAnim->stop();
-    heartbeatAnim->start();
 }
 
 void OverviewPage::setWalletModel(WalletModel *model)
