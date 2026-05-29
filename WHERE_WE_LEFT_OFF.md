@@ -32,9 +32,12 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - **The Descent** (10 ceremonial verses at heights 999,991-1,000,000): revived 2026-05-25 via
   `CODEX_DESCENT_START=999991` constant and guard fix `if (nHeight < CODEX_DESCENT_START) return egg;`
   Was previously dead code (early-return at CODEX_ANCHOR=1000001 blocked the Descent range).
-- **OFFSIG signed-mining window** (heights 1,000,000-1,057,329, only Conclave keys can mine):
-  validation in main.cpp + chainparams (already on vps3); mining-side (placeholder OP_RETURN +
-  `SignBlockIfNeeded`) ported into vps3's miner.cpp in commit `9062e1d`.
+- **OFFSIG signed-mining window** (heights 999,991-1,050,666 as of v2.0.0-rc2,
+  only Conclave keys can mine — window extended backwards 2026-05-29 to cover all
+  10 Descent verses + canon-reading + ~2.4-day post-canon tail):
+  validation in main.cpp + chainparams; mining-side (placeholder OP_RETURN +
+  `SignBlockIfNeeded`) in vps3's miner.cpp. Conclave signing privkey lives in
+  chaos btcbob + vps1 btcbob (the pool's backing daemon) wallets + paper backup.
 - Miner crash fixes (chainActive data race TRY_LOCK, dead-chain IBD gate removed):
   also in vps3's miner.cpp post-`9062e1d`.
 - **Web** (vps3, cron): https://23skidoo.info/codex/ (paginated Library e-reader) +

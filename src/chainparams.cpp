@@ -155,12 +155,17 @@ public:
         }
 
         // ---- Conclave signed-mining window ----
-        // From the Restoration fork until OpenMiningHeight, a block is only valid
-        // if it carries a signature from one of the Conclave keys below. This lets
-        // the home signer(s) mine the canon transcription unmolested; at
-        // OpenMiningHeight the gate lifts and Quark mining is permissionless again
-        // (~1 week after the Dreaming begins).
-        nOpenMiningHeight = 1057329;
+        // From SignedWindowStart through OpenMiningHeight (inclusive), a block is
+        // only valid if it carries a signature from one of the Conclave keys below.
+        //
+        // Window opens at 999,991 — the first Descent verse — so the entire 10-block
+        // Descent (999991..1000000) plus the full canon transcription (1000001..1047248,
+        // 47,248 chunks) plus ~2.4 days of post-canon buffer are consensus-protected
+        // from outsider mining. Window closes at 1,050,666, on the project's xxx,666
+        // numerological convention; after that Quark mining is permissionless again.
+        // (Changed in v2.0.0-rc2 from previous bounds [1000000 .. 1057329].)
+        nSignedWindowStart = 999991;
+        nOpenMiningHeight  = 1050666;
         vConclaveKeys.push_back(ParseHex(
             "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // chaos
 

@@ -79,8 +79,12 @@ public:
     int64_t RestorationTithe()         const { return nRestorationTithe; }
     const std::set<CScript>& BannedAttackerScripts() const { return setBannedAttackers; }
     // Conclave signed-mining window: only blocks signed by a Conclave key are
-    // valid for heights in [RestorationForkHeight() .. OpenMiningHeight()].
-    int64_t OpenMiningHeight() const { return nOpenMiningHeight; }
+    // valid for heights in [SignedWindowStart() .. OpenMiningHeight()]. The window
+    // opens 9 blocks BEFORE RestorationForkHeight so the Descent verses
+    // (heights 999991..1000000) are consensus-protected from outsider mining
+    // alongside the canon-reading itself.
+    int64_t SignedWindowStart() const { return nSignedWindowStart; }
+    int64_t OpenMiningHeight()  const { return nOpenMiningHeight; }
     const std::vector<std::vector<unsigned char> >& ConclaveKeys() const { return vConclaveKeys; }
 
 protected:
@@ -106,6 +110,7 @@ protected:
     int     nTreasuryDen;
     int64_t nRestorationTithe;
     std::set<CScript> setBannedAttackers;
+    int64_t nSignedWindowStart;
     int64_t nOpenMiningHeight;
     std::vector<std::vector<unsigned char> > vConclaveKeys;
 };

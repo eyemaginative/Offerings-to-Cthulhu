@@ -1447,7 +1447,7 @@ bool IsAfterRestorationFork(int nHeight)
 // Quark mining is permissionless again.
 bool IsInSignedWindow(int nHeight)
 {
-    return nHeight >= Params().RestorationForkHeight()
+    return nHeight >= Params().SignedWindowStart()
         && nHeight <= Params().OpenMiningHeight();
 }
 
