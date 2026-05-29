@@ -15,11 +15,13 @@ class CBlockHeader;
 // (non-consensus, 2026-05-29) — the checkpoint locks old history, this
 // fork hardens the chain going forward.
 //
-// HARDFORK_LWMA3_MAIN_OFF: TBD — set ~7-10 days from release after
-// testnet validation completes. Block-height activation (not wall-time)
-// so the fork lands deterministically regardless of attack-compressed
-// solvetimes.
-static const int64_t HARDFORK_LWMA3_MAIN_OFF    = 990000;  // TBD post-testnet
+// HARDFORK_LWMA3_MAIN_OFF: pulled in from 990000 → 980000 in rc4
+// (2026-05-29) after observing the chain locked at ~20s/block with
+// hashrate tracking the legacy +10%/cycle clamp 1:1 — the drive-by-
+// miner pattern the LWMA-3 + MAX_REORG_DEPTH defense was built for.
+// Block-height activation (not wall-time) so the fork lands
+// deterministically regardless of attack-compressed solvetimes.
+static const int64_t HARDFORK_LWMA3_MAIN_OFF    = 980000;
 static const int64_t HARDFORK_LWMA3_TESTNET_OFF = 100;
 
 // MAX_REORG_DEPTH: chains attempting to reorganize past this many buried
