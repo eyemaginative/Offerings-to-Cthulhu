@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-05-29)
+# OFF — Where We Left Off  (snapshot 2026-05-29, rc4)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -19,7 +19,7 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Older trees on chaos (`~/off-canonical/`, etc.) are also stale, ignore.
 - See `[[feedback-off-canonical-source-vps3]]` in auto-memory for full rationale.
 
-## DONE (in source on vps3 / origin — chaos is currently NOT carrying the rc2 OFFSIG window or the h=976000 checkpoint; see OPEN/NEXT)
+## DONE (in source on vps3 / origin — chaos is currently NOT carrying rc3/rc4, the rc2 OFFSIG window, or the h=976000 checkpoint; see OPEN/NEXT)
 - Consensus v2.0.0: 1.5 OFF/block lock, 7/8 miner + 1/8 Conclave Treasury, 150k Tithe at fork,
   8 BCT-#699 attacker addresses banned.
 - **Renewed Ritual** (HUNK 10 in canonical patch, code in `src/main.cpp::RitualBonus`):
@@ -32,24 +32,52 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - **The Descent** (10 ceremonial verses at heights 999,991-1,000,000): revived 2026-05-25 via
   `CODEX_DESCENT_START=999991` constant and guard fix `if (nHeight < CODEX_DESCENT_START) return egg;`
   Was previously dead code (early-return at CODEX_ANCHOR=1000001 blocked the Descent range).
-- **OFFSIG signed-mining window** (heights 999,991-1,050,666 as of v2.0.0-rc2,
-  only Conclave keys can mine — window extended backwards 2026-05-29 to cover all
-  10 Descent verses + canon-reading + ~2.4-day post-canon tail):
-  validation in main.cpp + chainparams; mining-side (placeholder OP_RETURN +
-  `SignBlockIfNeeded`) in vps3's miner.cpp. Conclave signing privkey lives in
-  chaos btcbob + vps1 btcbob (the pool's backing daemon) wallets + paper backup.
-- Miner crash fixes (chainActive data race TRY_LOCK, dead-chain IBD gate removed):
-  also in vps3's miner.cpp post-`9062e1d`.
+- **OFFSIG signed-mining window** (heights 999,991-1,050,666, unchanged since rc2 —
+  `nSignedWindowStart`/`nOpenMiningHeight` in `src/chainparams.cpp:167-168`).
+  Covers all 10 Descent verses + canon-reading (1,000,001-1,047,248) + ~2.4-day
+  post-canon tail. Only Conclave keys can mine in this range. Validation in
+  main.cpp + chainparams; mining-side (placeholder OP_RETURN + `SignBlockIfNeeded`)
+  in miner.cpp. Conclave signing privkey lives in chaos btcbob + vps1 btcbob
+  (the pool's backing daemon) wallets + paper backup.
+- **rc3 — LWMA-3 + MAX_REORG_DEPTH + extranonce-invariant OFFSIG** (commit `788fc60`,
+  tag `v2.0.0-rc3`, 2026-05-29). Three concurrent consensus changes:
+  - **LWMA-3 retarget** (Zawy's linear-weighted moving average, N=60, T=60s).
+    New `src/pow.{h,cpp}::GetNextWorkRequired_LWMA3`. Old retarget renamed to
+    `GetNextWorkRequired_Legacy` in main.cpp; dispatcher in pow.cpp routes by
+    height. Activation `HARDFORK_LWMA3_MAIN_OFF=990000` (later 980000 in rc4),
+    `HARDFORK_LWMA3_TESTNET_OFF=100`.
+  - **MAX_REORG_DEPTH=100** finality rule in `src/main.cpp:2498-2523`
+    (`ActivateBestChain`). Rejects reorgs deeper than 100 blocks from active tip
+    past LWMA-3 fork height. Walks both chains backward to common ancestor
+    manually (OFF's CChain API takes CBlockLocator, not CBlockIndex*).
+  - **Extranonce-invariant OFFSIG** (Option B-a). `main.cpp::OffSigningHash`
+    now blanks the coinbase scriptSig in addition to the OFFSIG output's
+    scriptPubKey before computing merkleSansSig. Pools can serve one signed
+    template to many workers searching different extranonce ranges without
+    invalidating the signature. `rpcmining.cpp::getblocktemplate` now calls
+    `SignBlockIfNeeded` after `CreateNewBlock + UpdateTime`. Closes the rc2
+    gap where pool-served templates submitted placeholder OFFSIGs and tripped
+    `bad-conclave-sig` rejection.
+  - ⚠ **rc3 wire break:** rc2 binaries REJECT rc3-signed blocks (different
+    merkleSansSig). All cluster nodes must upgrade to rc4 before block 999,991.
+- **rc4 — LWMA-3 activation pulled 990000 → 980000** (commit `5b1c8ba`,
+  tag `v2.0.0-rc4`, 2026-05-29). Chain has been locked at ~20s/block for 300+
+  blocks under the legacy retarget's +10%/cycle clamp (diff 2.56 → 10.85 over
+  16 cycles, solvetimes flat ~20s) — classic drive-by rented-hash pattern.
+  980000 gives ~22k blocks of LWMA-3 settling (~15 days at 60s) before Descent
+  at 999,991, vs ~5 days under legacy with hash still ramping. `src/pow.h:24`.
 - **Anti-reorg checkpoint at h=976000** (commit `0c751a5`, 2026-05-29): one hardcoded
   entry in `src/checkpoints.cpp::mapCheckpoints` locking block hash
   `000000cd…7225f95`. Defends against deep reorgs by the >80%-hash attacker camped on
   the chain. Non-consensus for new blocks. Binary SHA256 = `6bef0f0f…743a3d7`.
-  Deployed: vps1 btcbob (pool backend), vps3 relay. Chaos miner still TBD.
+  Deployed: vps1 btcbob (pool backend), vps3 relay. Chaos miner still TBD —
+  and now must include rc3/rc4 as well, see OPEN/NEXT.
 - **vps3 Linux build: GREEN as of 2026-05-29.** Fresh binary at `src/Offeringsd`,
-  HEAD `0c751a5` (rc2 + checkpoint), builds clean against system Boost 1.74 with
+  builds clean against system Boost 1.74 with
   `./configure --with-gui=qt5 --without-miniupnpc --disable-tests --disable-hardening`.
-  Earlier "C++17 issues" note was a stale May-25 snapshot; the version-bump-to-2.0.0
-  fixes superseded it.
+  (Note: the green build that produced SHA `6bef0f0f…` was HEAD `0c751a5` —
+  pre-rc3. A fresh rc4 build has not yet been hashed/snapshotted here; if you
+  rebuild, record the new SHA before deploying.)
 - **Web** (vps3, cron): https://23skidoo.info/codex/ (paginated Library e-reader) +
   /awakening/ (live countdown). Note: site currently reveals all 24 book bodies despite 0%
   inscription; user flagged 2026-05-25 that books 1-23 should be sealed pre-inscription,
@@ -69,21 +97,35 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   batch — backport invalidateblock RPC, deploy ritual binary to vps3, read ~/codex/post-fork-backlog.md.
 
 ## OPEN / NEXT
-- **Deploy checkpoint binary (`0c751a5`, SHA `6bef0f0f…`) to chaos miner.** vps3 +
-  vps1 btcbob are done; chaos is the last remaining node carrying the pre-checkpoint
-  binary (`cd0bfd2-Bokrug`). Build on chaos itself — Debian 13 + Boost 1.83 ABI
-  differs from vps3's Boost 1.74 dynamic links. vps1 endciv (Treasury Key #2 cold)
-  is on a separate rc2 OFFSIG-window deploy track handled by a sibling session.
-- Decide whether to cut a tagged release (v2.0.1?) for the checkpoint patch, or
-  fold it into the next rc. (Patch is on `origin/main` as of `19abe83` —
-  external operators can `git pull` and build.)
-- Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
+- **Deploy rc4 binary to the cluster** — now urgent because of the rc3 wire
+  break. rc2 binaries reject rc3-signed blocks. Every node that will be online
+  at block 999,991 must be on rc4 (or rc3 — same wire) before then. Affected:
+  - **chaos miner** — still on `cd0bfd2-Bokrug` (pre-checkpoint, pre-rc3).
+    Build on chaos itself: Debian 13 + Boost 1.83 ABI differs from vps3's
+    Boost 1.74 dynamic links. After rebuild, snapshot the binary SHA into this
+    doc.
+  - **vps1 btcbob (pool backend)** — was on `6bef0f0f…` (HEAD `0c751a5`,
+    pre-rc3). Pool block submissions will fail with `bad-conclave-sig`
+    starting at height 999,991 unless upgraded — but the extranonce-invariant
+    OFFSIG fix in rc3 is precisely the pool's path forward. Rebuild + restart
+    `offeringsd` + bounce Miningcore.
+  - **vps3 relay** — same `6bef0f0f…` situation. Rebuild from HEAD; record
+    new SHA.
+  - **vps1 endciv (Treasury Key #2, cold)** — sibling-session deploy track;
+    confirm with that session that rc3/rc4 is on their list too.
+- **LWMA-3 testnet validation** — rc3 commit message and the `pow.cpp`
+  README warning both flag this: LWMA-3 is NOT testnet-validated yet. The
+  `HARDFORK_LWMA3_TESTNET_OFF=100` activation makes it trivial to spin up a
+  testnet daemon and watch retarget behavior. Do this before block 980000
+  on mainnet.
+- Re-cut the source bundle to include the Codex GUI tab + the ported miner.cpp
+  (Codex GUI is in vps3 source but no recent release bundle includes it).
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
   (per user 2026-05-25); Proem stays open as Conclave invocation.
 
 ## Milestones
-- fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666 (rc2)
+- LWMA-3 activates: **980,000** (rc4)  | fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666
 
 ## Notes
 - Auto-memory is per-box/per-cwd — it does NOT sync across chaos/vps3. This file is the
