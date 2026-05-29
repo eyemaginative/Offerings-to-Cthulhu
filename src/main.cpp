@@ -11,6 +11,7 @@
 #include "alert.h"
 #include "chainparams.h"
 #include "checkpoints.h"
+#include "pow.h"
 #include "checkqueue.h"
 #include "init.h"
 #include "net.h"
@@ -1203,8 +1204,8 @@ static const int64_t nGenesisBlockRewardCoin = 10000 * COIN;
 static const int64_t nBlockRewardStartCoin = 5 * COIN;
 static const int64_t nBlockRewardMinimumCoin = .011 * COIN;
 
-static const int64_t nTargetTimespan = 20 * 60; // 10 minutes
-static const int64_t nTargetSpacing = 60; // 30 seconds
+static const int64_t nTargetTimespan = 20 * 60; // 20 minutes
+static const int64_t nTargetSpacing = 60; // 60 seconds (1 minute)
 static const int64_t nInterval = nTargetTimespan / nTargetSpacing; // 20 blocks
 
 // The Ritual Renewed (post-Restoration). The original ritual died at the fork when the
@@ -1481,9 +1482,19 @@ int FindOffSigOutput(const CBlock& block, std::vector<unsigned char>& vchSig)
 // never be lifted onto a different block.
 uint256 OffSigningHash(const CBlock& block, int nHeight, int sigVout)
 {
+    // v2.0.0-rc3: blank BOTH the OFFSIG output's scriptPubKey AND the coinbase
+    // scriptSig (which carries the extranonce + Codex chunk). This makes the
+    // signature invariant to extranonce variation, which lets Miningcore-style
+    // pools serve the same signed template to multiple workers searching
+    // different extranonce ranges. Replay-to-other-block-at-same-height is
+    // still prevented because PoW for any other block at the same height+prev
+    // is independently infeasible.
     CBlock tmp = block;
-    if (!tmp.vtx.empty() && sigVout >= 0 && sigVout < (int)tmp.vtx[0].vout.size())
-        tmp.vtx[0].vout[sigVout].scriptPubKey = CScript();
+    if (!tmp.vtx.empty()) {
+        tmp.vtx[0].vin[0].scriptSig = CScript();
+        if (sigVout >= 0 && sigVout < (int)tmp.vtx[0].vout.size())
+            tmp.vtx[0].vout[sigVout].scriptPubKey = CScript();
+    }
     uint256 merkleSansSig = tmp.BuildMerkleTree();
     CHashWriter ss(SER_GETHASH, 0);
     ss << block.hashPrevBlock;
@@ -1560,7 +1571,8 @@ unsigned int ComputeMinWork(unsigned int nBase, int64_t nTime)
     return bnResult.GetCompact();
 }
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
+// Renamed in v2.0.0-rc3 — LWMA-3 fork dispatches to this via pow.cpp::GetNextWorkRequired
+unsigned int GetNextWorkRequired_Legacy(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
     unsigned int nProofOfWorkLimit = Params().ProofOfWorkLimit().GetCompact();
 
@@ -2482,6 +2494,36 @@ bool ActivateBestChain(CValidationState &state) {
 
         // Check whether we have something to do.
         if (chainMostWork.Tip() == NULL) break;
+
+        // MAX_REORG_DEPTH defense (v2.0.0-rc3, gated on LWMA-3 fork activation).
+        // Reject any reorg that would unwind more than MAX_REORG_DEPTH blocks
+        // from the active tip. Closes the rented-hash deep-reorg surface;
+        // companion to the hardcoded h=976000 checkpoint (which protects buried
+        // history) and the LWMA-3 retarget (which slows attacker progress).
+        if (chainActive.Tip() != NULL &&
+            chainActive.Height() >= LWMA3ForkHeight())
+        {
+            // Walk both chains back to their common ancestor manually
+            // (OFF's CChain::FindFork takes a CBlockLocator, not a CBlockIndex*).
+            const CBlockIndex *a = chainActive.Tip();
+            const CBlockIndex *b = chainMostWork.Tip();
+            while (a && b && a->nHeight > b->nHeight) a = a->pprev;
+            while (a && b && b->nHeight > a->nHeight) b = b->pprev;
+            while (a && b && a != b) { a = a->pprev; b = b->pprev; }
+            const CBlockIndex *pindexFork = a;  // == b at this point
+            if (pindexFork != NULL) {
+                int reorgDepth = chainActive.Height() - pindexFork->nHeight;
+                if (reorgDepth > MAX_REORG_DEPTH) {
+                    LogPrintf("ActivateBestChain: REJECTING %d-block reorg "
+                              "(max %d) from active tip height %d\n",
+                              reorgDepth, MAX_REORG_DEPTH,
+                              chainActive.Height());
+                    return error("ActivateBestChain: reorg depth %d "
+                                 "exceeds MAX_REORG_DEPTH %d",
+                                 reorgDepth, MAX_REORG_DEPTH);
+                }
+            }
+        }
 
         // Disconnect active blocks which are no longer in the best chain.
         while (chainActive.Tip() && !chainMostWork.Contains(chainActive.Tip())) {
