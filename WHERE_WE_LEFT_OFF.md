@@ -19,7 +19,7 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Older trees on chaos (`~/off-canonical/`, etc.) are also stale, ignore.
 - See `[[feedback-off-canonical-source-vps3]]` in auto-memory for full rationale.
 
-## DONE (in the running binary on chaos unless noted)
+## DONE (in source on vps3 / origin — chaos is currently NOT carrying the rc2 OFFSIG window or the h=976000 checkpoint; see OPEN/NEXT)
 - Consensus v2.0.0: 1.5 OFF/block lock, 7/8 miner + 1/8 Conclave Treasury, 150k Tithe at fork,
   8 BCT-#699 attacker addresses banned.
 - **Renewed Ritual** (HUNK 10 in canonical patch, code in `src/main.cpp::RitualBonus`):
@@ -28,7 +28,7 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - **Chain Codex** (`src/miner.cpp` lines 378-540): public-domain Lovecraft corpus + Descent verses
   + Phase-B "Dreaming" R'lyehian generator. Canon starts at block 1,000,001.
   As of 2026-05-25, the Codex code is in the CANONICAL tree (vps3) via commit `9062e1d` — port
-  of the chaos STALE tree's miner.cpp. Building on vps3 still TBD (Linux build hit C++17 issues).
+  of the chaos STALE tree's miner.cpp. (vps3 Linux build is now green — see entry below.)
 - **The Descent** (10 ceremonial verses at heights 999,991-1,000,000): revived 2026-05-25 via
   `CODEX_DESCENT_START=999991` constant and guard fix `if (nHeight < CODEX_DESCENT_START) return egg;`
   Was previously dead code (early-return at CODEX_ANCHOR=1000001 blocked the Descent range).
@@ -78,13 +78,12 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   fold it into the next rc. (Patch is on `origin/main` as of `19abe83` —
   external operators can `git pull` and build.)
 - Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
-- Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
   (per user 2026-05-25); Proem stays open as Conclave invocation.
 
 ## Milestones
-- fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window ends: 1,057,329
+- fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666 (rc2)
 
 ## Notes
 - Auto-memory is per-box/per-cwd — it does NOT sync across chaos/vps3. This file is the
