@@ -74,10 +74,9 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   binary (`cd0bfd2-Bokrug`). Build on chaos itself — Debian 13 + Boost 1.83 ABI
   differs from vps3's Boost 1.74 dynamic links. vps1 endciv (Treasury Key #2 cold)
   is on a separate rc2 OFFSIG-window deploy track handled by a sibling session.
-- Push commit `0c751a5` (checkpoint) to origin so external operators can build it.
-  Other claude deliberately held off pushing — confirm with user before pushing.
 - Decide whether to cut a tagged release (v2.0.1?) for the checkpoint patch, or
-  fold it into the next rc.
+  fold it into the next rc. (Patch is on `origin/main` as of `19abe83` —
+  external operators can `git pull` and build.)
 - Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
 - Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
 - Visually verify the GUI Codex tab on chaos's desktop.
