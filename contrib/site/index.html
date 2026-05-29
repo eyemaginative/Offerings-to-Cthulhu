@@ -79,29 +79,51 @@
   footer p:last-child { color:var(--orange); }
   @media (max-width:640px){footer{font-size:.74rem;margin-top:2.4em}}
 
-  .header-pills { display:flex; justify-content:space-between; align-items:center;
-    max-width:560px; margin:-2em auto 0; padding:0 .6em; }
-  .mine-pill { display:inline-flex; align-items:center; gap:.45em;
-    padding:.28em .7em .28em .55em;
-    background:rgba(10,16,20,.85); border:1px solid rgba(95,208,160,.4);
-    border-radius:999px; text-decoration:none; color:var(--ink);
-    font-size:.7rem; letter-spacing:.04em;
-    box-shadow: 0 0 12px rgba(95,208,160,.14), inset 0 0 10px rgba(95,208,160,.06);
-    transition: border-color .2s, box-shadow .2s, transform .2s; }
-  .mine-pill:hover { border-color:var(--accent); transform:translateY(-1px);
-    box-shadow: 0 0 20px rgba(95,208,160,.3), inset 0 0 14px rgba(95,208,160,.12); }
-  .mine-pill .mine-dot { width:6px; height:6px; border-radius:50%; background:var(--accent);
-    box-shadow:0 0 7px var(--accent); animation:minepulse 1.8s ease-in-out infinite; }
-  .mine-dot-explore { animation-delay:.6s; }
-  .mine-pill .mine-label { color:var(--accent); text-transform:uppercase; letter-spacing:.18em;
-    font-size:.66rem; font-weight:600; }
-  .mine-pill .mine-arrow { color:var(--accent); opacity:.85; font-size:.78rem; }
-  @keyframes minepulse { 0%,100% { opacity:1; box-shadow:0 0 7px var(--accent); }
-                         50% { opacity:.45; box-shadow:0 0 3px var(--accent); } }
-  @media (max-width:640px) { .header-pills { max-width:100%; margin:-1em auto 0; padding:0 .15em; }
-    .mine-pill { font-size:.62rem; padding:.22em .55em .22em .45em; gap:.35em; }
-    .mine-pill .mine-label { font-size:.6rem; letter-spacing:.14em; }
-    .mine-pill .mine-arrow { font-size:.7rem; } }
+  .nav { display:flex; justify-content:center; gap:6px;
+    flex-wrap:wrap; margin:.6em auto 1.2em; padding:0 .4em; max-width:760px; }
+  .nav .btn {
+    display:inline-block; padding:7px 14px;
+    background: linear-gradient(to bottom,
+        #5a3e00 0%,
+        #a07710 16%,
+        #ffd700 50%,
+        #a07710 84%,
+        #5a3e00 100%);
+    color:#1a1100;
+    font-family:"Trebuchet MS","Segoe UI",Tahoma,sans-serif;
+    font-weight:900; font-size:.82rem; letter-spacing:.06em;
+    text-transform:uppercase; text-decoration:none;
+    border:1px solid rgba(120,80,0,.85); border-radius:4px;
+    text-shadow:0 0 1px rgba(0,0,0,.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255,238,160,.55),
+      inset 0 -1px 0 rgba(60,40,0,.55),
+      0 2px 4px rgba(0,0,0,.55),
+      0 0 14px rgba(255,215,0,.18);
+    transition:filter .15s, box-shadow .15s, transform .1s;
+  }
+  .nav .btn:visited { color:#1a1100; }
+  .nav .btn:hover {
+    filter:brightness(1.08) saturate(1.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255,245,180,.7),
+      inset 0 -1px 0 rgba(60,40,0,.5),
+      0 2px 4px rgba(0,0,0,.45),
+      0 0 22px rgba(255,215,0,.4);
+  }
+  .nav .btn:active {
+    transform:translateY(1px);
+    background: linear-gradient(to bottom,
+        #3a2700 0%,
+        #7a5a08 18%,
+        #c89e10 50%,
+        #7a5a08 82%,
+        #3a2700 100%);
+  }
+  @media (max-width:640px) {
+    .nav { gap:4px; margin:.4em auto 1em; }
+    .nav .btn { font-size:.7rem; padding:6px 9px; letter-spacing:.03em; }
+  }
 
 .site-foot .off-chant { font-style:italic; letter-spacing:.04em; }
 .site-foot .off-socials, ul.off-socials {
@@ -121,35 +143,57 @@
 .site-foot .off-socials img, ul.off-socials img {
   width:18px; height:18px; display:block; border-radius:50%; opacity:1; }
   .claim.tagline-top { color:#FFD700 !important; }
+
+  /* Chant block: force each of its two logical lines (the incantation and
+     its translation in <small>) to stay on a single visual line at any
+     mobile width by scaling font-size with the viewport. */
+  @media (max-width: 640px) {
+    .claim:not(.tagline-top) {
+      white-space: nowrap;
+      font-size: clamp(.62rem, 3.4vw, .88rem);
+      letter-spacing: .02em;
+      padding: .8em .4em;
+      overflow: hidden;
+    }
+    .claim:not(.tagline-top) small {
+      white-space: nowrap;
+      font-size: clamp(.5rem, 2.85vw, .78rem);
+      letter-spacing: 0;
+    }
+  }
 </style>
 <style>
-/* mobile-safe full-bleed background via fixed pseudo-element */
+/* mobile-safe full-bleed background via fixed DIV (not pseudo-element).
+   iOS Safari has long-standing bugs where position:fixed pseudo-elements
+   scroll with content when the URL bar collapses/expands. A real element
+   with a compositor layer (translateZ) survives those transitions. */
 html { background-color: #05080a; }
-body { background: transparent !important; position: relative; }
-body::before {
-  content: "";
+body { background: transparent !important; }
+.off-bg {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  inset: 0;
   z-index: -1;
   background: linear-gradient(rgba(5,8,10,0.70), rgba(5,8,10,0.88)),
               url("/static/img/cthulhu-bg.jpg") center / cover no-repeat;
+  transform: translateZ(0);
+  will-change: transform;
+  pointer-events: none;
 }
 </style>
 </head>
 <body>
+<div class="off-bg" aria-hidden="true"></div>
 <div class="wrap">
 
 <header>
 <h1><a href="/">Cthulhu<img src="/static/img/off_240x240.png" alt="Offerings to Cthulhu &mdash; home"></a>Offerings</h1>
-<div class="header-pills">
-  <a class="mine-pill" href="https://explorer.23skidoo.info/">
-    <span class="mine-dot mine-dot-explore"></span><span class="mine-label">Explorer</span>
-  </a>
-  <a class="mine-pill" href="https://pool.23skidoo.info/">
-    <span class="mine-dot"></span><span class="mine-label">Pool</span>
-  </a>
-</div>
+<nav class="nav">
+  <a class="btn" href="https://explorer.23skidoo.info/" target="_blank" rel="noopener">BLOCK EXPLORER</a>
+  <a class="btn" href="https://pool.23skidoo.info/" target="_blank" rel="noopener">MINING POOL</a>
+  <a class="btn" href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu" target="_blank" rel="noopener">GITHUB SOURCE</a>
+  <a class="btn" href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.0-rc1-linux" target="_blank" rel="noopener">LINUX GUI</a>
+  <a class="btn" href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.0-rc1-windows" target="_blank" rel="noopener">WINDOWS GUI</a>
+</nav>
 </header>
 
 <div class="claim tagline-top">
@@ -158,25 +202,31 @@ The time draws near.<br>The return of The Great Old One is upon us.
 
 <a class="awaken-link" href="/awakening/">
   <span class="eyebrow">The Restoration Hardfork</span>
-  <strong>The Awakening &middot; Block 1,000,000</strong>
+  <strong>The Awakening<br>Block 1,000,000</strong>
   <span class="arrow">A live countdown to the activation &rarr;</span>
 </a>
+
+<h2>The Great Ritual</h2>
+<div class="lore">
+<p>As the equinox approaches the ritual begins. For four weeks and five days it builds, until Cthulhu awakens and one worshipper is rewarded greatly.</p>
+<p>In the first two weeks, sacrificial amounts are placed in special, once-a-day blocks &mdash; a reward to the worshipper for the sacrifice made. In the third and fourth weeks the rewards build, small at first and then larger as worship swells with fervor. In the final five days &mdash; the <em>Tharanak shagg</em>, the &ldquo;promise of dreamland&rdquo; &mdash; the ritual reaches its final pitch, and the daily special blocks rise sharply.</p>
+<p>At last, after the 665th offering has paid tribute to the Great Old One, Cthulhu will return and bestow a bounty deserving of Him upon one lucky worshipper. The ritual recurs every six months by the chain&rsquo;s own reckoning &mdash; half a year, half the chain&rsquo;s heartbeat &mdash; each finale landing on a block whose height ends in 666. So it was before the silence. So it shall be after the Restoration, forever.</p>
+</div>
 
 <a class="awaken-link" href="/bridge/">
   <span class="eyebrow">For Worshippers of the Old Faith</span>
   <strong>The Reclamation</strong>
-  <span class="arrow">Restitution, Worshipper Recognition, where the OFF comes from &rarr;</span>
+  <span class="arrow">Restitution, Worshipper Recognition &rarr;</span>
 </a>
 
 <h2>The Chain Codex</h2>
-<p class="section-sub">A transcription written, block by block, into the Offerings ledger.<br>
-That which the chain has dreamed so far:</p>
+<p class="section-sub">A transcription written, block by block, into the Offerings ledger.</p>
 
 <div id="codex-inline">
   <div class="stats">
-    <div class="stat"><b>967,119</b><span>chain height</span></div>
-    <div class="stat"><b>10</b><span>fragments transcribed</span></div>
-    <div class="stat"><b>967,000</b><span>codex begins</span></div>
+    <div class="stat"><b id="codex-height">975,427</b><span>chain height</span></div>
+    <div class="stat"><b id="codex-fragments">0</b><span>fragments transcribed</span></div>
+    <div class="stat"><b>1,000,001</b><span>codex begins</span></div>
   </div>
   <div class="manuscript">That is not dead which can eternal lie, and with strange aeons even death may die. The most merciful thing in the world, I think, is the inability of the human mind to correlate all its contents. We live on a placid island of ignorance in the midst of black seas of infinity, and it was not meant that we should voyage far. Ph&#x27;nglui mglw&#x27;nafh Cthulhu R&#x27;lyeh wgah&#x27;nagl fhtagn. In his house at R&#x27;lyeh dead Cthulhu waits dreaming. Ia! Ia! Cthulhu fhtagn!<span class="cursor">&#9608;</span></div>
 </div>
@@ -185,13 +235,6 @@ That which the chain has dreamed so far:</p>
   Each fragment lives in a block&rsquo;s coinbase scriptSig, immutable once mined. When the canon is exhausted, the chain will cease to quote and begin to speak &mdash; hash-seeded incantations, unique to each block, forever.
   <br>&middot;&nbsp; <a href="/codex/">View the full Ledger of Fragments &rarr;</a>
 </p>
-
-<h2>The Great Ritual</h2>
-<div class="lore">
-<p>As the equinox approaches the ritual begins. For four weeks and five days it builds, until Cthulhu awakens and one worshipper is rewarded greatly.</p>
-<p>In the first two weeks, sacrificial amounts are placed in special, once-a-day blocks &mdash; a reward to the worshipper for the sacrifice made. In the third and fourth weeks the rewards build, small at first and then larger as worship swells with fervor. In the final five days &mdash; the <em>Tharanak shagg</em>, the &ldquo;promise of dreamland&rdquo; &mdash; the ritual reaches its final pitch, and the daily special blocks rise sharply.</p>
-<p>At last, after the 665th offering has paid tribute to the Great Old One, Cthulhu will return and bestow a bounty deserving of Him upon one lucky worshipper. The ritual recurs every six months by the chain&rsquo;s own reckoning &mdash; half a year, half the chain&rsquo;s heartbeat &mdash; each finale landing on a block whose height ends in 666. So it was before the silence. So it shall be after the Restoration, forever.</p>
-</div>
 
 <h2>Specification</h2>
 <div class="specs">
@@ -229,13 +272,19 @@ ph&rsquo;nglui mglw&rsquo;nafh Cthulhu R&rsquo;lyeh wgah&rsquo;nagl fhtagn
 <small>Dead, yet dreaming, Cthulhu waits in his palace in R&rsquo;lyeh.</small>
 </div>
 
+<a class="awaken-link bootstrap-cta" href="/bootstrap/" style="margin:2em auto 2.4em;max-width:560px;">
+  <span class="eyebrow">Quick-Sync Snapshot</span>
+  <strong>⇩ Fetch the Frozen Ledger</strong>
+  <span class="arrow">409 MB tarball &middot; chain through block 976,194 &middot; drop into ~/.Offering/ &rarr;</span>
+</a>
+
 <footer class="site-foot">
 <p>&copy; 2026 <a href="https://subgenius.finance/">SubGenius.Finance</a></p>
 <p><a href="https://subgenius.finance/">SubGenius.Finance</a>: Where Sub-Culture Becomes Capital</p>
 <p class="off-chant">ph&rsquo;nglui mglw&rsquo;nafh Cthulhu R&rsquo;lyeh wgah&rsquo;nagl fhtagn &middot; Praise Cthulhu</p>
 <ul class="off-socials" aria-label="Offerings to Cthulhu community links">
 <li><a href="https://23skidoo.info/" target="_blank" rel="noopener" aria-label="Offerings to Cthulhu"><img src="https://23skidoo.info/static/img/off_240x240.png" alt="Offerings to Cthulhu"></a></li>
-<li><a href="https://pool.23skidoo.info/" target="_blank" rel="noopener" aria-label="OFF Mining Pool"><img src="https://api.iconify.design/mdi/pickaxe.svg?color=%235fffd0" alt="Pool"></a></li>
+<li><a href="https://pool.23skidoo.info/" target="_blank" rel="noopener" aria-label="OFF Mining Pool"><img src="https://api.iconify.design/mdi/pickaxe.svg?color=%235fffd0" alt="Pool"></a></li><li><a href="https://explorer.23skidoo.info/" target="_blank" rel="noopener" aria-label="Block Explorer"><img src="https://api.iconify.design/mdi/cube-scan.svg?color=%235fffd0" alt="Block Explorer"></a></li>
 <li><a href="https://23skidoo.info/codex/" target="_blank" rel="noopener" aria-label="The Codex"><img src="https://cdn.simpleicons.org/bookstack/5fffd0" alt="Codex"></a></li>
 <li><a href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu" target="_blank" rel="noopener" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/5fffd0" alt="GitHub"></a></li>
 </ul>
@@ -244,16 +293,19 @@ ph&rsquo;nglui mglw&rsquo;nafh Cthulhu R&rsquo;lyeh wgah&rsquo;nagl fhtagn
 </div>
 
 <script>
-fetch('/codex/', { cache: 'no-store' })
+// Codex stats: live chain height from the explorer; fragments-transcribed
+// is (height - 1,000,000) clamped at zero — one Lovecraft fragment lands
+// per coinbase scriptSig from block 1,000,001 onward. Codex-begins block
+// is hard-coded since it's a consensus constant.
+fetch('https://explorer.23skidoo.info/api/getblockcount', { cache: 'no-store' })
   .then(r => r.ok ? r.text() : Promise.reject())
-  .then(html => {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const stats = doc.querySelector('.stats');
-    const manuscript = doc.querySelector('.manuscript');
-    if (stats && manuscript) {
-      const slot = document.getElementById('codex-inline');
-      slot.innerHTML = stats.outerHTML + manuscript.outerHTML;
-    }
+  .then(t => {
+    var h = parseInt(t.trim(), 10);
+    if (!Number.isFinite(h)) return;
+    var hEl = document.getElementById('codex-height');
+    var fEl = document.getElementById('codex-fragments');
+    if (hEl) hEl.textContent = h.toLocaleString();
+    if (fEl) fEl.textContent = Math.max(0, h - 1000000).toLocaleString();
   })
   .catch(() => { /* keep static fallback */ });
 </script>
