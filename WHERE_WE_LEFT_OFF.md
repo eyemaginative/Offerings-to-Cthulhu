@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-05-25)
+# OFF — Where We Left Off  (snapshot 2026-05-29)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -40,6 +40,16 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   chaos btcbob + vps1 btcbob (the pool's backing daemon) wallets + paper backup.
 - Miner crash fixes (chainActive data race TRY_LOCK, dead-chain IBD gate removed):
   also in vps3's miner.cpp post-`9062e1d`.
+- **Anti-reorg checkpoint at h=976000** (commit `0c751a5`, 2026-05-29): one hardcoded
+  entry in `src/checkpoints.cpp::mapCheckpoints` locking block hash
+  `000000cd…7225f95`. Defends against deep reorgs by the >80%-hash attacker camped on
+  the chain. Non-consensus for new blocks. Binary SHA256 = `6bef0f0f…743a3d7`.
+  Deployed: vps1 btcbob (pool backend), vps3 relay. Chaos miner still TBD.
+- **vps3 Linux build: GREEN as of 2026-05-29.** Fresh binary at `src/Offeringsd`,
+  HEAD `0c751a5` (rc2 + checkpoint), builds clean against system Boost 1.74 with
+  `./configure --with-gui=qt5 --without-miniupnpc --disable-tests --disable-hardening`.
+  Earlier "C++17 issues" note was a stale May-25 snapshot; the version-bump-to-2.0.0
+  fixes superseded it.
 - **Web** (vps3, cron): https://23skidoo.info/codex/ (paginated Library e-reader) +
   /awakening/ (live countdown). Note: site currently reveals all 24 book bodies despite 0%
   inscription; user flagged 2026-05-25 that books 1-23 should be sealed pre-inscription,
@@ -59,13 +69,16 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   batch — backport invalidateblock RPC, deploy ritual binary to vps3, read ~/codex/post-fork-backlog.md.
 
 ## OPEN / NEXT
-- Build the canonical binary on vps3 (Linux build is hitting C++17 issues unrelated to
-  recent changes — `leveldbwrapper.h` dynamic exception specs, `net.cpp` miniupnp API,
-  `rpcserver.cpp` filesystem ambiguity). Need to modernize source or pin compiler.
-- Once vps3 builds clean: distribute new binary to chaos + vps1 (pool) so the Codex
-  inscription + Descent verses + OFFSIG signing actually fire at the fork.
-- Push the bundle to GitHub once `gh` auth exists. After today's port, the GitHub push
-  will include the Codex (which was missing from the older bundle).
+- **Deploy checkpoint binary (`0c751a5`, SHA `6bef0f0f…`) to chaos miner.** vps3 +
+  vps1 btcbob are done; chaos is the last remaining node carrying the pre-checkpoint
+  binary (`cd0bfd2-Bokrug`). Build on chaos itself — Debian 13 + Boost 1.83 ABI
+  differs from vps3's Boost 1.74 dynamic links. vps1 endciv (Treasury Key #2 cold)
+  is on a separate rc2 OFFSIG-window deploy track handled by a sibling session.
+- Push commit `0c751a5` (checkpoint) to origin so external operators can build it.
+  Other claude deliberately held off pushing — confirm with user before pushing.
+- Decide whether to cut a tagged release (v2.0.1?) for the checkpoint patch, or
+  fold it into the next rc.
+- Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
 - Re-cut the bundle to include the Codex GUI tab + the ported miner.cpp.
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
