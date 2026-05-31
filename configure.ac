@@ -603,7 +603,11 @@ else
     AC_MSG_RESULT($use_upnp_default)
     AC_DEFINE_UNQUOTED([USE_UPNP],[$upnp_setting],[UPnP support not compiled if undefined, otherwise value (0 or 1) determines default state])
     if test x$TARGET_OS = xwindows; then
-      CPPFLAGS="$CPPFLAGS -DSTATICLIB"
+      dnl miniupnpc headers use __declspec(dllimport) on Windows unless told the
+      dnl library is static. Old miniupnpc keyed this off STATICLIB; >=2.x uses
+      dnl MINIUPNP_STATICLIB (miniupnpc_declspec.h). depends builds it static, so
+      dnl define both or net.cpp gets __imp_* (dllimport) undefined references.
+      CPPFLAGS="$CPPFLAGS -DSTATICLIB -DMINIUPNP_STATICLIB"
     fi
   else
     AC_MSG_RESULT(no)
