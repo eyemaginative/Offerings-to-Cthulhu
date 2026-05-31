@@ -52,8 +52,15 @@ Q_IMPORT_PLUGIN(qtwcodecs)
 Q_IMPORT_PLUGIN(qkrcodecs)
 Q_IMPORT_PLUGIN(qtaccessiblewidgets)
 #else
-// AccessibleFactory plugin merged into platform plugin in Qt 5
+// AccessibleFactory plugin merged into platform plugin in Qt 5.
+// Statically import the per-OS QPA platform plugin so the GUI has a platform
+// to run on; the matching plugin/support libs are added to QT_LIBS in
+// src/m4/bitcoin_qt.m4.
+#if defined(Q_OS_WIN)
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin);
+#elif defined(Q_OS_LINUX)
+Q_IMPORT_PLUGIN(QXcbIntegrationPlugin);
+#endif
 #endif
 #endif
 

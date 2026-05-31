@@ -47,4 +47,9 @@ ac_cv_have_decl_strtof=yes
 # explicitly, otherwise bitcoin-qt is silently dropped.
 with_qt_bindir="$PREFIX/native/bin"
 with_protoc_bindir="$PREFIX/native/bin"
+# Qt static plugins live under $PREFIX/plugins (e.g. plugins/platforms/libqxcb.a);
+# configure.ac adds -L$qt_plugin_path/platforms so the statically-imported xcb
+# platform plugin resolves at link time.
+with_qt_libdir="$PREFIX/lib"
+with_qt_plugindir="$PREFIX/plugins"
 QT_BIN_PATH="$PREFIX/native/bin"
