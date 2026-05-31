@@ -375,7 +375,10 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
         AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
         dnl AccessibleFactory plugin merged into platform plugin in Qt 5; check skipped
         if test x$TARGET_OS == xwindows; then
-          QT_LIBS="-lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5WindowsUIAutomationSupport $QT_LIBS -lqtharfbuzz -lqtpcre2 -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool -luserenv -lsecur32 -lcrypt32 -lbcrypt"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
+          dnl Qt5WindowsUIAutomationSupport is a Qt 5.10+ module; on Qt 5.9.x
+          dnl the UI-automation code is bundled inside the qwindows platform
+          dnl plugin (libqwindows.a), so there is no separate lib to link.
+          QT_LIBS="-lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport $QT_LIBS -lqtharfbuzz -lqtpcre2 -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool -luserenv -lsecur32 -lcrypt32 -lbcrypt"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
         elif test x$TARGET_OS == xdarwin; then
           dnl macOS static Qt5 bundles harfbuzz/pcre2 into separate archives
           dnl that libQt5Gui/libQt5Core depend on; append them (the cocoa
