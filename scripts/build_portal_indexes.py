@@ -161,7 +161,9 @@ def parse_tx(cur: Cursor):
         if prev_vout == 0xFFFFFFFF and prev_txid == b'\x00' * 32:
             is_coinbase = True
         else:
-            spent.append((prev_txid, prev_vout))
+            # NOTE: prev_txid is LE (file-order); utxo dict keys txids as BE.
+            # Reverse here so utxo.pop() matches.
+            spent.append((prev_txid[::-1], prev_vout))
     output_count = cur.varint(max_value=MAX_OUTPUTS)
     vouts = []
     for n in range(output_count):
@@ -170,6 +172,10 @@ def parse_tx(cur: Cursor):
         spk = bytes(cur.read(spk_len))
         vouts.append((value, spk))
     cur.u32()  # locktime
+    # OFF v2+ tx has strTxComment after locktime (non-standard field — see core.h:201)
+    if version >= 2:
+        comment_len = cur.varint(max_value=MAX_SCRIPT)
+        cur.read(comment_len)
     tx_raw = bytes(cur.buf[tx_start:cur.pos])
     txid = hashlib.sha256(hashlib.sha256(tx_raw).digest()).digest()[::-1]  # internal byte order -> txid
     return txid, vouts, is_coinbase, spent

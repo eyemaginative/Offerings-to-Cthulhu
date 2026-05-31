@@ -171,7 +171,7 @@ page = f"""<!DOCTYPE html>
       <li>&#128683; Eight <strong>attacker addresses banned</strong> in consensus forever.</li>
       <li>&#128367;&#65039; One-time <strong>150,000 OFF Restoration Tithe</strong> in the fork block.</li>
       <li>&#9876;&#65039; Coinbase splits <strong>7/8 miner, 1/8 Conclave Treasury</strong>.</li>
-      <li>&#128370;&#65039; <strong>The Reclamation</strong> opens &mdash; open invitation for anyone who mined or held OFF on the original chain. Restitution + Worshipper Recognition (scaled by earliness &amp; depth); no calendar deadline. <a href="/bridge/">How it works &rarr;</a></li>
+      <li>&#128370;&#65039; <strong>The Reclamation</strong> opens &mdash; two-year window for anyone who mined or held OFF on the original chain. Restitution + Worshipper Recognition (scaled by earliness &amp; depth); window closes at T+730 days. <a href="/bridge/">How it works &rarr;</a></li>
       <li>&#127744; Once the canon completes (~33 days past fork)<br>Conclave Pool&#39;s miner enters <strong>Phase B: The Dreaming</strong><br>Pool-solved blocks speak hash-seeded generative R&#39;lyehian; outsider-mined blocks stay silent.</li>
     </ul>
   </div>

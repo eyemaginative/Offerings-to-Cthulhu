@@ -60,12 +60,19 @@ namespace Checkpoints
 		//   that height). Removed 2026-05-25. Required `checkpoints=0` in Offerings.conf as a
 		//   workaround until this rebuild; after rebuilding the daemon, the workaround can be
 		//   dropped from Offerings.conf.
+		( 980000,     uint256("0x000000055ad0b466c8dbbac3d29d9d1f98b1c413566391a41585db4655d0ed79"))
+		// h=980000 is the LWMA-3 + MAX_REORG_DEPTH activation height (see src/pow.h
+		// HARDFORK_LWMA3_MAIN_OFF). Locking this hash ensures every v2.0.1 node enters
+		// the LWMA-3 regime on the same tip — closes the remaining post-checkpoint
+		// fork window where rented-hash attackers stalled some Windows clients on a
+		// parallel chain between h=976001..980000 (drive-by 2026-05-29).
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
-        1780052148, // * UNIX timestamp of last checkpoint block (h=976000, added 2026-05-29 vs rented-hash drive-by)
-        1017523,     // * total number of transactions between genesis and last checkpoint
+        1780236172, // * UNIX timestamp of last checkpoint block (h=980000, added 2026-05-31 — LWMA-3 activation tip lock)
+        1021523,    // * total number of transactions between genesis and last checkpoint
                     //   (the tx=... number in the SetBestChain debug.log lines)
+                    //   (was 1017523 at h=976000; +4000 coinbases through h=980000)
         2880.0      // * estimated number of transactions per day after checkpoint
     };
 
