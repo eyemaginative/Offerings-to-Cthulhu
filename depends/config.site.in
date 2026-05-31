@@ -50,6 +50,11 @@ with_protoc_bindir="$PREFIX/native/bin"
 # Qt static plugins live under $PREFIX/plugins (e.g. plugins/platforms/libqxcb.a);
 # configure.ac adds -L$qt_plugin_path/platforms so the statically-imported xcb
 # platform plugin resolves at link time.
+# The mingw/Windows build uses the non-pkg-config Qt path, which builds
+# QT_INCLUDES from --with-qt-incdir (it adds -I$incdir/QtCore etc.). Without it,
+# <QtPlugin>/<QtCore> are not found and bitcoin-qt is silently dropped. Harmless
+# on Linux, where pkg-config --cflags overrides this.
+with_qt_incdir="$PREFIX/include"
 with_qt_libdir="$PREFIX/lib"
 with_qt_plugindir="$PREFIX/plugins"
 QT_BIN_PATH="$PREFIX/native/bin"
