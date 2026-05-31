@@ -11,7 +11,7 @@ qt_darwin_packages=qt
 qt_mingw32_packages=qt
 
 qt_linux_$(USE_LINUX_STATIC_QT5):=$(qt5_linux_packages)
-qt_linux_:=$(qt46_linux_packages)
+qt_linux_:=$(qt5_linux_packages)
 qt_linux_packages:=$(qt_linux_$(USE_LINUX_STATIC_QT5))
 
 wallet_packages=bdb
