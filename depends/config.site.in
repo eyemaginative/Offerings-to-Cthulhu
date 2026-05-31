@@ -40,5 +40,11 @@ unset PKG_CONFIG_ALLOW_SYSTEM_LIBS
 # Disable system library probing for reproducibility
 ac_cv_have_decl_strtof=yes
 
-# Qt5 paths (set when Qt is built via depends/)
+# Qt5 / protobuf tool paths (set when Qt is built via depends/).
+# configure.ac keys off --with-qt-bindir / --with-protoc-bindir (read from the
+# with_qt_bindir / with_protoc_bindir shell vars). protoc is not a Qt tool, so
+# it has no pkg-config host_bins fallback and must be pointed at native/bin
+# explicitly, otherwise bitcoin-qt is silently dropped.
+with_qt_bindir="$PREFIX/native/bin"
+with_protoc_bindir="$PREFIX/native/bin"
 QT_BIN_PATH="$PREFIX/native/bin"
