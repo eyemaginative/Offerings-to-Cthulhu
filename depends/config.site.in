@@ -20,7 +20,13 @@ ac_default_prefix="$PREFIX"
 export CPPFLAGS="-I$PREFIX/include $CPPFLAGS"
 export LDFLAGS="-L$PREFIX/lib $LDFLAGS"
 
-# Boost: depends/ builds as static, so tell the AX_BOOST macros where it is
+# Boost: depends/ builds as static, so tell the AX_BOOST macros where it is.
+# ax_boost_base.m4 keys off --with-boost / --with-boost-libdir (read from the
+# with_boost / with_boost_libdir shell vars). Setting BOOST_ROOT alone is not
+# enough: without an explicit libdir, BOOST_LDFLAGS stays empty and the tagged
+# library suffix (e.g. -mt-x64) can never be auto-detected.
+with_boost="$PREFIX"
+with_boost_libdir="$PREFIX/lib"
 BOOST_ROOT="$PREFIX"
 BOOST_INCLUDEDIR="$PREFIX/include"
 BOOST_LIBRARYDIR="$PREFIX/lib"
