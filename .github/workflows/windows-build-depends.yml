@@ -23,7 +23,7 @@ on:
 jobs:
   windows-cross:
     name: Cthulhu Offerings — Windows x86_64 (depends/ cross)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 360
 
     steps:
