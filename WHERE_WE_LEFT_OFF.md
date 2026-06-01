@@ -72,12 +72,24 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   the chain. Non-consensus for new blocks. Binary SHA256 = `6bef0f0f…743a3d7`.
   Deployed: vps1 btcbob (pool backend), vps3 relay. Chaos miner still TBD —
   and now must include rc3/rc4 as well, see OPEN/NEXT.
-- **vps3 Linux build: GREEN as of 2026-05-29.** Fresh binary at `src/Offeringsd`,
-  builds clean against system Boost 1.74 with
-  `./configure --with-gui=qt5 --without-miniupnpc --disable-tests --disable-hardening`.
-  (Note: the green build that produced SHA `6bef0f0f…` was HEAD `0c751a5` —
-  pre-rc3. A fresh rc4 build has not yet been hashed/snapshotted here; if you
-  rebuild, record the new SHA before deploying.)
+- **vps3 Linux build: GREEN as of 2026-06-01 at ec14634 (v2.0.1-Bokrug-checkpoint).**
+  Fresh stripped binaries shipped in the v2.0.1 GitHub release as
+  `cthulhu-offerings-linux-x86_64-v2.0.1.tar.gz` (sha `cc5cbda2…`). Internal:
+  Offeringsd `645b1de5…`, Offerings-cli `32b57a98…`, Offerings-qt `e054133f…`.
+  Configure: `--with-gui=qt5 --without-miniupnpc --disable-tests --disable-hardening`
+  + **`CPPFLAGS=-I/home/btcbob/openssl-1.0.2/include -I/home/btcbob/db4/include`,
+  `CXXFLAGS=-fPIC ...`** (the GUI build needs `-fPIC` for Qt5 on this Debian, and
+  configure MUST be re-given the openssl-1.0.2 path or it falls back to system
+  OpenSSL 3 and breaks on bignum.h). See [[offerings-build-recipe]] § GUI build.
+- **v2.0.1 release on GitHub is corrected as of 2026-06-01.** Win64 zip + 3 exes
+  came from the depends/ CI (run `26718849256`, Qt 5.15.16 + posix-threads MinGW).
+  Linux tarball is the vps3 build above. The original 2026-05-31 Win64 upload was
+  a stale Qt 5.7.1 + win32-threads MinGW build whose toolbar buttons were dead
+  on Windows — replaced. See [[feedback-release-win64-from-ci]].
+- **Homepage at https://23skidoo.info/ download buttons updated** (2026-06-01):
+  LINUX GUI → v2.0.1 tarball, WINDOWS GUI → v2.0.1 zip. Lineage line bumped to
+  "v2.0.1-Bokrug-checkpoint (2026, the Conclave)". Backups preserved at
+  `/var/www/23skidoo.info/index.html.bak-20260601-*`.
 - **Web** (vps3, cron): https://23skidoo.info/codex/ (paginated Library e-reader) +
   /awakening/ (live countdown). Note: site currently reveals all 24 book bodies despite 0%
   inscription; user flagged 2026-05-25 that books 1-23 should be sealed pre-inscription,
