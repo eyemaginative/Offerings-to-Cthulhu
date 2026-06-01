@@ -51,9 +51,12 @@ jobs:
             depends/x86_64-w64-mingw32
             depends/work
           # Cache invalidates if any .mk file changes (version pins or build recipes).
-          key: depends-x86_64-w64-mingw32-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile', 'depends/funcs.mk') }}
+          # Distro is part of the key — depends/ builds host-native helpers (ccache, qmake,
+          # protoc) that link against the runner's glibc; a cache built on Noble (glibc 2.38)
+          # won't execute on Jammy (glibc 2.35). Bump the version suffix to invalidate.
+          key: depends-x86_64-w64-mingw32-jammy-v1-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile', 'depends/funcs.mk') }}
           restore-keys: |
-            depends-x86_64-w64-mingw32-
+            depends-x86_64-w64-mingw32-jammy-v1-
 
       - name: Inventory depends/ state
         run: |
