@@ -211,6 +211,10 @@ case $host in
      if test "x$CXXFLAGS_overridden" = "xno"; then
        CXXFLAGS="$CXXFLAGS -w"
      fi
+     # gcc 10+ template instantiation in main.cpp exceeds PE-COFF's 16-bit
+     # section count (~33,772 sections observed). -Wa,-mbig-obj switches the
+     # assembler to the extended bigobj object format. Harmless on smaller TUs.
+     CXXFLAGS="$CXXFLAGS -Wa,-mbig-obj"
      case $host in
        i?86-*) WINDOWS_BITS=32 ;;
        x86_64-*) WINDOWS_BITS=64 ;;
