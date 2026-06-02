@@ -110,10 +110,28 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   they exist in the workflow file only. Proper homes: `-Wa,-mbig-obj` belongs
   in `configure.ac` under `host=*mingw*`, TOUCHINPUT needs a Qt patch to
   unpin runner from Jammy. See [[feedback-off-win64-ci-quirks]].
-- **Homepage at https://23skidoo.info/ download buttons updated** (2026-06-01):
-  LINUX GUI → v2.0.1 tarball, WINDOWS GUI → v2.0.1 zip. Lineage line bumped to
-  "v2.0.1-Bokrug-checkpoint (2026, the Conclave)". Backups preserved at
-  `/var/www/23skidoo.info/index.html.bak-20260601-*`.
+- **Homepage at https://23skidoo.info/ download buttons updated** (2026-06-02):
+  LINUX GUI → `Offerings-qt-v2.0.2-fnu-linux64.tar.gz`, WINDOWS GUI →
+  `Offerings-qt-v2.0.2-fnu-win64.zip`. Lineage line bumped to "v2.0.2 (2026,
+  the Conclave)". Backups at `/var/www/23skidoo.info/index.html.bak-20260601-*`
+  (prior v2.0.1 cut) and `index.html.bak-20260602-005230-v202` (pre-v2.0.2 cut).
+  URLs verified live: both 302 → 200 with correct content-length.
+- **v2.0.2 released on GitHub** (2026-06-02 00:48 UTC,
+  https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.2):
+  - **Win64**: `Offerings-qt-v2.0.2-fnu-win64.zip` (sha256 `e8fe0c1e…`).
+    Cross-compiled via CI run `26790951112` (Jammy + Qt 5.9.8 + posix mingw,
+    cache hit on the new `-jammy-v1-` key). DLL deps: Win32 system libraries
+    only — no `libwinpthread-1.dll`, no `Qt5*.dll`, no `libgcc_s_seh-1.dll`,
+    no `libstdc++-6.dll`. Fully self-contained.
+  - **Linux x86_64**: `Offerings-qt-v2.0.2-fnu-linux64.tar.gz` (sha256
+    `9cb518b5…`). Built natively on vps3 per [[offerings-build-recipe]] GUI
+    incantation (--with-gui=qt5 --without-miniupnpc --disable-tests
+    --disable-hardening, openssl-1.0.2 + db4 CPPFLAGS, -fPIC, -j1).
+  - Both archives use top-level `Offerings-v2.0.2-fnu/` dir per Bitcoin Core
+    convention. Per-binary + per-archive SHA256s in release notes.
+  - 9019x credited as **first external Restoration contributor**, his
+    requested `fnu` handle in filenames, "fnu works for me" quoted, tip
+    address `QZ4wBASgvrHdodYt6CBDqDv3MitAQYnd75` referenced.
 - **Web** (vps3, cron): https://23skidoo.info/codex/ (paginated Library e-reader) +
   /awakening/ (live countdown). Note: site currently reveals all 24 book bodies despite 0%
   inscription; user flagged 2026-05-25 that books 1-23 should be sealed pre-inscription,
@@ -133,11 +151,7 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   batch — backport invalidateblock RPC, deploy ritual binary to vps3, read ~/codex/post-fork-backlog.md.
 
 ## OPEN / NEXT
-- **Cut v2.0.2 release** once 9019x answers the filename-handle question on
-  PR #1 thread (`9019x` / `skifdni` / `fnu` / no handle). depends/ modernization
-  is real — semver minor is right (no consensus code touched). CI artifact at
-  run `26766107340` already proves the build works; v2.0.2 cut will trigger
-  a fresh CI via `tags: [ 'v*' ]` and produce the packaged release.
+- (was: cut v2.0.2 — DONE, see DONE section below)
 - **Move CI workarounds into source** as build-hardening follow-up: port
   `-Wa,-mbig-obj` from CI's CXXFLAGS into `configure.ac` under `host=*mingw*`
   conditional; add a Qt patch fixing the TOUCHINPUT redefinition so we can
