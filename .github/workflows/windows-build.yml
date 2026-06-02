@@ -267,7 +267,11 @@ jobs:
           export CPPFLAGS="-I$HOME/openssl-1.0.2/include $CPPFLAGS"
           export LDFLAGS="-L$HOME/openssl-1.0.2/lib $LDFLAGS"
           export PKG_CONFIG_PATH="$HOME/openssl-1.0.2/lib/pkgconfig:$PKG_CONFIG_PATH"
-          export CXXFLAGS="-std=c++11 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          # -std=gnu++14: C++14 + GNU extensions. Avoids C++17's std::byte which
+          # collides with the Windows API ::byte typedef in rpcndr.h/wtypesbase.h,
+          # surfacing as "reference to 'byte' is ambiguous" on MSYS2's gcc 16+.
+          # Matches the depends/ workflow convention.
+          export CXXFLAGS="-std=gnu++14 -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
           export CFLAGS="-Wno-error -O2 -g"
           ./configure \
             --with-gui=qt5 \
@@ -287,8 +291,10 @@ jobs:
         run: |
           echo "=== verify Makefile CXXFLAGS ==="
           grep "^CXXFLAGS" src/Makefile src/qt/Makefile 2>/dev/null | head -4
-          # Force -std=c++17 explicitly at make time in case configure dropped it
-          export CXXFLAGS="-std=c++17 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
+          # -std=gnu++14 (was c++17): C++17 pulls std::byte which collides with the
+          # Windows API ::byte typedef on MSYS2's gcc 16+. C++14 is what this
+          # Bitcoin-Core-0.10-vintage code targets anyway.
+          export CXXFLAGS="-std=gnu++14 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
           make -j2 CXXFLAGS="$CXXFLAGS"
 
       - name: Strip binaries
