@@ -4,14 +4,23 @@ name: Build Windows wallet (MSYS2 / mingw64)
 # Sidesteps the missing `depends/` system in this fork — uses MSYS2 packages
 # for Boost, OpenSSL, Qt5, protobuf, qrencode, BDB instead.
 #
-# Triggers: every push to main, every PR, and manual workflow_dispatch.
+# STATUS 2026-06-02: this workflow is best-effort. MSYS2's mingw64 toolchain
+# rolls forward aggressively (currently gcc 16+) and the package versions
+# (Qt5, leveldb, OpenSSL) drift faster than this Bitcoin-Core-0.10-vintage
+# tree absorbs. The canonical Win64 build path is `windows-build-depends.yml`
+# (Ubuntu + pinned mingw + depends/ static prefix) — that's what ships in
+# releases. This MSYS2 path is parallel insurance, not authoritative.
+#
+# pull_request trigger disabled to keep transient MSYS2/toolchain breakage
+# from showing as failing checks on otherwise-good PRs. Re-enable if/when
+# this workflow stabilizes against a deterministic MSYS2 baseline.
+#
+# Triggers: manual workflow_dispatch, push to main, and release tag pushes.
 
 on:
   push:
     branches: [ main, master ]
     tags: [ 'v*', 'wallet-*' ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
