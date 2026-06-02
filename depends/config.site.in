@@ -20,7 +20,13 @@ ac_default_prefix="$PREFIX"
 export CPPFLAGS="-I$PREFIX/include $CPPFLAGS"
 export LDFLAGS="-L$PREFIX/lib $LDFLAGS"
 
-# Boost: depends/ builds as static, so tell the AX_BOOST macros where it is
+# Boost: depends/ builds as static, so tell the AX_BOOST macros where it is.
+# ax_boost_base.m4 keys off --with-boost / --with-boost-libdir (read from the
+# with_boost / with_boost_libdir shell vars). Setting BOOST_ROOT alone is not
+# enough: without an explicit libdir, BOOST_LDFLAGS stays empty and the tagged
+# library suffix (e.g. -mt-x64) can never be auto-detected.
+with_boost="$PREFIX"
+with_boost_libdir="$PREFIX/lib"
 BOOST_ROOT="$PREFIX"
 BOOST_INCLUDEDIR="$PREFIX/include"
 BOOST_LIBRARYDIR="$PREFIX/lib"
@@ -34,5 +40,21 @@ unset PKG_CONFIG_ALLOW_SYSTEM_LIBS
 # Disable system library probing for reproducibility
 ac_cv_have_decl_strtof=yes
 
-# Qt5 paths (set when Qt is built via depends/)
+# Qt5 / protobuf tool paths (set when Qt is built via depends/).
+# configure.ac keys off --with-qt-bindir / --with-protoc-bindir (read from the
+# with_qt_bindir / with_protoc_bindir shell vars). protoc is not a Qt tool, so
+# it has no pkg-config host_bins fallback and must be pointed at native/bin
+# explicitly, otherwise bitcoin-qt is silently dropped.
+with_qt_bindir="$PREFIX/native/bin"
+with_protoc_bindir="$PREFIX/native/bin"
+# Qt static plugins live under $PREFIX/plugins (e.g. plugins/platforms/libqxcb.a);
+# configure.ac adds -L$qt_plugin_path/platforms so the statically-imported xcb
+# platform plugin resolves at link time.
+# The mingw/Windows build uses the non-pkg-config Qt path, which builds
+# QT_INCLUDES from --with-qt-incdir (it adds -I$incdir/QtCore etc.). Without it,
+# <QtPlugin>/<QtCore> are not found and bitcoin-qt is silently dropped. Harmless
+# on Linux, where pkg-config --cflags overrides this.
+with_qt_incdir="$PREFIX/include"
+with_qt_libdir="$PREFIX/lib"
+with_qt_plugindir="$PREFIX/plugins"
 QT_BIN_PATH="$PREFIX/native/bin"

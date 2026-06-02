@@ -1,0 +1,120 @@
+--- a/qtbase/src/corelib/tools/qbytearraymatcher.h
++++ b/qtbase/src/corelib/tools/qbytearraymatcher.h
+@@ -42,6 +42,7 @@
+ 
+ #include <QtCore/qbytearray.h>
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ 
+--- a/qtbase/src/corelib/tools/qtimezoneprivate_p.h
++++ b/qtbase/src/corelib/tools/qtimezoneprivate_p.h
+@@ -72,6 +72,7 @@
+ #include <QtCore/private/qjni_p.h>
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ class Q_AUTOTEST_EXPORT QTimeZonePrivate : public QSharedData
+--- a/qtbase/src/corelib/kernel/qdeadlinetimer.cpp
++++ b/qtbase/src/corelib/kernel/qdeadlinetimer.cpp
+@@ -41,6 +41,7 @@
+ #include "qdeadlinetimer_p.h"
+ #include <qpair.h>
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ Q_DECL_CONST_FUNCTION static inline QPair<qint64, qint64> toSecsAndNSecs(qint64 nsecs)
+--- a/qtbase/src/corelib/tools/qdatetime.cpp
++++ b/qtbase/src/corelib/tools/qdatetime.cpp
+@@ -70,6 +70,7 @@
+ #include <private/qcore_mac_p.h>
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ /*****************************************************************************
+--- a/qtbase/src/corelib/tools/qbytearray.cpp
++++ b/qtbase/src/corelib/tools/qbytearray.cpp
+@@ -64,6 +64,7 @@
+ 
+ #define IS_RAW_DATA(d) ((d)->offset != sizeof(QByteArrayData))
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ // Latin 1 case system, used by QByteArray::to{Upper,Lower}() and qstr(n)icmp():
+--- a/qtbase/src/corelib/tools/qstring.cpp
++++ b/qtbase/src/corelib/tools/qstring.cpp
+@@ -99,6 +99,7 @@
+ 
+ #define IS_RAW_DATA(d) ((d)->offset != sizeof(QStringData))
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ /*
+--- a/qtbase/src/corelib/io/qfsfileengine.cpp
++++ b/qtbase/src/corelib/io/qfsfileengine.cpp
+@@ -58,6 +58,7 @@
+ # include <private/qcore_mac_p.h>
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ #ifdef Q_OS_WIN
+--- a/qtbase/src/corelib/tools/qlocale_tools.cpp
++++ b/qtbase/src/corelib/tools/qlocale_tools.cpp
+@@ -68,6 +68,7 @@
+ #   define ULLONG_MAX Q_UINT64_C(0xffffffffffffffff)
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ #include "../../3rdparty/freebsd/strtoull.c"
+--- a/qtbase/src/corelib/tools/qtimezoneprivate_mac.mm
++++ b/qtbase/src/corelib/tools/qtimezoneprivate_mac.mm
+@@ -49,6 +49,7 @@
+ 
+ #include <algorithm>
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ /*
+--- a/qtbase/src/corelib/global/qglobal.cpp
++++ b/qtbase/src/corelib/global/qglobal.cpp
+@@ -119,6 +119,7 @@
+ #  undef qFatal
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ #if !QT_DEPRECATED_SINCE(5, 0)
+--- a/qtbase/src/corelib/io/qfsfileengine_unix.cpp
++++ b/qtbase/src/corelib/io/qfsfileengine_unix.cpp
+@@ -60,6 +60,7 @@
+ # include <private/qcore_mac_p.h>
+ #endif
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ /*!
+--- a/qtbase/src/corelib/global/qfloat16.cpp
++++ b/qtbase/src/corelib/global/qfloat16.cpp
+@@ -39,6 +39,7 @@
+ 
+ #include "qfloat16_p.h"
+ 
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ /*! \headerfile <QFloat16>

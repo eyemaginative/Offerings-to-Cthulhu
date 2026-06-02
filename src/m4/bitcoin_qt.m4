@@ -258,6 +258,33 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
         BITCOIN_QT_FAIL([Qt dependencies not found])
       fi
     ])
+    dnl PKG_CHECK_MODULES sets QT_LIBS from a non-static `pkg-config --libs`,
+    dnl which omits the bundled harfbuzz/pcre2/libpng/zlib archives (they live
+    dnl in Libs.private, only emitted with --static) and the QPA platform plugin
+    dnl (not a pkg-config module at all). For a static Qt5 (the depends build),
+    dnl that leaves libQt5Gui/libQt5Core symbols (hb_*, pcre2_*_16, png_*,
+    dnl uncompress, dl*) unresolved at final link. Detect static Qt5 and, if so,
+    dnl rebuild QT_LIBS from the static deps and explicitly link the xcb
+    dnl platform plugin imported in src/qt/bitcoin.cpp. The plugin/support libs
+    dnl live in $qt_lib_path and $qt_plugin_path/platforms (set via config.site
+    dnl --with-qt-libdir/--with-qt-plugindir); the -L's must precede the -l's
+    dnl for static link resolution. This lib set was verified against the
+    dnl depends-built Qt with a standalone link test.
+    BITCOIN_QT_CHECK([
+      if test x$have_qt == xyes && test x$bitcoin_qt_got_major_vers == x5; then
+        qt_pkgconfig_cppflags_save="$CPPFLAGS"
+        CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
+        _BITCOIN_QT_IS_STATIC
+        CPPFLAGS="$qt_pkgconfig_cppflags_save"
+        if test x$bitcoin_cv_static_qt == xyes; then
+          AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
+          QT_LIBS=`$PKG_CONFIG --libs --static $qt5_modules`
+          if test x$TARGET_OS != xwindows && test x$TARGET_OS != xdarwin; then
+            QT_LIBS="-L$qt_lib_path -L$qt_plugin_path/platforms -lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus -lxcb-static -lfontconfig -lfreetype -lxcb -lX11 -lX11-xcb $QT_LIBS"
+          fi
+        fi
+      fi
+    ])
     BITCOIN_QT_CHECK([
       PKG_CHECK_MODULES([QT_TEST], [${QT_LIB_PREFIX}Test], [QT_TEST_INCLUDES="$QT_TEST_CFLAGS"; have_qt_test=yes], [have_qt_test=no])
       if test x$use_dbus != xno; then
@@ -348,7 +375,27 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
         AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
         dnl AccessibleFactory plugin merged into platform plugin in Qt 5; check skipped
         if test x$TARGET_OS == xwindows; then
-          QT_LIBS="-lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5WindowsUIAutomationSupport $QT_LIBS -lqtharfbuzz -lqtpcre2 -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool -luserenv -lsecur32 -lcrypt32 -lbcrypt"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
+          dnl Qt5WindowsUIAutomationSupport is a Qt 5.10+ module; on Qt 5.9.x
+          dnl the UI-automation code is bundled inside the qwindows platform
+          dnl plugin (libqwindows.a), so there is no separate lib to link.
+          QT_LIBS="-lqwindows -lQt5FontDatabaseSupport -lQt5EventDispatcherSupport -lQt5ThemeSupport -lQt5AccessibilitySupport $QT_LIBS -lqtharfbuzz -lqtpcre2 -lwtsapi32 -luxtheme -ldwmapi -limm32 -loleaut32 -lversion -lnetapi32 -lwinmm -lwinspool -luserenv -lsecur32 -lcrypt32 -lbcrypt"; dnl skip link check; src/qt/bitcoin.cpp Q_IMPORT_PLUGIN does the job
+        elif test x$TARGET_OS == xdarwin; then
+          dnl macOS static Qt5 bundles harfbuzz/pcre2 into separate archives
+          dnl that libQt5Gui/libQt5Core depend on; append them (the cocoa
+          dnl platform plugin is handled via frameworks elsewhere).
+          QT_LIBS="$QT_LIBS -lqtharfbuzz -lqtpcre2"
+        else
+          dnl Linux static Qt5: link the xcb platform plugin (imported in
+          dnl src/qt/bitcoin.cpp via Q_IMPORT_PLUGIN(QXcbIntegrationPlugin))
+          dnl plus its QPA support libs, and the bundled harfbuzz/pcre2/libpng
+          dnl archives that libQt5Gui/libQt5Core depend on. -lqxcb is found via
+          dnl the -L$qt_plugin_path/platforms added above (config.site sets
+          dnl --with-qt-plugindir). pkg-config's QT_LIBS is built manually via
+          dnl AC_CHECK_LIB and omits all of these. Order matters for the static
+          dnl link: plugin/support libs before $QT_LIBS, bundled + system X libs
+          dnl after. This exact set was confirmed with a static link test
+          dnl against the depends-built Qt.
+          QT_LIBS="-lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus $QT_LIBS -lqtharfbuzz -lqtpcre2 -lqtlibpng -lxcb-static -lfontconfig -lfreetype -lxcb -lX11 -lX11-xcb -ldl"
         fi
       fi
     else

@@ -104,6 +104,7 @@ $(host_prefix)/.stamp_$(final_build_id): | $(native_packages) $(packages)
 $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_build_id)
 	$(AT)@mkdir -p $(@D)
 	$(AT)sed -e 's|@HOST@|$(host)|' \
+            -e 's|@STAGING_DIR_HOST@|$(host_prefix)|' \
             -e 's|@CC@|$(toolchain_path)$(host_CC)|' \
             -e 's|@CXX@|$(toolchain_path)$(host_CXX)|' \
             -e 's|@AR@|$(toolchain_path)$(host_AR)|' \
