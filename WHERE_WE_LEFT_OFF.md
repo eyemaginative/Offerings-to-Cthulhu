@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-06-02, post PR #1 merge)
+# OFF — Where We Left Off  (snapshot 2026-06-02, post v2.0.2 / #FNU etching)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -116,6 +116,29 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   the Conclave)". Backups at `/var/www/23skidoo.info/index.html.bak-20260601-*`
   (prior v2.0.1 cut) and `index.html.bak-20260602-005230-v202` (pre-v2.0.2 cut).
   URLs verified live: both 302 → 200 with correct content-length.
+- **`#FNU` etched into OFF block 982,099 coinbase** (2026-06-02 ~01:05 UTC,
+  hash `00000000e381a99280ee36456d1244d60af872c566dc68920e31eaf1748867fc`,
+  coinbase txid `bf553c5bc0dd7271a8d7e01f45bf704f7ebe9c3dfd85a98c824ca15557266598`).
+  First community-recognition coinbase tribute in OFF's history — honors
+  skifdni/9019x for PR #1. (BOB) pool was disabled for ~3 min during the
+  one-shot window to avoid Miningcore cluster-level coinbaseString
+  cross-contamination. Verified via daemon RPC (decoded scriptSig contains
+  `04 23 46 4e 55` = push-4-bytes "#FNU"). See
+  [[reference-miningcore-coinbase-tribute]] for the mechanism + replay
+  recipe, and [[project-off-codex-mechanism]] for how this differs from
+  the upcoming Codex inscription window.
+- **Build hardening — `-Wa,-mbig-obj` ported into `configure.ac`** (commit
+  `2c99dc3`, 2026-06-02): the gcc-10+ COFF section overflow workaround now
+  lives in source under the existing `*mingw*` host case (line ~214), not
+  just in CI workflow CXXFLAGS (cleaned at `d17205d`). Anyone cross-compiling
+  for Windows from source now picks it up automatically. Qt TOUCHINPUT
+  patch for ubuntu-latest unpinning is **deferred** — ubuntu-22.04 runner
+  supported through April 2027, unpin is cosmetic. See
+  [[feedback-off-win64-ci-quirks]] for the full picture.
+- **v2.0.2 = THE #FNU RELEASE**, frozen at `0bce45b`. Post-v2.0.2 build-mechanics
+  commits ride the next real release (likely rc4 cluster-deploy push near
+  block 999,991). DO NOT cut a v2.0.3 for build mechanics alone — v2.0.2's
+  identity as the first-external-contributor milestone is the historical anchor.
 - **v2.0.2 released on GitHub** (2026-06-02 00:48 UTC,
   https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.2):
   - **Win64**: `Offerings-qt-v2.0.2-fnu-win64.zip` (sha256 `e8fe0c1e…`).
