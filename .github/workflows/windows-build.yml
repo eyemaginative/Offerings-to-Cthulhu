@@ -303,8 +303,16 @@ jobs:
           # -std=gnu++14 (was c++17): C++17 pulls std::byte which collides with the
           # Windows API ::byte typedef on MSYS2's gcc 16+. C++14 is what this
           # Bitcoin-Core-0.10-vintage code targets anyway.
+          # NOTE: pass CXXFLAGS via env (export), NOT on the make command line.
+          # leveldb's src/leveldb/Makefile uses `CXXFLAGS += -I. -I./include …`,
+          # and GNU make treats command-line variable assignments as immutable —
+          # `+=` from inside a Makefile silently no-ops against them. That drops
+          # leveldb's own -I. include path, and helpers/memenv/memenv.cc fails
+          # with `fatal error: helpers/memenv/memenv.h: No such file or directory`.
+          # Environment-exported CXXFLAGS doesn't have that override behavior:
+          # leveldb's `+=` appends correctly.
           export CXXFLAGS="-std=gnu++14 -fpermissive -Wno-error -O2 -g -include $HOME/boost_bind_compat.h"
-          make -j2 CXXFLAGS="$CXXFLAGS"
+          make -j2
 
       - name: Strip binaries
         run: strip --strip-all src/Offeringsd.exe src/Offerings-cli.exe src/qt/Offerings-qt.exe
