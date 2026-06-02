@@ -121,7 +121,7 @@ jobs:
           CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
           LDFLAGS="-L${DEPENDS_PREFIX}/lib -L${DEPENDS_PREFIX}/plugins/platforms -L${DEPENDS_PREFIX}/plugins/accessible -L${DEPENDS_PREFIX}/plugins/imageformats -L${DEPENDS_PREFIX}/plugins/styles" \
           PKG_CONFIG_PATH="${DEPENDS_PREFIX}/lib/pkgconfig" \
-          CXXFLAGS="-std=gnu++14 -Wa,-mbig-obj" \
+          CXXFLAGS="-std=gnu++14" \
             ./configure \
               --prefix=/ \
               --host=x86_64-w64-mingw32 \
