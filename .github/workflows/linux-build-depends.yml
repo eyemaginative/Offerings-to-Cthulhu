@@ -1,0 +1,140 @@
+name: Build Linux daemon (depends/ static)
+
+# Canonical Bitcoin Core depends/ build path, native Linux x86_64.
+# depends/ vendors Boost 1.74 / OpenSSL 1.0.2 / BDB 4.8 / miniupnpc 2.2.2
+# from pinned source, so the resulting Offeringsd + Offerings-cli do not
+# depend on the host distro's Boost version.
+#
+# Scope: daemon + cli only (NO_QT=1). Qt5 Linux GUI is a separate workflow.
+#
+# Runner: ubuntu-22.04 (glibc 2.35). Resulting binary requires glibc >= 2.35
+# at runtime — covers Debian 12+, Ubuntu 22.04+, recent Fedora/Arch.
+#
+# Triggers: push to main when this file or depends/ changes, manual dispatch,
+# tag push (attaches to release).
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/linux-build-depends.yml'
+      - 'depends/**'
+      - 'configure.ac'
+      - 'src/**'
+    tags: [ 'v*', 'wallet-*' ]
+  workflow_dispatch:
+
+jobs:
+  linux-daemon:
+    name: Cthulhu Offerings — Linux x86_64 daemon (depends/)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake autoconf pkg-config \
+            bsdmainutils python3 curl ca-certificates faketime bison
+
+      - name: Cache depends/ sources + built artifacts
+        id: cache-depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/sources
+            depends/built
+            depends/x86_64-unknown-linux-gnu
+            depends/work
+          # Distro is part of the key — depends/ builds host-native helpers that
+          # link against the runner's glibc; a cache from a different runner glibc
+          # would fail at depends/-helper exec time. Bump the suffix to invalidate.
+          key: depends-x86_64-unknown-linux-gnu-jammy-v1-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile', 'depends/funcs.mk') }}
+          restore-keys: |
+            depends-x86_64-unknown-linux-gnu-jammy-v1-
+
+      - name: Inventory depends/ state
+        run: |
+          echo "=== depends/ contents ==="
+          ls depends/ 2>&1 | head -30
+          echo
+          echo "=== cache hit? ==="
+          [ -d depends/x86_64-unknown-linux-gnu ] && echo "depends/x86_64-unknown-linux-gnu present (cache hit)" || echo "no cache, will build from scratch"
+
+      - name: Build depends/ for x86_64-unknown-linux-gnu (NO_QT, NO_UPNP)
+        run: |
+          cd depends
+          # NO_QT=1: daemon-only. NO_UPNP=1: matches PR #1 Win path; UPnP not needed for daemon.
+          # First cold run ~30-45 min; cached runs ~2-5 min.
+          make HOST=x86_64-unknown-linux-gnu -j$(nproc) NO_QT=1 NO_UPNP=1 || {
+            echo "=== depends/ build failed — last 80 lines of any build.log ==="
+            find depends/work -name build.log -exec tail -80 {} \; 2>/dev/null | head -200
+            exit 1
+          }
+          echo "=== depends/ output ==="
+          ls x86_64-unknown-linux-gnu/lib/ 2>&1 | head -30
+          ls x86_64-unknown-linux-gnu/include/ 2>&1 | head -10
+
+      - name: autogen + configure
+        run: |
+          ./autogen.sh
+          DEPENDS_PREFIX=$PWD/depends/x86_64-unknown-linux-gnu
+          PATH="${DEPENDS_PREFIX}/native/bin:${PATH}" \
+          CONFIG_SITE=$DEPENDS_PREFIX/share/config.site \
+          CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
+          LDFLAGS="-L${DEPENDS_PREFIX}/lib" \
+          PKG_CONFIG_PATH="${DEPENDS_PREFIX}/lib/pkgconfig" \
+            ./configure \
+              --prefix=/ \
+              --host=x86_64-unknown-linux-gnu \
+              --build=x86_64-pc-linux-gnu \
+              --disable-tests \
+              --disable-bench \
+              --without-miniupnpc \
+              --with-boost=${DEPENDS_PREFIX} \
+              || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
+
+      - name: Pre-build LevelDB (generate build_config.mk)
+        run: |
+          cd src/leveldb
+          ./build_detect_platform build_config.mk ./
+          ls -la build_config.mk
+          head -5 build_config.mk
+
+      - name: make
+        run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
+
+      - name: Verify binaries
+        run: |
+          file src/Offeringsd src/Offerings-cli 2>&1 | head -10
+          ls -la src/Offeringsd src/Offerings-cli 2>&1 | head
+          echo "=== ldd Offeringsd ==="
+          ldd src/Offeringsd 2>&1 | head -30
+          echo "=== Boost symbols (should be 0 — statically linked) ==="
+          ldd src/Offeringsd 2>&1 | grep -c boost || true
+
+      - name: Strip + package
+        run: |
+          strip --strip-all src/Offeringsd src/Offerings-cli
+          mkdir -p dist
+          cp src/Offeringsd dist/Offeringsd
+          cp src/Offerings-cli dist/Offerings-cli
+          cd dist
+          sha256sum Offeringsd Offerings-cli > SHA256SUMS
+          tar czf ../offerings-cthulhu-daemon-linux-x86_64.tar.gz Offeringsd Offerings-cli SHA256SUMS
+          cd ..
+          ls -la offerings-cthulhu-daemon-linux-x86_64.tar.gz dist/SHA256SUMS
+          cat dist/SHA256SUMS
+
+      - name: Upload Linux daemon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cthulhu-offerings-daemon-linux-x86_64
+          path: |
+            offerings-cthulhu-daemon-linux-x86_64.tar.gz
+            dist/SHA256SUMS
+          retention-days: 90
