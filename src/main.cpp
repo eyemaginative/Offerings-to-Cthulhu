@@ -694,7 +694,7 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
 
     if (pblock) {
         // Update the tx's hashBlock
-        hashBlock = pblock->GetHash();
+        hashBlock = pblock->GetHash(true);
 
         // Locate the transaction
         for (nIndex = 0; nIndex < (int)pblock->vtx.size(); nIndex++)
@@ -1145,7 +1145,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
     }
 
     // Check the header
-    if (!CheckProofOfWork(block.GetHash(), block.nBits))
+    if (!CheckProofOfWork(block.GetHash(true), block.nBits))
         return error("ReadBlockFromDisk : Errors in block header");
 
     return true;
@@ -1155,7 +1155,7 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
 {
     if (!ReadBlockFromDisk(block, pindex->GetBlockPos()))
         return false;
-    if (block.GetHash() != pindex->GetBlockHash())
+    if (block.GetHash(true) != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*) : GetHash() doesn't match index");
     return true;
 }
@@ -2565,7 +2565,7 @@ bool ActivateBestChain(CValidationState &state) {
 bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos)
 {
     // Check for duplicate
-    uint256 hash = block.GetHash();
+    uint256 hash = block.GetHash(true);
     if (mapBlockIndex.count(hash))
         return state.Invalid(error("AddToBlockIndex() : %s already exists", hash.ToString()), 0, "duplicate");
 
@@ -2726,7 +2726,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                          REJECT_INVALID, "bad-blk-length");
 
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
+    if (fCheckPOW && !CheckProofOfWork(block.GetHash(true), block.nBits))
         return state.DoS(50, error("CheckBlock() : proof of work failed"),
                          REJECT_INVALID, "high-hash");
 
@@ -2785,7 +2785,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
 {
     AssertLockHeld(cs_main);
     // Check for duplicate
-    uint256 hash = block.GetHash();
+    uint256 hash = block.GetHash(true);
     if (mapBlockIndex.count(hash))
         return state.Invalid(error("AcceptBlock() : block already in mapBlockIndex"), 0, "duplicate");
 
@@ -2931,7 +2931,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     AssertLockHeld(cs_main);
 
     // Check for duplicate
-    uint256 hash = pblock->GetHash();
+    uint256 hash = pblock->GetHash(true);
     if (mapBlockIndex.count(hash))
         return state.Invalid(error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString()), 0, "duplicate");
     if (mapOrphanBlocks.count(hash))
