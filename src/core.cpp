@@ -213,9 +213,24 @@ uint64_t CTxOutCompressor::DecompressAmount(uint64_t x)
     return n;
 }
 
-uint256 CBlockHeader::GetHash() const
+uint256 CBlockHeader::ComputeHash() const
 {
     return Hash9(BEGIN(nVersion), END(nNonce));
+}
+
+uint256 CBlockHeader::GetHash(bool use_cache) const
+{
+    if (use_cache)
+    {
+        if (m_hash_cache != 0)
+            return m_hash_cache;
+
+        m_hash_cache = ComputeHash();
+
+        return m_hash_cache;
+    }
+
+    return ComputeHash();
 }
 
 uint256 CBlock::BuildMerkleTree() const

@@ -382,6 +382,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        m_hash_cache = 0;
     }
 
     bool IsNull() const
@@ -389,12 +390,21 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash() const;
+    // The block hash cache field prevents repeated computations of the block's
+    // hash, which is the expensive Hash9 proof-of-work chain in this codebase.
+    // use_cache defaults to false to discourage use of the cache except in
+    // carefully chosen single-threaded scenarios where the header is final.
+    uint256 GetHash(bool use_cache = false) const;
 
     int64_t GetBlockTime() const
     {
         return (int64_t)nTime;
     }
+
+private:
+    mutable uint256 m_hash_cache;
+
+    uint256 ComputeHash() const;
 };
 
 
