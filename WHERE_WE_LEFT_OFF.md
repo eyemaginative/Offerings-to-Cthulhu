@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-05-29, rc4)
+# OFF — Where We Left Off  (snapshot 2026-06-02, post PR #1 merge)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -86,6 +86,30 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   Linux tarball is the vps3 build above. The original 2026-05-31 Win64 upload was
   a stale Qt 5.7.1 + win32-threads MinGW build whose toolbar buttons were dead
   on Windows — replaced. See [[feedback-release-win64-from-ci]].
+- **PR #1 from 9019x merged to main** (merge commit `1979b59`, 2026-06-02):
+  *"Modernize depends build system"* — first external Restoration contributor's
+  work landed. Scope: depends/ tree (Qt **downgraded** 5.15.16 → 5.9.8 — "last
+  easy Qt5" without source modernization; miniupnpc 1.9 → 2.2.2; fontconfig
+  2.11.1 → 2.12.1; freetype 2.5.3 → 2.7.1; protobuf 2.5.0 → 2.6.1; fanquake-era
+  Qt patches + his own gcc-10 `<limits>` patch broadened to 12 headers after
+  review). Plus a 2-line `configure.ac` fix adding `-DMINIUPNP_STATICLIB`
+  alongside `-DSTATICLIB` for static miniupnpc on Windows. Plus one src adapter
+  for the new miniupnpc 2.x API. 19 atomic commits. Identity: **skifdni** (BCT)
+  ≡ **9019x** (GitHub) via shared OFF tip address `QZ4wBASgvrHdodYt6CBDqDv3MitAQYnd75`.
+  His NACK on switching to `-lwinpthread` was vindicated empirically — the green
+  Win64 binaries link 100% static with only Win32 system DLLs, no
+  `libwinpthread-1.dll` anywhere. See [[project-off-contributor-skifdni]].
+- **CI build-hardening landed on main** (commits `d795cfd` + `b75b6b7` +
+  `ecfc27a`, 2026-06-01/02): pinned Win64 cross-compile runner to
+  `ubuntu-22.04` (Noble's mingw-w64-13 hits TOUCHINPUT redefinition with Qt
+  5.9.8); added `-Wa,-mbig-obj` to CXXFLAGS (gcc-10+ template instantiation in
+  main.cpp blows past COFF's 16-bit section count, 33,772 sections on this
+  build); scoped depends/ cache key by distro (`-jammy-v1-`) so a Noble-built
+  ccache binary doesn't poison a Jammy runner via glibc-2.38-vs-2.35
+  mismatch. These are OUR infrastructure changes, not part of PR #1 —
+  they exist in the workflow file only. Proper homes: `-Wa,-mbig-obj` belongs
+  in `configure.ac` under `host=*mingw*`, TOUCHINPUT needs a Qt patch to
+  unpin runner from Jammy. See [[feedback-off-win64-ci-quirks]].
 - **Homepage at https://23skidoo.info/ download buttons updated** (2026-06-01):
   LINUX GUI → v2.0.1 tarball, WINDOWS GUI → v2.0.1 zip. Lineage line bumped to
   "v2.0.1-Bokrug-checkpoint (2026, the Conclave)". Backups preserved at
@@ -109,6 +133,17 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   batch — backport invalidateblock RPC, deploy ritual binary to vps3, read ~/codex/post-fork-backlog.md.
 
 ## OPEN / NEXT
+- **Cut v2.0.2 release** once 9019x answers the filename-handle question on
+  PR #1 thread (`9019x` / `skifdni` / `fnu` / no handle). depends/ modernization
+  is real — semver minor is right (no consensus code touched). CI artifact at
+  run `26766107340` already proves the build works; v2.0.2 cut will trigger
+  a fresh CI via `tags: [ 'v*' ]` and produce the packaged release.
+- **Move CI workarounds into source** as build-hardening follow-up: port
+  `-Wa,-mbig-obj` from CI's CXXFLAGS into `configure.ac` under `host=*mingw*`
+  conditional; add a Qt patch fixing the TOUCHINPUT redefinition so we can
+  unpin the runner from `ubuntu-22.04` back to `ubuntu-latest`. Not blocking
+  v2.0.2 — purely about portability for outside contributors building on
+  non-Jammy/non-Focal distros.
 - **Deploy rc4 binary to the cluster** — now urgent because of the rc3 wire
   break. rc2 binaries reject rc3-signed blocks. Every node that will be online
   at block 999,991 must be on rc4 (or rc3 — same wire) before then. Affected:
@@ -143,7 +178,8 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Auto-memory is per-box/per-cwd — it does NOT sync across chaos/vps3. This file is the
   cross-machine source of truth. Multi-Claude coordination historically via handoff files at
   https://23skidoo.info/handoff-<uuid>.md.
-- **Concurrent Claude on chaos** is working on `.github/workflows/windows-build-depends.yml` +
-  `depends/**` (Windows Qt5 cross-compile via GitHub Actions). Stay out of those paths.
+- Note: the prior `.github/workflows/windows-build-depends.yml` + `depends/**` work
+  is complete as of 2026-06-02 (PR #1 merged, three CI-hardening commits landed).
+  No active concurrent session on those paths. Future edits welcome.
 - **The OFF Reclamation portal** is live at https://23skidoo.info/bridge/ (Phase 1, FastAPI on
   vps3, indexes at /var/lib/bridge-portal/). See `[[project-off-bridge-portal-live]]` memory.
