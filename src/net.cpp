@@ -345,57 +345,42 @@ bool GetMyExternalIP2(const CService& addrConnect, const char* pszGet, const cha
 
 bool GetMyExternalIP(CNetAddr& ipRet)
 {
-    CService addrConnect;
-    const char* pszGet;
-    const char* pszKeyword;
+    // A modern, generic User-Agent. Some hosts reject very old or empty
+    // agents, so we present a current browser string.
+    static const char* pszUserAgent =
+        "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
 
-    for (int nLookup = 0; nLookup <= 1; nLookup++)
-    for (int nHost = 1; nHost <= 2; nHost++)
+    // Simple HTTP services that return the caller's IP as a plain-text body.
+    // We resolve each by DNS at call time rather than hardcoding an address,
+    // so we never connect to a stale IP. pszKeyword is the text preceding the
+    // address in the response, or NULL when the body is just the IP.
+    static const struct {
+        const char* pszHost;
+        const char* pszPath;
+        const char* pszKeyword;
+    } hosts[] = {
+        { "checkip.amazonaws.com", "/", NULL },
+        { "api.ipify.org",         "/", NULL },
+        { "icanhazip.com",         "/", NULL },
+    };
+
+    for (unsigned int nHost = 0; nHost < ARRAYLEN(hosts); nHost++)
     {
-        // We should be phasing out our use of sites like these. If we need
-        // replacements, we should ask for volunteers to put this simple
-        // php file on their web server that prints the client IP:
-        //  <?php echo $_SERVER["REMOTE_ADDR"]; ?>
-        if (nHost == 1)
-        {
-            addrConnect = CService("91.198.22.70", 80); // checkip.dyndns.org
+        // Always resolve by DNS so we pick up the service's current address.
+        CService addrConnect(hosts[nHost].pszHost, 80, true);
+        if (!addrConnect.IsValid())
+            continue;
 
-            if (nLookup == 1)
-            {
-                CService addrIP("checkip.dyndns.org", 80, true);
-                if (addrIP.IsValid())
-                    addrConnect = addrIP;
-            }
+        // HTTP/1.0 keeps the response simple (no chunked transfer-encoding),
+        // which our minimal line-based parser in GetMyExternalIP2 relies on.
+        string strGet = string("GET ") + hosts[nHost].pszPath + " HTTP/1.0\r\n"
+                      + "Host: " + hosts[nHost].pszHost + "\r\n"
+                      + "User-Agent: " + pszUserAgent + "\r\n"
+                      + "Accept: text/plain\r\n"
+                      + "Connection: close\r\n"
+                      + "\r\n";
 
-            pszGet = "GET / HTTP/1.1\r\n"
-                     "Host: checkip.dyndns.org\r\n"
-                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
-                     "Connection: close\r\n"
-                     "\r\n";
-
-            pszKeyword = "Address:";
-        }
-        else if (nHost == 2)
-        {
-            addrConnect = CService("74.208.43.192", 80); // www.showmyip.com
-
-            if (nLookup == 1)
-            {
-                CService addrIP("www.showmyip.com", 80, true);
-                if (addrIP.IsValid())
-                    addrConnect = addrIP;
-            }
-
-            pszGet = "GET /simple/ HTTP/1.1\r\n"
-                     "Host: www.showmyip.com\r\n"
-                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
-                     "Connection: close\r\n"
-                     "\r\n";
-
-            pszKeyword = NULL; // Returns just IP address
-        }
-
-        if (GetMyExternalIP2(addrConnect, pszGet, pszKeyword, ipRet))
+        if (GetMyExternalIP2(addrConnect, strGet.c_str(), hosts[nHost].pszKeyword, ipRet))
             return true;
     }
 
