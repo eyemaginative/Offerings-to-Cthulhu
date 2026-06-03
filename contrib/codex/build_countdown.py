@@ -164,6 +164,13 @@ page = f"""<!DOCTYPE html>
     <div class="cell"><b>{bpm:.2f}</b><span>blocks / min</span></div>
   </div>
 
+  <div class="rules" style="border-left:3px solid var(--accent);">
+    <div class="eyebrow" style="margin-bottom:.6em">A notice to independent miners</div>
+    <p style="margin:.4em 0;">From block <strong style="color:var(--accent);">999,991</strong> through block <strong style="color:var(--accent);">1,050,666</strong> &mdash; about <strong>35 days</strong>, 50,676 blocks &mdash; only blocks signed by one of the three Conclave keys are accepted. Unsigned blocks are rejected as <em>bad-conclave-sig</em>.</p>
+    <p style="margin:.4em 0;">If you are mining Offerings outside the Conclave pool, please point your hashrate elsewhere for the duration of the window. The Descent and the Codex of the Drowned must be inscribed in an unbroken sequence. After block <strong>1,050,667</strong> mining is permissionless again, and you are welcome to return.</p>
+    <p style="margin:.4em 0; color:var(--dim); font-style:italic;">The Sleeper turns. The Reading must not be broken.</p>
+  </div>
+
   <div class="rules">
     <div class="eyebrow" style="margin-bottom:.6em">What activates at the fork</div>
     <ul>
