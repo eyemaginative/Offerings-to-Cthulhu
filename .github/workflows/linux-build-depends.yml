@@ -24,6 +24,9 @@ on:
     tags: [ 'v*', 'wallet-*' ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   linux-daemon:
     name: Cthulhu Offerings — Linux x86_64 daemon (depends/)
