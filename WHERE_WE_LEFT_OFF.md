@@ -253,15 +253,22 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
   (per user 2026-05-25); Proem stays open as Conclave invocation.
-- **Issue #5 open — retire `ThreadGetMyExternalIP` entirely** (filed 2026-06-03,
-  https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/5): mirror upstream
-  `bitcoin/bitcoin#7028`. Three-edit plan: add `LOCAL_PEER` score tier in `src/net.h`,
-  swap `SeenLocal(addrMe)` → `AddLocal(addrMe, LOCAL_PEER)` at `src/main.cpp:3898`,
-  delete `GetMyExternalIP{,2}` + `ThreadGetMyExternalIP` + the thread spawn at
-  `src/net.cpp:1711`. Removes cleartext-HTTP privacy footprint and the MITM-can-poison-
-  `AddLocal` surface that PR #4 inherently leaves in place. Tradeoff: outbound-only
-  NAT'd nodes never learn their external IP (acceptable — unreachable anyway). Offered
-  to skifdni as their next contribution; pick up otherwise. Not blocking any release.
+- **Issues #7 + #5 open — split upstream-style external-IP cleanup into two halves**
+  (rescoped 2026-06-03, originally one issue #5):
+  - **#7 (prerequisite, 2-line):** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/7
+    *"net: capture peer addrMe votes via AddLocal(LOCAL_PEER) instead of SeenLocal."*
+    Add `LOCAL_PEER` tier in `src/net.h`; swap `SeenLocal(addrMe)` → `AddLocal(addrMe, LOCAL_PEER)`
+    at `src/main.cpp:3898`. Strictly an improvement — today every inbound peer's `addrMe`
+    vote is silently discarded because `SeenLocal` can only increment existing entries,
+    not create them. No code removed. Friendliest possible first contribution.
+  - **#5 (follow-up, depends on #7):** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/5
+    *"net: retire ThreadGetMyExternalIP + HTTP path (after #7 lands)."* Rescoped to
+    deletion-only after #7. Removes `GetMyExternalIP{,2}` + `ThreadGetMyExternalIP` + the
+    thread spawn at `src/net.cpp:1711`. UPnP + `LOCAL_IF` paths untouched. `LOCAL_HTTP`
+    enum slot left in `src/net.h` to avoid reshuffling on-disk peers.dat compat. Mirror
+    upstream `bitcoin/bitcoin#7028`. Cluster impact ~zero either way (we all use
+    `-externalip=`). Not blocking any release. Both offered to skifdni as next
+    contributions; pick up otherwise.
 - **Issue #6 open — rolling checkpoints, Phase 1 self-rolling persistent** (filed
   2026-06-03, https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/6):
   post-Codex-window finality guard. Activates `HARDFORK_ROLLING_CKPT_MAIN_OFF=1,055,555`
