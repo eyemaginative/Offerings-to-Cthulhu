@@ -166,8 +166,15 @@ public:
         // (Changed in v2.0.0-rc2 from previous bounds [1000000 .. 1057329].)
         nSignedWindowStart = 999991;
         nOpenMiningHeight  = 1050666;
+        // Conclave keys — any one valid signature lets a block pass CheckConclaveSignature.
+        // Three independent signers added 2026-06-03 for redundancy during the
+        // Codex window; loss of any two still permits the third to keep the chain alive.
         vConclaveKeys.push_back(ParseHex(
-            "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // chaos
+            "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // chaos (primary)
+        vConclaveKeys.push_back(ParseHex(
+            "027d7a1692dfb255925299a6114c3cf4a764aad7360548c60a2348a1d03abd4907")); // vps1 (pool box, addr QjiVMmRRZjLNmS3c4xMAS61UmpVTp1Dsfb)
+        vConclaveKeys.push_back(ParseHex(
+            "02a1c992ed9b6dc8ed3646cedc09b6075b13bfc957bb3bc0adf77c50c7e4193dfc")); // vps3 (seed mirror, addr QUfm18M9kzqzFuTmWDf6pPJsm8nEomshDh)
 
         // Convert the pnSeeds array into usable address objects.
         for (unsigned int i = 0; i < ARRAYLEN(pnSeed); i++)
