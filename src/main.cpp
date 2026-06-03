@@ -2799,8 +2799,9 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
 
-        // Check proof of work
-        if (block.nBits != GetNextWorkRequired(pindexPrev, &block))
+        // Check proof of work — relaxed for emergency-difficulty blocks (see pow.h)
+        if (block.nBits != GetNextWorkRequired(pindexPrev, &block) &&
+            !IsEmergencyDifficultyBlock(block, pindexPrev))
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"),
                              REJECT_INVALID, "bad-diffbits");
 

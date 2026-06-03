@@ -105,3 +105,41 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast,
 
     return GetNextWorkRequired_Legacy(pindexLast, pblock);
 }
+
+
+int EmergencyDiffForkHeight()
+{
+    return TestNet() ? HARDFORK_EMERGENCY_DIFF_TESTNET_OFF
+                                               : HARDFORK_EMERGENCY_DIFF_MAIN_OFF;
+}
+
+bool IsEmergencyDifficultyBlock(const CBlockHeader& block, const CBlockIndex* pindexPrev)
+{
+    if (pindexPrev == NULL)
+        return false;
+
+    const int64_t nHeight = pindexPrev->nHeight + 1;
+
+    // (a) Activation gate.
+    if (nHeight < EmergencyDiffForkHeight())
+        return false;
+
+    // (b) Hard-skip the Conclave signed-mining window. Descent + Codex blocks
+    // stay pool-only even under hashrate stall — the chain would rather wait
+    // than let an outsider land a min-diff ceremony block.
+    if (nHeight >= Params().SignedWindowStart() && nHeight <= Params().OpenMiningHeight())
+        return false;
+
+    // (c) Strict-greater gap. Equality at exactly 1h is not enough.
+    const int64_t gap = (int64_t)block.nTime - (int64_t)pindexPrev->nTime;
+    if (gap <= EMERGENCY_DIFFICULTY_GAP)
+        return false;
+
+    // (d) Min-difficulty only. Better-than-powLimit must publish at that target.
+    CBigNum bnTarget;
+    bnTarget.SetCompact(block.nBits);
+    if (bnTarget != Params().ProofOfWorkLimit())
+        return false;
+
+    return true;
+}
