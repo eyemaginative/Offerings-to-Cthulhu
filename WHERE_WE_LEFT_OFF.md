@@ -284,14 +284,11 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 ## Known-bad releases (don't troubleshoot, don't re-cut just for these)
 - **v2.0.4-Triune Windows + Linux binaries on GitHub release page** show
   `v2.0.4.0-<sha>-Bokrug` in the GUI About box. `CLIENT_VERSION_SUFFIX` in
-  `src/version.cpp:15` was still `"-Bokrug"` at tag time. Fixed in source at commit
-  `d2315b7` (2026-06-03). **Decision: don't re-cut v2.0.4** — the next real release
-  (v2.0.5 or whenever the next consensus/feature payload lands) inherits the
-  corrected suffix automatically. Same release also has the old tar.gz packaging;
-  CI was rebuilt to produce `Offerings-<tag>-win64.zip` with a top-level versioned
-  dir (commit `f4fe40e`, 2026-06-03), which likewise lands at next tag. If a user
-  reports the "-Bokrug" string in v2.0.4, point them at next release instead of
-  asking them to rebuild.
+  `src/version.cpp:15` was still `"-Bokrug"` at tag time. Same release also shipped
+  as `.tar.gz` with no top-level dir and no tag in the filename. Both fixed and
+  superseded by **v2.0.5-Triune** (tagged `1384c3a`, 2026-06-03) — a packaging-only
+  re-cut, no consensus content. Anyone on v2.0.4-Triune is functionally fine; the
+  upgrade is cosmetic. v2.0.4 release page kept as historical record.
 
 ## Milestones
 - LWMA-3 activates: **980,000** (rc4)  | fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666  | rolling checkpoints: 1,055,555 (issue #6)
