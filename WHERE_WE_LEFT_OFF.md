@@ -262,9 +262,20 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   `AddLocal` surface that PR #4 inherently leaves in place. Tradeoff: outbound-only
   NAT'd nodes never learn their external IP (acceptable — unreachable anyway). Offered
   to skifdni as their next contribution; pick up otherwise. Not blocking any release.
+- **Issue #6 open — rolling checkpoints, Phase 1 self-rolling persistent** (filed
+  2026-06-03, https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/6):
+  post-Codex-window finality guard. Activates `HARDFORK_ROLLING_CKPT_MAIN_OFF=1,055,555`
+  (one past OFFSIG window end). Auto-locks ancestor at `tip - ROLLING_DEPTH` into
+  runtime `mapCheckpoints` + appends to `<datadir>/rolling_checkpoints.dat`.
+  `ROLLING_DEPTH=1023` (2^10-1, carries the 23-skidoo motif; ~17h at 60s). Defaults on,
+  `-rollingcheckpoints=0` + `clearrollingcheckpoints <height>` RPC as escape hatches.
+  Static h=976000 entry untouched. Phase 2 (Conclave-signed P2P override, mirroring
+  Bitcoin's old `checkpoint` message) deferred to a separate follow-up. **Implement
+  after the monster begins to speak** — i.e., post-fork, post-OFFSIG. Not blocking
+  v2.0.x cluster deploy.
 
 ## Milestones
-- LWMA-3 activates: **980,000** (rc4)  | fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666
+- LWMA-3 activates: **980,000** (rc4)  | fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666  | rolling checkpoints: 1,055,555 (issue #6)
 
 ## Notes
 - Auto-memory is per-box/per-cwd — it does NOT sync across chaos/vps3. This file is the
