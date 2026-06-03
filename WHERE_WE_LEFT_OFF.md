@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-06-03, post explorer-txindex + portable-linux-daemon)
+# OFF — Where We Left Off  (snapshot 2026-06-03, post explorer-txindex + portable-linux-daemon + PR #4 GetMyExternalIP fix)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -195,6 +195,18 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   - QaREY balance after fix: **3399.4481 OFF** (right in the user's predicted range).
     Discord follow-up posted to channel `1509892777876390030`. See
     [[project-off-explorer-txindex-secondary]] for setup recipe + wire diagram.
+- **PR #4 from 9019x merged to main** (squash commit `1439f4f`, 2026-06-03):
+  *"net: Fix broken GetMyExternalIP"* — second external contribution from skifdni.
+  Replaces dead hardcoded IPs (`checkip.dyndns.org` 91.198.22.70, `www.showmyip.com`
+  74.208.43.192) with three modern services resolved by DNS at call time:
+  `checkip.amazonaws.com`, `api.ipify.org`, `icanhazip.com`. Switches request to
+  HTTP/1.0 so chunked transfer-encoding never reaches `GetMyExternalIP2`'s line-based
+  parser. Modernizes User-Agent, collapses the two-branch loop into a table-driven
+  sweep. 33+/48-, one file (`src/net.cpp`). Comment on PR thanks skifdni, flags the
+  cleartext-HTTP privacy footprint (AWS/Cloudflare/ipify pings on startup) for the
+  record, and points to issue #5 as the architectural follow-up. Pulled into the
+  vps3 canonical tree (`git pull --ff-only`, 2026-06-03). See
+  [[project-off-contributor-skifdni]].
 
 ## RUNNING UNATTENDED (survives terminals/reboots)
 - `offeringsd` systemd service on chaos (miner) + vps3 (relay) + vps1 (pool wallet), all enabled-on-boot.
@@ -241,6 +253,15 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
   (per user 2026-05-25); Proem stays open as Conclave invocation.
+- **Issue #5 open — retire `ThreadGetMyExternalIP` entirely** (filed 2026-06-03,
+  https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/5): mirror upstream
+  `bitcoin/bitcoin#7028`. Three-edit plan: add `LOCAL_PEER` score tier in `src/net.h`,
+  swap `SeenLocal(addrMe)` → `AddLocal(addrMe, LOCAL_PEER)` at `src/main.cpp:3898`,
+  delete `GetMyExternalIP{,2}` + `ThreadGetMyExternalIP` + the thread spawn at
+  `src/net.cpp:1711`. Removes cleartext-HTTP privacy footprint and the MITM-can-poison-
+  `AddLocal` surface that PR #4 inherently leaves in place. Tradeoff: outbound-only
+  NAT'd nodes never learn their external IP (acceptable — unreachable anyway). Offered
+  to skifdni as their next contribution; pick up otherwise. Not blocking any release.
 
 ## Milestones
 - LWMA-3 activates: **980,000** (rc4)  | fork: 1,000,000  | codex starts: 1,000,001  | Descent: 999,991-1,000,000  | 1st Ritual finale: 1,141,666 (2026-09-22)  | OFFSIG window: 999,991-1,050,666
