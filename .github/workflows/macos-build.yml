@@ -21,7 +21,7 @@ on:
 jobs:
   macos-native:
     name: Cthulhu Offerings — macOS x86_64 (native build)
-    runs-on: macos-13
+    runs-on: macos-13-large
     timeout-minutes: 180
 
     steps:
