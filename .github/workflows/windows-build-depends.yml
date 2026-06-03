@@ -170,15 +170,33 @@ jobs:
           [ -f "$BIN_C" ] || BIN_C=src/Offerings-cli
           [ -f "$BIN_Q" ] || BIN_Q=src/qt/Offerings-qt
           x86_64-w64-mingw32-strip --strip-all "$BIN_D" "$BIN_C" "$BIN_Q"
-          mkdir -p dist
-          cp "$BIN_D" dist/Offeringsd.exe
-          cp "$BIN_C" dist/Offerings-cli.exe
-          cp "$BIN_Q" dist/Offerings-qt.exe
-          cd dist
-          sha256sum *.exe > SHA256SUMS-windows.txt
-          tar czf ../offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz *.exe SHA256SUMS-windows.txt
-          cd ..
-          ls -la offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz dist/SHA256SUMS-windows.txt
+
+          # Derive a versioned release name. Tag builds get "Offerings-<tag>-win64",
+          # non-tag builds get "Offerings-snapshot-<short-sha>-win64". The archive
+          # extracts to a top-level dir of the same name so users land in a clean
+          # versioned folder (matches the dobbscoin-vX.Y.Z-win64/ convention).
+          if [ -n "${GITHUB_REF_NAME:-}" ] && [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            RELEASE_NAME="Offerings-${GITHUB_REF_NAME}-win64"
+          else
+            RELEASE_NAME="Offerings-snapshot-${GITHUB_SHA::7}-win64"
+          fi
+          echo "RELEASE_NAME=$RELEASE_NAME" >> "$GITHUB_ENV"
+
+          mkdir -p "dist/$RELEASE_NAME"
+          cp "$BIN_D" "dist/$RELEASE_NAME/Offeringsd.exe"
+          cp "$BIN_C" "dist/$RELEASE_NAME/Offerings-cli.exe"
+          cp "$BIN_Q" "dist/$RELEASE_NAME/Offerings-qt.exe"
+          ( cd "dist/$RELEASE_NAME" && sha256sum *.exe > SHA256SUMS-windows.txt )
+
+          # Windows users want .zip (native), not .tar.gz. apt installs `zip` from
+          # the runner's archive group; the ubuntu-22.04 image has it preinstalled.
+          ( cd dist && zip -r "../${RELEASE_NAME}.zip" "$RELEASE_NAME" )
+
+          # Side artifact for explorers / pool ops who want bare SHA256SUMS without
+          # unpacking the zip.
+          cp "dist/$RELEASE_NAME/SHA256SUMS-windows.txt" dist/SHA256SUMS-windows.txt
+
+          ls -la "${RELEASE_NAME}.zip" dist/SHA256SUMS-windows.txt
           cat dist/SHA256SUMS-windows.txt
 
       - name: Upload Windows Qt5 artifact
@@ -186,7 +204,7 @@ jobs:
         with:
           name: cthulhu-offerings-windows-x86_64-qt5
           path: |
-            offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
+            ${{ env.RELEASE_NAME }}.zip
             dist/SHA256SUMS-windows.txt
           retention-days: 90
 
@@ -195,7 +213,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
+            ${{ env.RELEASE_NAME }}.zip
             dist/SHA256SUMS-windows.txt
           draft: true
         env:

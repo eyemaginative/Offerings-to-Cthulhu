@@ -123,14 +123,27 @@ jobs:
       - name: Strip + package
         run: |
           strip --strip-all src/Offeringsd src/Offerings-cli
-          mkdir -p dist
-          cp src/Offeringsd dist/Offeringsd
-          cp src/Offerings-cli dist/Offerings-cli
-          cd dist
-          sha256sum Offeringsd Offerings-cli > SHA256SUMS-linux.txt
-          tar czf ../offerings-cthulhu-daemon-linux-x86_64.tar.gz Offeringsd Offerings-cli SHA256SUMS-linux.txt
-          cd ..
-          ls -la offerings-cthulhu-daemon-linux-x86_64.tar.gz dist/SHA256SUMS-linux.txt
+
+          # Match the windows workflow's versioned-dir convention. Tag builds get
+          # "Offerings-daemon-<tag>-linux64", non-tag builds get a snapshot name.
+          # tar.gz is kept for Linux (native), unlike Windows which uses zip.
+          if [ -n "${GITHUB_REF_NAME:-}" ] && [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            RELEASE_NAME="Offerings-daemon-${GITHUB_REF_NAME}-linux64"
+          else
+            RELEASE_NAME="Offerings-daemon-snapshot-${GITHUB_SHA::7}-linux64"
+          fi
+          echo "RELEASE_NAME=$RELEASE_NAME" >> "$GITHUB_ENV"
+
+          mkdir -p "dist/$RELEASE_NAME"
+          cp src/Offeringsd "dist/$RELEASE_NAME/Offeringsd"
+          cp src/Offerings-cli "dist/$RELEASE_NAME/Offerings-cli"
+          ( cd "dist/$RELEASE_NAME" && sha256sum Offeringsd Offerings-cli > SHA256SUMS-linux.txt )
+          ( cd dist && tar czf "../${RELEASE_NAME}.tar.gz" "$RELEASE_NAME" )
+
+          # Side artifact for ops who want bare SHA256SUMS without unpacking.
+          cp "dist/$RELEASE_NAME/SHA256SUMS-linux.txt" dist/SHA256SUMS-linux.txt
+
+          ls -la "${RELEASE_NAME}.tar.gz" dist/SHA256SUMS-linux.txt
           cat dist/SHA256SUMS-linux.txt
 
       - name: Upload Linux daemon artifact
@@ -138,7 +151,7 @@ jobs:
         with:
           name: cthulhu-offerings-daemon-linux-x86_64
           path: |
-            offerings-cthulhu-daemon-linux-x86_64.tar.gz
+            ${{ env.RELEASE_NAME }}.tar.gz
             dist/SHA256SUMS-linux.txt
           retention-days: 90
 
@@ -147,7 +160,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            offerings-cthulhu-daemon-linux-x86_64.tar.gz
+            ${{ env.RELEASE_NAME }}.tar.gz
             dist/SHA256SUMS-linux.txt
           draft: true
         env:
