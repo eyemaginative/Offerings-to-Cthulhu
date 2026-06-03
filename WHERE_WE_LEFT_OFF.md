@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-06-02, post v2.0.2 / #FNU etching)
+# OFF — Where We Left Off  (snapshot 2026-06-03, post explorer-txindex + portable-linux-daemon)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -162,9 +162,43 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - **Wallet GUI**: Qt5 port that compiles+launches on Debian 13 on chaos. Codex tab in
   `src/qt/codexpage.{h,cpp}`. Source ported to vps3 alongside miner.cpp work. NOT visually
   verified yet — run on chaos's desktop AFTER `sudo systemctl stop offeringsd` (datadir lock).
+- **Portable Linux daemon attached to v2.0.2 release** (2026-06-03):
+  `Offerings-daemon-v2.0.2-fnu-linux64.tar.gz` (sha256 `c0bc16b8…`) built via the new
+  `.github/workflows/linux-build-depends.yml` (CI run `26838763984`, 6m18s on ubuntu-22.04).
+  depends/-vendored Boost 1.74 + OpenSSL 1.0.2 + BDB 4.8 + miniupnpc 2.2.2 — `ldd` shows
+  zero non-glibc external deps. Solves the BCT-user-reported "needs libboost dependency"
+  complaint for anyone on Boost 1.83+ distros (Ubuntu 24.04, Debian 13's successor, etc).
+  Daemon-only — Qt GUI variant is a separate future workflow. Release-notes addendum live.
+- **Explorer phantom-balance bug fixed via dual-daemon txindex secondary** (2026-06-02/03):
+  Discord user reported `QaREYi2mG9k9dtmGUhwBWGyY2eUXfBfjR5` balance was inflated 9152.45
+  vs actual ~3300. Root cause: eIquidus's `prepare_vin` wrote `unknown_address` with
+  `amount: 0` for every vin (no txindex on prod daemon), so every spender's running
+  `sent` ledger was never debited. Self-pays were the loudest symptom, but the bug
+  affected every address that had ever spent. Fix shape:
+  - Spun up **second** Offerings daemon on vps1, `~/.Offering-txindex/`, RPC 11929,
+    `txindex=1`, `disablewallet=1`. systemd: `offeringsd-txindex.service` (enabled,
+    `After=`/`Requires=` prod). Reindex took 7 min on already-seeded blocks/.
+  - Pointed eIquidus's `settings.json` at port 11929 (creds `explorerRO`/…).
+  - Dropped broken mongo collections (`txes`, `addresses`, `addresstxes`, `richlists`,
+    `coinstats`), let eIquidus resync from block 0 (~1.5 h to tip on this hardware).
+  - Retired `/etc/cron.d/fix-pool-payment-vins` (now redundant — the cron only patched
+    pool-payment txes in `db.txes` and never reconciled `db.addresses`, so balances
+    stayed inflated even for pool addresses). File renamed
+    `.fix-pool-payment-vins.disabled-20260602-txindex-swap`, restorable if needed.
+  - **Side-discovery worth knowing:** `eiquidus-off-sync.service` had been crash-looping
+    silently with restart counter at **40,728** since 2026-05-30 01:09 — `tmp/` ownership
+    flipped to `btcbob:www-data` while the service runs as `User=patrykw`. EACCES on
+    `tmp/show_sync_message.tmp` exited 1 every ~8 s. Web frontend kept serving stale
+    mongo so nobody noticed for 3 days. Fixed via `chown -R patrykw:patrykw
+    /var/www/eiquidus-off/tmp/`. See [[feedback-eiquidus-tmp-ownership]].
+  - Production daemon `offeringsd.service` UNTOUCHED throughout — zero pool downtime.
+  - QaREY balance after fix: **3399.4481 OFF** (right in the user's predicted range).
+    Discord follow-up posted to channel `1509892777876390030`. See
+    [[project-off-explorer-txindex-secondary]] for setup recipe + wire diagram.
 
 ## RUNNING UNATTENDED (survives terminals/reboots)
-- `offeringsd` systemd service on chaos (miner) + vps3 (relay), both enabled-on-boot.
+- `offeringsd` systemd service on chaos (miner) + vps3 (relay) + vps1 (pool wallet), all enabled-on-boot.
+- `offeringsd-txindex.service` on vps1 (explorer backend, port 11929, ~/.Offering-txindex/). NEW 2026-06-03. `After=`/`Requires=` the prod `offeringsd.service` so they start in order.
 - chaos cron `~/reset-finalize.sh` (*/30): self-deleted once height passed 967,250.
 - vps3 crons: e-reader (every 2m), countdown (every 1m).
 - vps1 pool: `pool.23skidoo.info:3040` (Miningcore), currently mining most blocks
