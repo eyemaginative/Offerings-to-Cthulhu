@@ -269,6 +269,16 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
     upstream `bitcoin/bitcoin#7028`. Cluster impact ~zero either way (we all use
     `-externalip=`). Not blocking any release. Both offered to skifdni as next
     contributions; pick up otherwise.
+- **Issue #8 open — qt: add a Mining tab** (filed 2026-06-03,
+  https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/8): "Worthless On
+  Purpose" community-onramp feature. Built-in `setgenerate` solo miner already works via
+  Debug Console but is hidden from new users. Tab pattern mirrors `src/qt/codexpage.{h,cpp}`
+  (recent Restoration-prep work). UI greys out + auto-`setgenerate false` when chain
+  height enters the OFFSIG window `[999991, 1050666]` so new users don't burn CPU on
+  `bad-conclave-sig` rejections. ~300 lines net, no consensus risk. Not urgent — could
+  land in v2.1.x. Subtitle voice + persistence-mechanism + block-found-notification are
+  open design questions called out in the issue. Probably appealing to a new contributor
+  (Qt5, well-scoped, no chain knowledge needed beyond the OFFSIG window guard).
 - **Issue #6 open — rolling checkpoints, Phase 1 self-rolling persistent** (filed
   2026-06-03, https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/6):
   post-Codex-window finality guard. Activates `HARDFORK_ROLLING_CKPT_MAIN_OFF=1,055,555`
