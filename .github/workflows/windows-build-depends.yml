@@ -175,11 +175,11 @@ jobs:
           cp "$BIN_C" dist/Offerings-cli.exe
           cp "$BIN_Q" dist/Offerings-qt.exe
           cd dist
-          sha256sum *.exe > SHA256SUMS
-          tar czf ../offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz *.exe SHA256SUMS
+          sha256sum *.exe > SHA256SUMS-windows.txt
+          tar czf ../offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz *.exe SHA256SUMS-windows.txt
           cd ..
-          ls -la offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz dist/SHA256SUMS
-          cat dist/SHA256SUMS
+          ls -la offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz dist/SHA256SUMS-windows.txt
+          cat dist/SHA256SUMS-windows.txt
 
       - name: Upload Windows Qt5 artifact
         uses: actions/upload-artifact@v4
@@ -187,7 +187,7 @@ jobs:
           name: cthulhu-offerings-windows-x86_64-qt5
           path: |
             offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
-            dist/SHA256SUMS
+            dist/SHA256SUMS-windows.txt
           retention-days: 90
 
       - name: Attach to release (if tag push)
@@ -196,7 +196,7 @@ jobs:
         with:
           files: |
             offerings-cthulhu-wallet-windows-x86_64-qt5.tar.gz
-            dist/SHA256SUMS
+            dist/SHA256SUMS-windows.txt
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
