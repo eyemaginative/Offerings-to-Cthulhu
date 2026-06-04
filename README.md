@@ -39,17 +39,11 @@ Any v1.6.2 or v2.0.0 wallet binary, anywhere on Earth, will find the network on 
 
 ### Windows — shipping now
 
-**v2.0.0-rc1-windows** — first Windows binary carrying the Restoration Hardfork consensus rules. Auto-routes through the fork at block 1,000,000; no second download required.
+Latest Windows release: **[github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/latest](https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/latest)**
 
-🔗 **Release:** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.0-rc1-windows
+Carries the Restoration Hardfork consensus rules + the Conclave Signed Window. Auto-routes through the fork at block 1,000,000; no second download required. SHA256 hashes for every binary are published in `SHA256SUMS-windows.txt` on the release page.
 
-| File | Purpose | SHA256 |
-|---|---|---|
-| `Offerings-qt.exe` | Qt GUI wallet | `9a1318f6f9d5070fa03ed950680e46309011b462f31f37279d5bbaea85bd056b` |
-| `Offeringsd.exe` | Headless full node daemon | `63165fd6ff8fb8c35f9f50af7d1b96ca7e2574a16adffc3e22911d519d1c451e` |
-| `Offerings-cli.exe` | RPC client | `b92190f3e944a1eb160d3b466325f63d2f187c2aa72e83ea286dd64226194fa0` |
-
-Statically linked. Native Windows TLS (SChannel/BCrypt) — no OpenSSL DLL hell. 22 MB tarball, three .exe binaries inside.
+Statically linked. Native Windows TLS (SChannel/BCrypt) — no OpenSSL DLL hell.
 
 ### Linux — build from source
 
@@ -250,11 +244,11 @@ The `/api/state` endpoint reports the public queue depth + remaining ceiling so 
 
 ---
 
-## Build Modernization — what changed for v2.0.0-rc1
+## Build Modernization — the Restoration dependency sweep
 
 OFF was a 2013 codebase. To get it cross-compiling to Windows in 2026, the entire dependency stack was bumped:
 
-| Dependency | Before | After (v2.0.0-rc1) |
+| Dependency | Before | After |
 |---|---|---|
 | Boost | 1.55.0 | **1.74.0** |
 | Qt | 5.12.11 | **5.15.16 LTS** |
@@ -271,7 +265,7 @@ Source-side, the modernization sweep replaced:
 - LevelDB `build_config.mk` pre-generated to avoid a parallel-make race in `$(shell ./build_detect_platform)`
 - Static Qt plugin link order fixed: `-lqtharfbuzz`, `-lqtpcre2`, `-lsecur32`, `-lcrypt32`, `-lbcrypt`, `-luserenv` placed AFTER `$QT_LIBS` so the linker keeps unresolved refs around long enough
 
-The `depends/` cross-compile is reproducible end-to-end via `.github/workflows/windows-build-depends.yml`. A clean CI run produces the v2.0.0-rc1-windows tarball in ~28 minutes.
+The `depends/` cross-compile is reproducible end-to-end via `.github/workflows/windows-build-depends.yml`. A clean CI run produces the Windows release tarball in ~28 minutes.
 
 ---
 
