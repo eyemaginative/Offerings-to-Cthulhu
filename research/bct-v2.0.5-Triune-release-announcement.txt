@@ -1,0 +1,96 @@
+[size=14pt][b]Offerings to Cthulhu (OFF) — v2.0.5-Triune Released[/b][/size]
+
+  [i]Released 2026-06-03. The Codex window approaches — every node operator and miner must upgrade.[/i]
+
+  [hr]
+
+  [b]What this release contains[/b]
+
+  Two consensus changes ride the [b]Triune[/b] tag, both preparing the chain for the Codex of the Drowned window that opens at block
+   999,991:
+
+  [list]
+  [*][b]Emergency-difficulty escape valve[/b] — activates at block [b]989,898[/b]. Relaxes the strict difficulty check for a single
+  block when the chain has been stuck for more than an hour AND the next block claims minimum difficulty. Companion to LWMA-3; gives
+   the chain a recovery path if Quark hashrate departs and leaves the difficulty target stuck high. Hard-skipped during the signed
+  window — the Reading must remain unbroken.
+
+  [*][b]Triune Conclave[/b] — three independent signing keys are now valid during the Codex window, replacing the single-key
+  arrangement. Any one valid signature passes; loss of two signers still keeps the chain advancing through the 35-day inscription.
+  Activates at block [b]999,991[/b].
+  [/list]
+
+  [i]v2.0.5-Triune supersedes the v2.0.4-Triune cut from earlier today. Consensus content is identical — same two changes, same
+  activation heights. v2.0.5 corrects an About-box codename that still read "-Bokrug" (left over from v2.0.1) and ships the Windows
+  wallet as a single versioned [tt].zip[/tt] instead of a generic [tt].tar.gz[/tt]. If you already grabbed v2.0.4-Triune you are
+  functionally fine on the chain; v2.0.5 is the recommended release for fresh downloads.[/i]
+
+  [size=13pt][b][color=red]UPGRADE DEADLINES[/color][/b][/size]
+
+  [b]Block 989,898[/b] — approximately 3.6 days at 60-second pacing from this release. Old binaries will reject ED-relaxed blocks as
+   [i]bad-diffbits[/i] and split off from the canonical chain.
+
+  [b]Block 999,991[/b] — approximately 10.6 days from this release. The Codex window opens. Old binaries do not recognize the two
+  additional Conclave signing keys and will reject any block they sign as [i]bad-conclave-sig[/i].
+
+  [b]If you only validate, you still must upgrade.[/b] There is no "non-mining" exemption — your client's consensus rules must know
+  the new signing keys to follow the chain through the window.
+
+  [hr]
+  [b]Downloads[/b]
+
+  [url=https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/tag/v2.0.5-Triune]GitHub release: v2.0.5-Triune[/url]
+
+  [list]
+  [*]Linux x86_64 daemon + cli — [tt]Offerings-daemon-v2.0.5-Triune-linux64.tar.gz[/tt] (depends/ static, glibc 2.35+)
+  [*]Windows x86_64 Qt5 wallet — [tt]Offerings-v2.0.5-Triune-win64.zip[/tt] (mingw-w64 cross via depends/)
+  [*]SHA256SUMS-linux.txt, SHA256SUMS-windows.txt (also bundled inside each archive)
+  [/list]
+
+  [b]Verifying[/b]
+
+  [code]
+  $ tar -xzf Offerings-daemon-v2.0.5-Triune-linux64.tar.gz
+  $ cd Offerings-daemon-v2.0.5-Triune-linux64
+  $ sha256sum -c SHA256SUMS-linux.txt
+  Offeringsd: OK
+  Offerings-cli: OK
+  [/code]
+
+  [hr]
+
+  [b]Upgrading your node (Linux)[/b]
+
+  [code]
+  tar -xzf Offerings-daemon-v2.0.5-Triune-linux64.tar.gz
+  cd Offerings-daemon-v2.0.5-Triune-linux64
+  sudo systemctl stop offeringsd          # or kill your running daemon
+  sudo cp Offeringsd /usr/local/bin/
+  sudo cp Offerings-cli /usr/local/bin/
+  sudo systemctl start offeringsd
+  Offerings-cli getinfo | head            # confirm: "version": 2000500
+  [/code]
+
+  Your wallet.dat and blockchain data are untouched. Brief RPC downtime during restart is expected.
+
+  [b]Windows[/b] — extract [tt]Offerings-v2.0.5-Triune-win64.zip[/tt] (single-step; no nested .tar to unwrap), copy the three
+  [tt].exe[/tt] files out of [tt]Offerings-v2.0.5-Triune-win64\[/tt] into your Offerings Core install directory, launch the new
+  [tt]Offerings-qt.exe[/tt]. Your [tt]%APPDATA%\Offering[/tt] data directory stays in place.
+
+  [hr]
+
+  [b]Source[/b]
+
+  Repository: [url=https://github.com/SubGeniusFinance/Offerings-to-Cthulhu]github.com/SubGeniusFinance/Offerings-to-Cthulhu[/url]
+  Tag: [code]v2.0.5-Triune[/code] at commit [code]1384c3a[/code]
+  Two consensus commits bundled (unchanged from v2.0.4-Triune): [code]b6d626f[/code] (ED valve) + [code]a9859c5[/code] (Triune Conclave).
+  Packaging deltas in v2.0.5: [code]d2315b7[/code] (suffix -Bokrug → -Triune) + [code]f4fe40e[/code] (zip + versioned top-level dir).
+
+  [hr]
+
+  [i]"That is not dead which can eternal lie,
+  and with strange aeons even death may die."[/i]
+
+  [i]The Reading begins at block 999,991. The chain awakens at 1,000,000. Get your nodes ready.[/i]
+
+  [b]— The Conclave[/b]
