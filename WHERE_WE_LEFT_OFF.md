@@ -1,4 +1,4 @@
-# OFF — Where We Left Off  (snapshot 2026-06-03, post explorer-txindex + portable-linux-daemon + PR #4 GetMyExternalIP fix)
+# OFF — Where We Left Off  (snapshot 2026-06-04, post PR #9 HTTP-IP-discovery removal + issue #10 UPnP hardening filed)
 
 > Fresh session? Read this, then for LIVE state run on **chaos**:  `bash ~/status.sh`
 > (chaos is the miner box, tailscale 100.87.114.52, reachable as `ssh btcbob@chaos`)
@@ -207,6 +207,54 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
   record, and points to issue #5 as the architectural follow-up. Pulled into the
   vps3 canonical tree (`git pull --ff-only`, 2026-06-03). See
   [[project-off-contributor-skifdni]].
+- **PR #9 from 9019x merged to main** (merge commit `24196aa`, 2026-06-04):
+  *"net: Do not use third party service for IP detection"* — fifth submission /
+  fourth real PR / third merged from skifdni. Clean port of
+  [bitcoin/bitcoin#5161](https://github.com/bitcoin/bitcoin/pull/5161) (gmaxwell,
+  2014). 60+/148-, four files (init.cpp, main.cpp, net.cpp, net.h). **Deletes
+  9019x's own PR #4** — same contributor self-correcting from the quick-fix
+  modernized-host-list approach to the upstream architecturally-correct removal of
+  the entire HTTP-callout path. Concrete deltas:
+  - Removes `GetMyExternalIP{,2}` + `ThreadGetMyExternalIP` + the thread spawn in
+    `Discover()` + the `net.h` forward decl. ~110 LOC of bespoke HTTP parser /
+    cleartext startup pings gone.
+  - Removes the `LOCAL_HTTP` enum slot (shifts `LOCAL_MANUAL` from 6 → 5; no
+    cross-version footprint because `mapLocalHost` is runtime-memory only, never
+    serialized).
+  - Adds per-CNode `pfrom->addrLocal = addrMe` recording for **all** peers (not
+    just inbound, not just routable). Used in new `AdvertizeLocal(CNode*)` +
+    `IsPeerAddrLocalGood(CNode*)` to substitute peer-told IP into outbound `addr`
+    pushes with probability 1/2 (or 1/8 if we have a `LOCAL_MANUAL` address).
+  - `-proxy` set now soft-implies `-discover=0` — closes a real proxy-leak bug
+    (proxy users were still doing clearnet HTTP+DNS to amazonaws.com on boot).
+  - Architectural read: gmaxwell-2014 design (per-peer addrLocal, not aggregated)
+    is **more secure** than the Wuille-2016 `LOCAL_PEER` aggregation design that
+    issue #7 proposed — one hostile peer can only poison its own view, never
+    `mapLocalHost` globally. Blast radius is one peer.
+- **Issues #5 and #7 closed by PR #9** (2026-06-04). #5 closed with deletion-confirmation
+  note + retraction of the `LOCAL_HTTP` enum-slot peers.dat-compat concern (`mapLocalHost`
+  is not persisted; concern was incorrect). #7 closed with architectural caveat: PR #9 took
+  gmaxwell-2014 path (`bitcoin#5161`) not Wuille-2016 path (`bitcoin#7028`) that #7 cited,
+  so the global-aggregation `LOCAL_PEER` tier never landed and isn't needed for OFF's
+  threat model. If anyone wants global aggregation later, it's strictly additive on top
+  of PR #9 — reopen then.
+- **Issue #10 filed — net/upnp LAN attacker can poison external-IP advertisement**
+  (2026-06-04, https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/10).
+  Residual surface after PR #9: miniupnpc trusts whatever device wins the SSDP M-SEARCH
+  race, so any LAN-resident attacker (compromised IoT, guest-wifi user, roommate's box)
+  can race the real router with a forged IGD impersonator and inject arbitrary
+  `<NewExternalIPAddress>` via SOAP, which OFFd then gossips via `addr`/`version`.
+  Eclipse-attack staging primitive — same protocol-level move the 2018 >80% attacker
+  used. Cluster nodes are protected by `-externalip=` (`LOCAL_MANUAL` outranks
+  `LOCAL_UPNP`); third-party hobbyist operators at home are the target population.
+  Phased mitigation: (1) release-notes recommendation immediate, (2) `-upnp` default
+  flip in v2.1.0 matching [bitcoin/bitcoin#20410](https://github.com/bitcoin/bitcoin/pull/20410),
+  (3) compile-time `USE_UPNP=0` + depends/ drop later.
+- **v2.0.4-Triune + v2.0.5-Triune release notes updated** (2026-06-04) with
+  `-upnp=0 -externalip=<your.real.ip>` hardening recommendation block — threat-model
+  summary, cluster-is-unaffected note, link to issue #10 + PR #9, "default flip in
+  v2.1.0" framing so it doesn't read as a CVE-style emergency. Older v2.0.x releases
+  (v2.0.3 and below) intentionally not updated — past their upgrade window.
 
 ## RUNNING UNATTENDED (survives terminals/reboots)
 - `offeringsd` systemd service on chaos (miner) + vps3 (relay) + vps1 (pool wallet), all enabled-on-boot.
@@ -253,22 +301,19 @@ vps1 at ~/Offering-chainstate-backup-2026-05-21, sha256 12033fa5…). Activates 
 - Visually verify the GUI Codex tab on chaos's desktop.
 - Decide whether the site should seal the 23 Lovecraft books behind inscription progress
   (per user 2026-05-25); Proem stays open as Conclave invocation.
-- **Issues #7 + #5 open — split upstream-style external-IP cleanup into two halves**
-  (rescoped 2026-06-03, originally one issue #5):
-  - **#7 (prerequisite, 2-line):** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/7
-    *"net: capture peer addrMe votes via AddLocal(LOCAL_PEER) instead of SeenLocal."*
-    Add `LOCAL_PEER` tier in `src/net.h`; swap `SeenLocal(addrMe)` → `AddLocal(addrMe, LOCAL_PEER)`
-    at `src/main.cpp:3898`. Strictly an improvement — today every inbound peer's `addrMe`
-    vote is silently discarded because `SeenLocal` can only increment existing entries,
-    not create them. No code removed. Friendliest possible first contribution.
-  - **#5 (follow-up, depends on #7):** https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/5
-    *"net: retire ThreadGetMyExternalIP + HTTP path (after #7 lands)."* Rescoped to
-    deletion-only after #7. Removes `GetMyExternalIP{,2}` + `ThreadGetMyExternalIP` + the
-    thread spawn at `src/net.cpp:1711`. UPnP + `LOCAL_IF` paths untouched. `LOCAL_HTTP`
-    enum slot left in `src/net.h` to avoid reshuffling on-disk peers.dat compat. Mirror
-    upstream `bitcoin/bitcoin#7028`. Cluster impact ~zero either way (we all use
-    `-externalip=`). Not blocking any release. Both offered to skifdni as next
-    contributions; pick up otherwise.
+- (was: Issues #5 + #7 open — external-IP cleanup split. **Both closed 2026-06-04 by PR #9**; see DONE.)
+- **Issue #10 open — UPnP LAN-attacker hardening** (filed 2026-06-04,
+  https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/10). Phased plan:
+  - Phase 1 (DONE): release-notes recommendation in v2.0.4 / v2.0.5 — done same day.
+  - Phase 2: default-flip `-upnp=1` → `-upnp=0` in `src/init.cpp` for v2.1.0. One-line
+    change; matches `bitcoin/bitcoin#20410` (2020). Behavior change for hobbyist
+    operators relying on UPnP for inbound NAT-traversal — they'll need explicit
+    `-upnp=1` or manual port-forwarding.
+  - Phase 3: compile-time `USE_UPNP=0` in release builds + drop miniupnpc from
+    `depends/`. Skifdni-style PR. Irreversible without re-adding the recipe; defer
+    until chain is stable.
+  - Cluster impact: zero (`-externalip=` precedence already neutralizes UPnP scoring).
+  - Not a Restoration blocker. No consensus impact.
 - **Issue #8 open — qt: Mining sub-tab in Text Based Worship, solo + pool modes**
   (filed 2026-06-03, rescoped twice same day,
   https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/issues/8): "Worthless On
