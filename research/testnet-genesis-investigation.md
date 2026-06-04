@@ -76,5 +76,5 @@ All of these are nice-to-haves. The consensus rules themselves have been validat
 2. Bump testnet `strDataDir = "testnet3"` to `"testnet4"` so existing testnet datadirs don't get clobbered.
 3. Recompile, run `./Offeringsd -testnet`, observe the new genesis hash (will print at startup).
 4. Update any docs/scripts that reference the old testnet genesis hash (probably none — testnet has been broken for years).
-5. Stand up 1-2 testnet peers on the fleet (vps1 has spare bandwidth) and add DNS seed.
+5. Stand up 1-2 testnet peers on the fleet (one host has spare bandwidth) and add DNS seed.
 6. Optional: tag v2.0.0-rc4 with the testnet fix.

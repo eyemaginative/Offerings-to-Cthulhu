@@ -2,8 +2,8 @@
 
 Hand-authored static content for `https://23skidoo.info/`, the public landing
 page + lore page for Offerings to Cthulhu (OFF). Versioned in this repo so the
-copy survives a vps3 disk loss; the live site is served from
-`/var/www/23skidoo.info/` on vps3.
+copy survives a the production host disk loss; the live site is served from
+`/var/www/23skidoo.info/` on the production host.
 
 ## What's here
 
@@ -31,7 +31,7 @@ copy survives a vps3 disk loss; the live site is served from
 
 ## Workflow
 
-**Current state (as of 2026-05-25):** this is a **snapshot for recovery**. The live files at `/var/www/23skidoo.info/` are still the editable source on vps3; edits there are NOT automatically synced back to this directory.
+**Current state (as of 2026-05-25):** this is a **snapshot for recovery**. The live files at `/var/www/23skidoo.info/` are still the editable source on the production host; edits there are NOT automatically synced back to this directory.
 
 To re-sync after a manual edit to the live site:
 ```bash

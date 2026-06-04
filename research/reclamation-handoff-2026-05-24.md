@@ -1,9 +1,9 @@
 # Reclamation Portal + Ritual-Continuation Handoff — 2026-05-24
 
 **For:** Next Claude session resuming OFF work, once the v2.0.0-Restoration wallet builds cleanly again.
-**From:** Claude session on vps3 (`subgenius.vip` / `23skidoo.info`), working with **BtcBob** / @dobbscoin (`dobbscoin@gmail.com`).
+**From:** Claude session on the production host, working with **BtcBob** / @dobbscoin.
 **Date:** 2026-05-24, ~16:30 UTC.
-**Status of OFF chain:** still pre-fork. Tip ~block 969,000-ish. Fork activates at 1,000,000 (~31K blocks away). Restoration patch lives at `~/claude/offerings-master/research/restoration-hardfork.patch`. Daemon currently running on this box (vps3 = `subgenius.vip`) at `~/.Offering/`.
+**Status of OFF chain:** still pre-fork. Tip ~block 969,000-ish. Fork activates at 1,000,000 (~31K blocks away). Restoration patch lives at `~/claude/offerings-master/research/restoration-hardfork.patch`. Daemon running locally at `~/.Offering/`.
 
 ---
 
@@ -146,7 +146,7 @@ If user asks for it: pull the most recent reprint from session history, OR ask t
   - `project_off_bridge_portal_live.md` — full ops details, formula, index stats
   - `project_off_bridge_portal_idea.md` — original spec context (deferred → built)
   - `feedback_off_voice_separation.md` — keep (BOB) out of OFF copy
-  - `feedback_vps2_scope.md` — vps2 is off-limits for new OFF infrastructure
+  - `feedback_offlimits_host_scope.md` — one VPS in the fleet is off-limits for new OFF infrastructure
 - **`~/claude/offerings-master/scripts/build_portal_indexes.py`** — chain walker that produced the three JSON indexes. Knows the OFF block format, Quark-Hash-9 cross-reference via RPC, address derivation, banlist 1-hop downstream computation.
 
 ---
@@ -177,7 +177,7 @@ In rough priority order:
 - User is realistic about claim volume — "no one's gonna take the OFF but it'd be a real community if they did." Design for the come-back-home case, not for processing thousands of claims.
 - User dislikes overly-long writeups. Direct answers. Tables over prose where possible. Don't summarize what was just decided unless explicitly asked.
 - Voice is **Lovecraft / Cthulhu** parody for OFF, **NOT** SubGenius. Don't blend. See [[feedback_off_voice_separation]].
-- This machine is hostname `subgenius.vip` (= vps3). Daemon, blocks, chainstate, portal, indexer, website all here. Workstation references in older memory may actually be this same box — the user has consolidated.
+- This machine is the production host. Daemon, blocks, chainstate, portal, indexer, website all here. Workstation references in older memory may actually be this same box — the user has consolidated.
 
 ---
 

@@ -2,8 +2,8 @@
 
 This directory holds the build scripts and frozen assets that drive the public-facing
 Codex of the Drowned reader at `https://23skidoo.info/codex/` and the Awakening
-countdown at `https://23skidoo.info/awakening/`. Scripts run on cron on vps3
-(`subgenius.vip`) against the local OFF daemon's RPC.
+countdown at `https://23skidoo.info/awakening/`. Scripts run on cron on the production
+host against the local OFF daemon's RPC.
 
 ## Layout
 
@@ -25,7 +25,7 @@ Scripts split paths into two namespaces:
 - **`SCRIPT_DIR`** (where this README lives) — frozen, version-controlled assets:
   the corpus, the manifest, the scripts themselves. Resolved via `__file__` so the
   scripts run correctly no matter what cwd you invoke them from.
-- **`STATE_DIR = /home/btcbob/codex`** — runtime state on vps3:
+- **`STATE_DIR = /home/btcbob/codex`** — runtime state on the production host:
   - `*_cache.json` — incremental scan checkpoints (one per script)
   - `*_cron.log` / `cron.log` — cron stderr/stdout captures
   - `tts_state.json` — monthly char-budget ledger
@@ -34,7 +34,7 @@ Scripts split paths into two namespaces:
 The state dir is intentionally outside the repo so caches don't churn the git tree
 and secrets stay off GitHub.
 
-## Cron entries (vps3, `crontab -e`)
+## Cron entries (production host, `crontab -e`)
 
 ```
 * * * * *  /usr/bin/python3 /home/btcbob/claude/offerings-master/contrib/codex/build_countdown.py >/home/btcbob/codex/countdown_cron.log 2>&1

@@ -120,9 +120,9 @@ public:
         //   P2SH address: 4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4
         //   Redeem H160:  1bb03a89f2c713bd1beed4cd67934dbd6094b686
         //   Keys (any 2 of 3 required to spend):
-        //     #1 workstation    ~btcbob/.Offering        pk 03129479…28b7adcde
-        //     #2 vps1 endciv    ~endciv/.Offering        pk 0244dbe9…578e059
-        //     #3 paper wallet   offline, physical only   pk 02df218b…b99b2b4c
+        //     #1 Treasury Key A (hot, online)    pk 03129479…28b7adcde
+        //     #2 Treasury Key B (hot, online)    pk 0244dbe9…578e059
+        //     #3 Treasury Key C (cold, offline)  pk 02df218b…b99b2b4c
         scriptTreasury = CScript()
             << OP_HASH160
             << ParseHex("1bb03a89f2c713bd1beed4cd67934dbd6094b686")
@@ -170,11 +170,11 @@ public:
         // Three independent signers added 2026-06-03 for redundancy during the
         // Codex window; loss of any two still permits the third to keep the chain alive.
         vConclaveKeys.push_back(ParseHex(
-            "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // chaos (primary)
+            "0238efde05d567979485df6cd6dcf3af2606348a1e260eedf9a6464df57f46b111")); // Conclave Key #1
         vConclaveKeys.push_back(ParseHex(
-            "027d7a1692dfb255925299a6114c3cf4a764aad7360548c60a2348a1d03abd4907")); // vps1 (pool box, addr QjiVMmRRZjLNmS3c4xMAS61UmpVTp1Dsfb)
+            "027d7a1692dfb255925299a6114c3cf4a764aad7360548c60a2348a1d03abd4907")); // Conclave Key #2
         vConclaveKeys.push_back(ParseHex(
-            "02a1c992ed9b6dc8ed3646cedc09b6075b13bfc957bb3bc0adf77c50c7e4193dfc")); // vps3 (seed mirror, addr QUfm18M9kzqzFuTmWDf6pPJsm8nEomshDh)
+            "02a1c992ed9b6dc8ed3646cedc09b6075b13bfc957bb3bc0adf77c50c7e4193dfc")); // Conclave Key #3
 
         // Convert the pnSeeds array into usable address objects.
         for (unsigned int i = 0; i < ARRAYLEN(pnSeed); i++)

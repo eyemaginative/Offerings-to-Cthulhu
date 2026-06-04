@@ -31,7 +31,7 @@ Conclave Treasury — 2-of-3 P2SH multisig (in construction):
                       53ae
   decode:             OP_2 <Key#3 pk> <Key#1 pk> <Key#2 pk> OP_3 OP_CHECKMULTISIG
 
-  Any 2 of {workstation, vps1-endciv, paper} required to spend.
+  Any 2 of {Treasury Key A, Treasury Key B, paper-cold Key C} required to spend.
   Single-host compromise = NOT enough to drain Treasury.
 
   This is the FINAL Treasury script. HUNK 2 below embeds it as P2SH
@@ -124,9 +124,9 @@ closing brace and after the vSeeds.push_back block:
 +        //   P2SH address: 4fZqDjscS9ANR59xNFJxZ2HmrhuDwWUJB4
 +        //   Redeem H160:  1bb03a89f2c713bd1beed4cd67934dbd6094b686
 +        //   Keys (any 2 of 3 required to spend):
-+        //     #1 workstation    ~btcbob/.Offering          pk 0312947903...28b7adcde
-+        //     #2 vps1 endciv    ~endciv/.Offering (cold)   pk 0244dbe930...578e059
-+        //     #3 paper wallet   offline, physical          pk 02df218b5a...b99b2b4c
++        //     #1 Treasury Key A (hot, online)    pk 0312947903...28b7adcde
++        //     #2 Treasury Key B (hot, online)    pk 0244dbe930...578e059
++        //     #3 Treasury Key C (cold, offline)  pk 02df218b5a...b99b2b4c
 +        //   Redeem script (full hex):
 +        //     522102df218b5a5bf3c10bbc343666d1fe99b557f86a8cacc919ef6b943e58b99b2b4c
 +        //     2103129479031d88a6a0b592e11f5059360e34b9ad83024bd5c497e251438b7adcde
@@ -451,8 +451,8 @@ MANIFEST SOURCE — what counts as "provable pre-attack balance"
   The remaining authoritative source is the chainstate WE HAVE — the
   385 MB Wayback-recovered chainstate at block 966,413, June 2015,
   best-block hash 000000111e64c528... It is preserved at:
-    /home/btcbob/.Offering/blocks/ + chainstate/    (workstation)
-    [BACKUP TO vps1 BEFORE FORK ACTIVATION — see deployment note]
+    primary host: ~/.Offering/blocks/ + chainstate/
+    [BACKED UP TO SECONDARY HOST BEFORE FORK ACTIVATION — see deployment note]
 
   This means the Bridge manifest covers chain HISTORY UP TO BLOCK 966,413
   ONLY. Claims for addresses that received their first balance AFTER
@@ -516,9 +516,9 @@ DISBURSEMENT MECHANICS
 
   Verified claims are batched into multisig transactions roughly weekly.
   The Conclave produces a partial-signed transaction (Key #1 sigs all
-  pending claims), passes it to Key #2 on vps1 endciv (second signature),
-  and broadcasts. Key #3 (paper) is NEVER touched for routine Bridge
-  disbursement — it is the disaster-recovery key, not an operational one.
+  pending claims), passes it to Key #2 (second signature), and broadcasts.
+  Key #3 (paper-cold) is NEVER touched for routine Bridge disbursement —
+  it is the disaster-recovery key, not an operational one.
 
   Each batch is announced in-thread with:
     – list of claims included (claimant -> amount -> destination)

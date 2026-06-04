@@ -115,8 +115,8 @@ Co-locating with the existing /bridge/ explainer keeps the mental model simple; 
 ## Backend — read-only verification service
 
 ### Where it runs
-- **Phase 1:** lightweight Python service on vps3, talking to the Offerings daemon over an SSH-tunnelled RPC from the workstation (`ssh -L 11928:127.0.0.1:11928 btcbob@workstation`). Read-only.
-- **Phase 2:** dedicated Offerings daemon on vps3 once the restored chain is live and stable. Cuts the SSH-tunnel dependency.
+- **Phase 1:** lightweight Python service on the production host, talking to the Offerings daemon over an SSH-tunnelled RPC from the workstation. Read-only.
+- **Phase 2:** dedicated Offerings daemon co-located with the portal once the restored chain is live and stable. Cuts the SSH-tunnel dependency.
 
 ### Stack
 - Python 3.11 + FastAPI (or Flask if we want fewer deps)
@@ -208,7 +208,7 @@ Phase 2 (Conclave queue dashboard, multisig signing helper, broadcast UX) is at 
 ## Open questions for next session
 
 1. **HMR-B evidence standard.** What Wayback URL is good enough? Single cthulhu.tk explorer page showing one block coinbase to the address? A pool dashboard showing repeated payouts? Codify before publishing.
-2. **Workstation→vps3 RPC tunnel resilience.** SSH tunnel can drop. Use `autossh` or build local read-replica indexes on vps3 and refresh nightly from a workstation dump.
+2. **Workstation→portal-host RPC tunnel resilience.** SSH tunnel can drop. Use `autossh` or build local read-replica indexes on the portal host and refresh nightly from a workstation dump.
 3. **Should HMR claimants be required to provide a destination address?** Or could the portal optionally credit the *signing* address (if they still control it, the Restoration chain can pay there directly)? Simpler UX, but means HMR is paid into the historical address rather than a fresh one.
 4. **Update the patch.** HUNK 9 still says 12-month window. Should the patch file be updated to reflect the new policy, with a note that the change post-dates the original draft? Or kept as historical record with a sibling `restoration-hardfork-policy-v2.md` documenting the revision?
 
@@ -216,7 +216,7 @@ Phase 2 (Conclave queue dashboard, multisig signing helper, broadcast UX) is at 
 
 ## Sibling pages to update once policy is confirmed
 
-- `/var/www/23skidoo.info/bridge/index.html` (vps3) — remove 12-month window language, add HMR tier section, reframe as community gesture
-- `/home/btcbob/codex/build_countdown.py` (vps3) — update the Bridge bullet on `/awakening/` to drop "12-month" and the misleading "vanished in the chainstate gap" framing (since HMR covers people whose balances *didn't* vanish but who mined honestly)
-- `/home/btcbob/claude/offerings-master/research/restoration-hardfork.patch` (workstation) — update HUNK 9 to reflect the new window + HMR tier, OR add a sibling policy doc
-- `/home/btcbob/claude/offerings-master/research/bct-revival-announcement.txt` (workstation) — update the Bridge section to match
+- `/var/www/23skidoo.info/bridge/index.html` — remove 12-month window language, add HMR tier section, reframe as community gesture
+- `/home/btcbob/codex/build_countdown.py` — update the Bridge bullet on `/awakening/` to drop "12-month" and the misleading "vanished in the chainstate gap" framing (since HMR covers people whose balances *didn't* vanish but who mined honestly)
+- `~/claude/offerings-master/research/restoration-hardfork.patch` — update HUNK 9 to reflect the new window + HMR tier, OR add a sibling policy doc
+- `~/claude/offerings-master/research/bct-revival-announcement.txt` — update the Bridge section to match
