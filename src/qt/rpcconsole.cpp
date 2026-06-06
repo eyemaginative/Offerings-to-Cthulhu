@@ -304,9 +304,11 @@ void RPCConsole::setClientModel(ClientModel *model)
              this, SLOT(peerSelected(const QItemSelection &, const QItemSelection &)));
         connect(model->getPeerTableModel(), SIGNAL(layoutChanged()), this, SLOT(peerLayoutChanged()));
 
-        // peers table right-click context menu — Copy Address
+        // peers table right-click context menu — Copy Address, Disconnect Node
         peersTableContextMenu = new QMenu(this);
         peersTableContextMenu->addAction(tr("&Copy address"), this, SLOT(copyPeerAddress()));
+        peersTableContextMenu->addSeparator();
+        peersTableContextMenu->addAction(tr("&Disconnect Node"), this, SLOT(disconnectSelectedPeer()));
         ui->peerWidget->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(ui->peerWidget, SIGNAL(customContextMenuRequested(const QPoint&)),
                 this, SLOT(showPeersTableContextMenu(const QPoint&)));
@@ -599,6 +601,30 @@ void RPCConsole::copyPeerAddress()
     if (!stats) return;
 
     QApplication::clipboard()->setText(QString::fromStdString(stats->nodeStats.addrName));
+}
+
+void RPCConsole::disconnectSelectedPeer()
+{
+    if (!clientModel) return;
+
+    QModelIndexList selected = ui->peerWidget->selectionModel()->selectedIndexes();
+    if (selected.isEmpty()) return;
+
+    const CNodeCombinedStats *stats =
+        clientModel->getPeerTableModel()->getNodeStats(selected.first().row());
+    if (!stats) return;
+
+    NodeId target = stats->nodeStats.nodeid;
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode *pnode, vNodes) {
+        if (pnode->GetId() == target) {
+            pnode->fDisconnect = true;
+            break;
+        }
+    }
+    // PeerTableModel::refresh() picks up the disappearance automatically
+    // (once the socket handler thread acts on fDisconnect).
 }
 
 void RPCConsole::on_openDebugLogfileButton_clicked()

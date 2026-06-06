@@ -75,6 +75,8 @@ public slots:
     void showPeersTableContextMenu(const QPoint& point);
     /** Copy the selected peer's address (addrName) to clipboard */
     void copyPeerAddress();
+    /** Mark the selected peer for disconnection on the next net thread tick */
+    void disconnectSelectedPeer();
 
 signals:
     // For RPC command executor
