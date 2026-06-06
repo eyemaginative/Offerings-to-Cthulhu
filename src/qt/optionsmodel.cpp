@@ -119,12 +119,10 @@ void OptionsModel::Init()
 #endif
 
     // Network
+    // Default UPnP off at startup regardless of the compile-time USE_UPNP
+    // default; the user can still enable it via the options dialog.
     if (!settings.contains("fUseUPnP"))
-#ifdef USE_UPNP
-        settings.setValue("fUseUPnP", true);
-#else
         settings.setValue("fUseUPnP", false);
-#endif
     if (!SoftSetBoolArg("-upnp", settings.value("fUseUPnP").toBool()))
         addOverriddenOption("-upnp");
 

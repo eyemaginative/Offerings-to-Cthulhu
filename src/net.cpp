@@ -1629,8 +1629,9 @@ void StartNode(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "dnsseed", &ThreadDNSAddressSeed));
 
 #ifdef USE_UPNP
-    // Map ports with UPnP
-    MapPort(GetBoolArg("-upnp", USE_UPNP));
+    // Map ports with UPnP. Default off at startup regardless of the
+    // compile-time USE_UPNP default; UPnP only runs if -upnp=1 is set.
+    MapPort(GetBoolArg("-upnp", false));
 #endif
 
     // Send and receive from sockets, accept connections

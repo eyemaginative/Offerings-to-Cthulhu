@@ -233,11 +233,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -socks=<n>             " + _("Select SOCKS version for -proxy (4 or 5, default: 5)") + "\n";
     strUsage += "  -timeout=<n>           " + _("Specify connection timeout in milliseconds (default: 5000)") + "\n";
 #ifdef USE_UPNP
-#if USE_UPNP
-    strUsage += "  -upnp                  " + _("Use UPnP to map the listening port (default: 1 when listening)") + "\n";
-#else
     strUsage += "  -upnp                  " + _("Use UPnP to map the listening port (default: 0)") + "\n";
-#endif
 #endif
 
 #ifdef ENABLE_WALLET
