@@ -16,9 +16,13 @@
 
 #include "json/json_spirit_value.h"
 #include <openssl/crypto.h>
+#include <QApplication>
+#include <QClipboard>
+#include <QCursor>
 #include <QHeaderView>
 #include <QItemSelectionModel>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QScrollBar>
 #include <QThread>
 #include <QTime>
@@ -199,7 +203,8 @@ RPCConsole::RPCConsole(QWidget *parent) :
     ui(new Ui::RPCConsole),
     clientModel(0),
     historyPtr(0),
-    cachedNodeid(-1)
+    cachedNodeid(-1),
+    peersTableContextMenu(0)
 {
     ui->setupUi(this);
     GUIUtil::restoreWindowGeometry("nRPCConsoleWindow", this->size(), this);
@@ -289,6 +294,7 @@ void RPCConsole::setClientModel(ClientModel *model)
         ui->peerWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
         ui->peerWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
         ui->peerWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+        ui->peerWidget->setColumnWidth(PeerTableModel::NetNodeId, NETNODEID_COLUMN_WIDTH);
         ui->peerWidget->setColumnWidth(PeerTableModel::Address, ADDRESS_COLUMN_WIDTH);
         ui->peerWidget->setColumnWidth(PeerTableModel::Subversion, SUBVERSION_COLUMN_WIDTH);
         ui->peerWidget->setColumnWidth(PeerTableModel::Ping, PING_COLUMN_WIDTH);
@@ -297,6 +303,13 @@ void RPCConsole::setClientModel(ClientModel *model)
         connect(ui->peerWidget->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
              this, SLOT(peerSelected(const QItemSelection &, const QItemSelection &)));
         connect(model->getPeerTableModel(), SIGNAL(layoutChanged()), this, SLOT(peerLayoutChanged()));
+
+        // peers table right-click context menu — Copy Address
+        peersTableContextMenu = new QMenu(this);
+        peersTableContextMenu->addAction(tr("&Copy address"), this, SLOT(copyPeerAddress()));
+        ui->peerWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(ui->peerWidget, SIGNAL(customContextMenuRequested(const QPoint&)),
+                this, SLOT(showPeersTableContextMenu(const QPoint&)));
 
         // Provide initial values
         ui->clientVersion->setText(model->formatFullVersion());
@@ -565,6 +578,27 @@ void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
     }
 
     ui->detailWidget->setVisible(true);
+}
+
+void RPCConsole::showPeersTableContextMenu(const QPoint& point)
+{
+    QModelIndex idx = ui->peerWidget->indexAt(point);
+    if (idx.isValid())
+        peersTableContextMenu->exec(QCursor::pos());
+}
+
+void RPCConsole::copyPeerAddress()
+{
+    if (!clientModel) return;
+
+    QModelIndexList selected = ui->peerWidget->selectionModel()->selectedIndexes();
+    if (selected.isEmpty()) return;
+
+    const CNodeCombinedStats *stats =
+        clientModel->getPeerTableModel()->getNodeStats(selected.first().row());
+    if (!stats) return;
+
+    QApplication::clipboard()->setText(QString::fromStdString(stats->nodeStats.addrName));
 }
 
 void RPCConsole::on_openDebugLogfileButton_clicked()

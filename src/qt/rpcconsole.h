@@ -20,6 +20,7 @@ namespace Ui {
 
 QT_BEGIN_NAMESPACE
 class QItemSelection;
+class QMenu;
 QT_END_NAMESPACE
 
 /** Local Bitcoin RPC console. */
@@ -70,6 +71,10 @@ public slots:
     void peerSelected(const QItemSelection &selected, const QItemSelection &deselected);
     /** Handle updated peer information */
     void peerLayoutChanged();
+    /** Show context menu on the peers table */
+    void showPeersTableContextMenu(const QPoint& point);
+    /** Copy the selected peer's address (addrName) to clipboard */
+    void copyPeerAddress();
 
 signals:
     // For RPC command executor
@@ -84,6 +89,7 @@ private:
 
     enum ColumnWidths
     {
+        NETNODEID_COLUMN_WIDTH = 50,
         ADDRESS_COLUMN_WIDTH = 200,
         SUBVERSION_COLUMN_WIDTH = 100,
         PING_COLUMN_WIDTH = 80
@@ -94,6 +100,7 @@ private:
     QStringList history;
     int historyPtr;
     NodeId cachedNodeid;
+    QMenu *peersTableContextMenu;
 
     void startExecutor();
 };
