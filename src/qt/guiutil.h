@@ -173,6 +173,15 @@ namespace GUIUtil
     /* Convert OS specific boost path to QString through UTF-8 */
     QString boostPathToQString(const boost::filesystem::path &path);
 
+    /* Format a CNodeStats.dPingTime (seconds, double) into a human "N ms" string. */
+    QString formatPingTime(double dPingTime);
+
+    /* Format seconds as "X d X h X m X s". */
+    QString formatDurationStr(int secs);
+
+    /* Decode CNode services bitmask into a human-readable string. */
+    QString formatServicesStr(quint64 mask);
+
 } // namespace GUIUtil
 
 #endif // GUIUTIL_H

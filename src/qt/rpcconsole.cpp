@@ -7,12 +7,17 @@
 
 #include "clientmodel.h"
 #include "guiutil.h"
+#include "peertablemodel.h"
 
 #include "rpcserver.h"
 #include "rpcclient.h"
 
+#include "util.h"
+
 #include "json/json_spirit_value.h"
 #include <openssl/crypto.h>
+#include <QHeaderView>
+#include <QItemSelectionModel>
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QThread>
@@ -193,7 +198,8 @@ RPCConsole::RPCConsole(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::RPCConsole),
     clientModel(0),
-    historyPtr(0)
+    historyPtr(0),
+    cachedNodeid(-1)
 {
     ui->setupUi(this);
     GUIUtil::restoreWindowGeometry("nRPCConsoleWindow", this->size(), this);
@@ -276,6 +282,21 @@ void RPCConsole::setClientModel(ClientModel *model)
 
         updateTrafficStats(model->getTotalBytesRecv(), model->getTotalBytesSent());
         connect(model, SIGNAL(bytesChanged(quint64,quint64)), this, SLOT(updateTrafficStats(quint64, quint64)));
+
+        // set up peer table
+        ui->peerWidget->setModel(model->getPeerTableModel());
+        ui->peerWidget->verticalHeader()->hide();
+        ui->peerWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->peerWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+        ui->peerWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+        ui->peerWidget->setColumnWidth(PeerTableModel::Address, ADDRESS_COLUMN_WIDTH);
+        ui->peerWidget->setColumnWidth(PeerTableModel::Subversion, SUBVERSION_COLUMN_WIDTH);
+        ui->peerWidget->setColumnWidth(PeerTableModel::Ping, PING_COLUMN_WIDTH);
+
+        // connect the peerWidget selection model to our peerSelected() handler
+        connect(ui->peerWidget->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
+             this, SLOT(peerSelected(const QItemSelection &, const QItemSelection &)));
+        connect(model->getPeerTableModel(), SIGNAL(layoutChanged()), this, SLOT(peerLayoutChanged()));
 
         // Provide initial values
         ui->clientVersion->setText(model->formatFullVersion());
@@ -439,6 +460,111 @@ void RPCConsole::on_tabWidget_currentChanged(int index)
     {
         ui->lineEdit->setFocus();
     }
+    else if(clientModel && ui->tabWidget->widget(index) == ui->tab_peers)
+    {
+        clientModel->getPeerTableModel()->startAutoRefresh();
+    }
+    else if(clientModel)
+    {
+        clientModel->getPeerTableModel()->stopAutoRefresh();
+    }
+}
+
+void RPCConsole::peerSelected(const QItemSelection &selected, const QItemSelection &deselected)
+{
+    Q_UNUSED(deselected);
+
+    if (!clientModel || selected.indexes().isEmpty())
+        return;
+
+    const CNodeCombinedStats *stats = clientModel->getPeerTableModel()->getNodeStats(selected.indexes().first().row());
+    if (stats)
+        updateNodeDetail(stats);
+}
+
+void RPCConsole::peerLayoutChanged()
+{
+    if (!clientModel)
+        return;
+
+    const CNodeCombinedStats *stats = NULL;
+    bool fUnselect = false;
+    bool fReselect = false;
+    bool fNewNodeSelected = false;
+
+    if (cachedNodeid == -1) // no node selected yet
+        return;
+
+    // find the currently selected row
+    int selectedRow;
+    QModelIndexList selectedModelIndex = ui->peerWidget->selectionModel()->selectedIndexes();
+    if (selectedModelIndex.isEmpty())
+        selectedRow = -1;
+    else
+        selectedRow = selectedModelIndex.first().row();
+
+    // check if our cached node is still alive
+    int detectedRow = clientModel->getPeerTableModel()->getRowByNodeId(cachedNodeid);
+    if (detectedRow < 0)
+    {
+        fUnselect = true;
+        cachedNodeid = -1;
+        ui->peerHeading->setText(tr("Select a peer to view detailed information."));
+    }
+    else
+    {
+        if (detectedRow != selectedRow)
+        {
+            fReselect = true;
+            fNewNodeSelected = true;
+        }
+        stats = clientModel->getPeerTableModel()->getNodeStats(detectedRow);
+    }
+
+    if (fUnselect && selectedRow >= 0)
+    {
+        ui->peerWidget->selectionModel()->select(QItemSelection(selectedModelIndex.first(), selectedModelIndex.last()),
+            QItemSelectionModel::Deselect);
+    }
+
+    if (fReselect)
+    {
+        ui->peerWidget->selectRow(detectedRow);
+    }
+
+    if (stats && !fNewNodeSelected)
+        updateNodeDetail(stats);
+}
+
+void RPCConsole::updateNodeDetail(const CNodeCombinedStats *stats)
+{
+    // Update cached nodeid
+    cachedNodeid = stats->nodeStats.nodeid;
+
+    // update the detail ui with latest node information
+    QString peerAddrDetails(QString::fromStdString(stats->nodeStats.addrName));
+    if (!stats->nodeStats.addrLocal.empty())
+        peerAddrDetails += "<br />" + tr("via %1").arg(QString::fromStdString(stats->nodeStats.addrLocal));
+    ui->peerHeading->setText(peerAddrDetails);
+    ui->peerServices->setText(GUIUtil::formatServicesStr(stats->nodeStats.nServices));
+    ui->peerLastSend->setText(stats->nodeStats.nLastSend ? GUIUtil::formatDurationStr(GetTime() - stats->nodeStats.nLastSend) : tr("never"));
+    ui->peerLastRecv->setText(stats->nodeStats.nLastRecv ? GUIUtil::formatDurationStr(GetTime() - stats->nodeStats.nLastRecv) : tr("never"));
+    ui->peerBytesSent->setText(FormatBytes(stats->nodeStats.nSendBytes));
+    ui->peerBytesRecv->setText(FormatBytes(stats->nodeStats.nRecvBytes));
+    ui->peerConnTime->setText(GUIUtil::formatDurationStr(GetTime() - stats->nodeStats.nTimeConnected));
+    ui->peerPingTime->setText(GUIUtil::formatPingTime(stats->nodeStats.dPingTime));
+    ui->peerVersion->setText(QString("%1").arg(stats->nodeStats.nVersion));
+    ui->peerSubversion->setText(QString::fromStdString(stats->nodeStats.cleanSubVer));
+    ui->peerDirection->setText(stats->nodeStats.fInbound ? tr("Inbound") : tr("Outbound"));
+    ui->peerHeight->setText(QString("%1").arg(stats->nodeStats.nStartingHeight));
+
+    if (stats->fNodeStateStatsAvailable) {
+        ui->peerBanScore->setText(QString("%1").arg(stats->nodeStateStats.nMisbehavior));
+    } else {
+        ui->peerBanScore->setText(tr("Fetching..."));
+    }
+
+    ui->detailWidget->setVisible(true);
 }
 
 void RPCConsole::on_openDebugLogfileButton_clicked()
