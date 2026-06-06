@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Generate pnSeed[] from Pieter's DNS seeder
 #
 
-NSEEDS=600
+NSEEDS=512
 
 import re
 import sys
@@ -13,7 +13,7 @@ def main():
     lines = sys.stdin.readlines()
 
     ips = []
-    pattern = re.compile(r"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):8333")
+    pattern = re.compile(r"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):20000\b")
     for line in lines:
         m = pattern.match(line)
         if m is None:
@@ -26,7 +26,7 @@ def main():
         ips.append(ip)
 
     for row in range(0, min(NSEEDS,len(ips)), 8):
-        print "    " + ", ".join([ "0x%08x"%i for i in ips[row:row+8] ]) + ","
+        print ("    " + ", ".join([ "0x%08x"%i for i in ips[row:row+8] ]) + ",")
 
 if __name__ == '__main__':
     main()
