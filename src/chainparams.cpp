@@ -26,7 +26,7 @@ unsigned int pnSeed[] =
     // seed1.23skidoo.info IP at v2.0.0-rc3 build time — fixed-seed fallback.
     // 159.198.79.74:20000 — packed little-endian uint32 below decodes via
     // memcpy into in_addr bytes 159,198,79,74 (network byte order).
-    0x4A4FC69F,
+    0x4a4fc69f, 0x06721441, 0xe8d12246,
 };
 
 static const unsigned int timeMainGenesisBlock = 1379187075;
