@@ -16,7 +16,7 @@ The Conclave has been listening at the door.
 
 This repository is the **community takeover** and **Restoration** of OFF — source resurrected, chain recovered, infrastructure rebuilt, and a hardfork (**v2.0.0-Restoration**) ready to engage at block 1,000,000.
 
-> **OFF is NOT for Sale.** This is **NOT financial advice.** We are **NOT financial advisors.** None of this is investment. Most of it is dread.
+> This is **NOT financial advice.** We are **NOT financial advisors.** None of this is investment. Most of it is dread.
 
 ---
 
@@ -321,7 +321,7 @@ The daemon will reach the seeds, sync to the recovered tip (~966,413), and conti
 ## What This Is Not
 
 - **Not a stealth fork.** Every consensus rule change is documented above, in `chainparams.cpp` comments, and in `research/restoration-hardfork.patch`.
-- **Not a sale.** OFF is NOT for Sale. The Ritual is NOT for Sale. The Tharanak shagg is NOT for Sale. The Book is NOT for Sale. We are NOT financial advisors. This is NOT financial advice.
+- **Not a sale.** We are NOT financial advisors. This is NOT financial advice.
 - **Not an erasure.** If Blazr2, ZeeWolf, HagbardCeline, b00mbastic, billotronic, vampirus, psycho-pat, Monk3ynutz, or any of the original Worshippers want to participate — they are welcome. If they want to reclaim the project entirely — make a credible claim, sign with a known historical key, and we'll hand back the Treasury keys and the seed DNS. **The Conclave acts as steward, not owner.**
 
 ---
