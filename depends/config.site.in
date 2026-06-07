@@ -3,12 +3,24 @@
 # Source: depends/config.site.in
 
 # Cross-compile toolchain
-CC=@CC@
-CXX=@CXX@
-AR=@AR@
-RANLIB=@RANLIB@
-NM=@NM@
-STRIP=@STRIP@
+# Quote the values: tool strings may contain flags with spaces (e.g. the
+# multilib "gcc -m32"/"g++ -m32" used for the i686-pc-linux host). Without
+# quotes, config.site is sourced as `CXX=g++ -m32`, which sets CXX only for a
+# bogus command "-m32" and leaves CXX unset, so configure silently falls back
+# to the native compiler and links the wrong-arch depends libraries.
+CC="@CC@"
+CXX="@CXX@"
+AR="@AR@"
+RANLIB="@RANLIB@"
+NM="@NM@"
+STRIP="@STRIP@"
+# The Objective-C/C++ compilers are not substituted by depends, but the qt GUI
+# target is linked with $(OBJCXXLD) (it contains .mm sources). If OBJC/OBJCXX
+# are left to configure's default they become a plain "g++" without the host
+# flags (e.g. -m32), so the final link pulls in the native-arch toolchain and
+# rejects every cross-built depends library. Inherit them from CC/CXX.
+OBJC="$CC"
+OBJCXX="$CXX"
 
 # Sysroot / prefix
 PREFIX=@STAGING_DIR_HOST@
