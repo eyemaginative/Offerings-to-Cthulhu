@@ -29,6 +29,9 @@ config.h.in~
 aclocal.m4
 autom4te.cache/
 src/Makefile.in
+src/qt/Makefile.in
+src/qt/test/Makefile.in
+src/test/Makefile.in
 src/config/
 
 # Local build dependencies
