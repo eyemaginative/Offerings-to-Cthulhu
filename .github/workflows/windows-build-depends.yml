@@ -18,6 +18,13 @@ on:
       - 'configure.ac'
       - 'src/**'
     tags: [ 'v*', 'wallet-*' ]
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/windows-build-depends.yml'
+      - 'depends/**'
+      - 'configure.ac'
+      - 'src/**'
   workflow_dispatch:
 
 permissions:
