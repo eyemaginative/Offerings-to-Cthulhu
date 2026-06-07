@@ -322,7 +322,7 @@ The daemon will reach the seeds, sync to the recovered tip (~966,413), and conti
 
 - **Not a stealth fork.** Every consensus rule change is documented above, in `chainparams.cpp` comments, and in `research/restoration-hardfork.patch`.
 - **Not a sale.** We are NOT financial advisors. This is NOT financial advice.
-- **Not an erasure.** If Blazr2, ZeeWolf, HagbardCeline, b00mbastic, billotronic, vampirus, psycho-pat, Monk3ynutz, or any of the original Worshippers want to participate — they are welcome. If they want to reclaim the project entirely — make a credible claim, sign with a known historical key, and we'll hand back the Treasury keys and the seed DNS. **The Conclave acts as steward, not owner.**
+- **Not an erasure.** If Blazr2, ZeeWolf, HagbardCeline, b00mbastic, billotronic, vampirus, psycho-pat, Monk3ynutz, or any of the original Worshippers want to participate — they are welcome. The historical thread, contributors, and chain lineage are credited in `research/bct-thread-scrape-2026-05-20.md`.
 
 ---
 
