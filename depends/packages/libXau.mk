@@ -1,13 +1,19 @@
 package=libXau
-$(package)_version=1.0.8
-$(package)_download_path=http://xorg.freedesktop.org/releases/individual/lib/
+GCCFLAGS?=
+$(package)_version=1.0.9
+$(package)_download_path=https://xorg.freedesktop.org/releases/individual/lib/
 $(package)_file_name=$(package)-$($(package)_version).tar.bz2
-$(package)_sha256_hash=fdd477320aeb5cdd67272838722d6b7d544887dfe7de46e1e7cc0c27c2bea4f2
+$(package)_sha256_hash=ccf8cbf0dbf676faa2ea0a6d64bcc3b6746064722b606c8c52917ed00dcb73ec
 $(package)_dependencies=xproto
 
 define $(package)_set_vars
-  $(package)_config_opts=--disable-shared
+  $(package)_config_opts=--disable-shared --enable-static --disable-lint-library --without-lint
   $(package)_config_opts_linux=--with-pic
+  $(package)_cxxflags_aarch64_linux = $(GCCFLAGS)
+  $(package)_cflags_aarch64_linux = $(GCCFLAGS)
+  $(package)_cxxflags_arm_linux = $(GCCFLAGS)
+  $(package)_cflags_arm_linux = $(GCCFLAGS)
+  $(package)_config_opts +=--libdir=$($($(package)_type)_prefix)/lib
 endef
 
 define $(package)_config_cmds

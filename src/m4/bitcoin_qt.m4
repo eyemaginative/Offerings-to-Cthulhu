@@ -280,7 +280,7 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
           AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
           QT_LIBS=`$PKG_CONFIG --libs --static $qt5_modules`
           if test x$TARGET_OS != xwindows && test x$TARGET_OS != xdarwin; then
-            QT_LIBS="-L$qt_lib_path -L$qt_plugin_path/platforms -lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb $QT_LIBS"
+            QT_LIBS="-L$qt_lib_path -L$qt_plugin_path/platforms -lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb -lXau $QT_LIBS"
           fi
         fi
       fi
@@ -395,7 +395,7 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
           dnl link: plugin/support libs before $QT_LIBS, bundled + system X libs
           dnl after. This exact set was confirmed with a static link test
           dnl against the depends-built Qt.
-          QT_LIBS="-lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus $QT_LIBS -lqtharfbuzz -lqtpcre2 -lpng16 -lz -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb -ldl"
+          QT_LIBS="-lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus $QT_LIBS -lqtharfbuzz -lqtpcre2 -lpng16 -lz -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb -lXau -ldl"
         fi
       fi
     else
