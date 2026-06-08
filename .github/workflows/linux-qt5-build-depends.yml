@@ -1,0 +1,237 @@
+name: Build Linux Qt5 wallet (depends/ static)
+
+# Canonical Bitcoin Core depends/ path, native Linux x86_64 Qt5 GUI wallet.
+# depends/ vendors Boost 1.74 / OpenSSL 1.0.2 / BDB 4.8 / Qt 5.9.8 / qrencode
+# / protobuf from pinned source so the resulting Offerings-qt does not depend
+# on the host distro's library versions.
+#
+# Sibling of:
+#   - linux-build-depends.yml      (daemon + cli only, NO_QT=1)
+#   - windows-build-depends.yml    (Qt5 cross-compile to win64)
+#
+# This workflow restores the Linux Qt5 GUI artifact that last shipped in
+# v2.0.2; v2.0.3 through v2.0.6 were Linux daemon-only. See
+# HANDOFF-linux-qt5-restoration.md for the full rationale.
+#
+# Runner: ubuntu-22.04 (glibc 2.35). Resulting binary requires glibc >= 2.35
+# at runtime — covers Debian 12+, Ubuntu 22.04+, recent Fedora/Arch.
+#
+# Triggers: push to main when this file or depends/ changes, manual dispatch,
+# tag push (attaches to release as draft).
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/linux-qt5-build-depends.yml'
+      - 'depends/**'
+      - 'configure.ac'
+      - 'src/**'
+    tags: [ 'v*', 'wallet-*' ]
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '.github/workflows/linux-qt5-build-depends.yml'
+      - 'depends/**'
+      - 'configure.ac'
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux-qt5:
+    name: Cthulhu Offerings — Linux x86_64 Qt5 GUI (depends/ static)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake autoconf pkg-config \
+            bsdmainutils python3 curl ca-certificates faketime bison \
+            libxcb1-dev libx11-xcb-dev libxkbcommon-x11-dev libxcb-icccm4-dev \
+            libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
+            libxcb-render-util0-dev libxcb-shape0-dev libxcb-sync-dev \
+            libxcb-xfixes0-dev libxcb-xinerama0-dev libxcb-xkb-dev \
+            libxkbcommon-dev libfontconfig1-dev libfreetype6-dev libglib2.0-dev
+
+      - name: Cache depends/ sources + built artifacts
+        id: cache-depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/sources
+            depends/built
+            depends/x86_64-unknown-linux-gnu
+            depends/work
+          # Cache invalidates if any .mk file changes (version pins or build recipes).
+          # Distro is part of the key — depends/ builds host-native helpers (ccache, qmake,
+          # protoc) that link against the runner's glibc; a cache built on Noble (glibc 2.38)
+          # won't execute on Jammy (glibc 2.35). Bump the version suffix to invalidate.
+          key: depends-x86_64-unknown-linux-gnu-jammy-v1-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile', 'depends/funcs.mk') }}
+          restore-keys: |
+            depends-x86_64-unknown-linux-gnu-jammy-v1-
+
+      - name: Inventory depends/ state
+        run: |
+          echo "=== depends/ contents ==="
+          ls depends/ 2>&1 | head -30
+          echo
+          echo "=== depends/packages/ ==="
+          ls depends/packages/ 2>&1 | head -30
+          echo
+          echo "=== cache hit? ==="
+          [ -d depends/x86_64-unknown-linux-gnu ] && echo "depends/x86_64-unknown-linux-gnu present (cache hit)" || echo "no cache, will build from scratch"
+          df -h .
+
+      - name: Build depends/ for x86_64-unknown-linux-gnu
+        run: |
+          cd depends
+          # Bitcoin Core depends/ supports NO_QT, NO_UPNP, NO_ZMQ flags. We want Qt for the GUI wallet.
+          # First run is slow (~30-60 min). Subsequent runs are cached.
+          make HOST=x86_64-unknown-linux-gnu -j$(nproc) NO_UPNP=1 || {
+            echo "=== depends/ build failed — last 80 lines ==="
+            tail -80 depends/work/build/x86_64-unknown-linux-gnu/*/build.log 2>/dev/null || true
+            exit 1
+          }
+          echo "=== depends/ output ==="
+          ls x86_64-unknown-linux-gnu/lib/ 2>&1 | head -20
+          ls x86_64-unknown-linux-gnu/include/ 2>&1 | head -10
+
+      - name: Materialize Qt host tools at expected build path
+        run: |
+          # depends/ cache restores Qt install but discards work/build dir.
+          # OFF's pre-generated qmake config embeds qt/X.Y.Z-HASH/qtbase/bin/
+          # for rcc/uic/moc/lupdate. Recreate that dir and symlink from native install.
+          # MUST run BEFORE autogen+configure because configure invokes qmake.
+          NATIVE=$PWD/depends/x86_64-unknown-linux-gnu/native/bin
+          echo "=== native bin ==="
+          ls -la $NATIVE/ 2>&1 | grep -E "rcc|uic|moc|lupdate|lrelease|lconvert|qmake" || true
+          # Find the qt hash dir (deterministic from qt.mk hash)
+          QT_HASH_DIR=$(ls -d depends/work/build/x86_64-unknown-linux-gnu/qt/5.9.8-* 2>/dev/null | head -1)
+          if [ -z "$QT_HASH_DIR" ]; then
+            # Cache restored but work/ discarded — recreate the canonical hash path.
+            # Hash is deterministic from depends/packages/qt.mk + Makefile + funcs.mk.
+            QT_HASH_DIR=$(ls -d depends/x86_64-unknown-linux-gnu/work/build/qt/5.9.8-* 2>/dev/null | head -1)
+          fi
+          if [ -z "$QT_HASH_DIR" ]; then
+            # Last-resort: discover any qt 5.x.y- dir under work/
+            QT_HASH_DIR=$(find depends -type d -path '*/work/build/*/qt/5.*-*' 2>/dev/null | head -1)
+          fi
+          if [ -z "$QT_HASH_DIR" ]; then
+            echo "ERROR: could not locate qt build hash dir under depends/work/"
+            find depends -type d -name 'qt' 2>/dev/null | head -5
+            exit 1
+          fi
+          echo "Materializing host tools in $QT_HASH_DIR/qtbase/bin/"
+          mkdir -p "$QT_HASH_DIR/qtbase/bin"
+          for tool in rcc moc uic lupdate lrelease lconvert qmake; do
+            if [ -f "$NATIVE/${tool}-qt5" ]; then
+              ln -sf "$NATIVE/${tool}-qt5" "$QT_HASH_DIR/qtbase/bin/$tool"
+            elif [ -f "$NATIVE/${tool}" ]; then
+              ln -sf "$NATIVE/${tool}" "$QT_HASH_DIR/qtbase/bin/$tool"
+            fi
+          done
+          ls -la "$QT_HASH_DIR/qtbase/bin/"
+
+      - name: autogen + configure
+        run: |
+          ./autogen.sh
+          # CONFIG_SITE is the bridge: tells configure to use the depends/ tree.
+          DEPENDS_PREFIX=$PWD/depends/x86_64-unknown-linux-gnu
+          # native/bin holds protoc and other build-host tools built by depends/
+          PATH="${DEPENDS_PREFIX}/native/bin:${PATH}" \
+          CONFIG_SITE=$DEPENDS_PREFIX/share/config.site \
+          CPPFLAGS="-I${DEPENDS_PREFIX}/include" \
+          LDFLAGS="-L${DEPENDS_PREFIX}/lib -L${DEPENDS_PREFIX}/plugins/platforms -L${DEPENDS_PREFIX}/plugins/accessible -L${DEPENDS_PREFIX}/plugins/imageformats -L${DEPENDS_PREFIX}/plugins/styles" \
+          PKG_CONFIG_PATH="${DEPENDS_PREFIX}/lib/pkgconfig" \
+          CXXFLAGS="-std=gnu++14" \
+            ./configure \
+              --prefix=/ \
+              --disable-tests \
+              --disable-bench \
+              --with-boost=${DEPENDS_PREFIX} \
+              --with-qt-incdir=${DEPENDS_PREFIX}/include \
+              --with-qt-libdir=${DEPENDS_PREFIX}/lib \
+              --with-qt-plugindir=${DEPENDS_PREFIX}/plugins \
+              --with-qt-bindir=${DEPENDS_PREFIX}/native/bin \
+              || { echo "=== config.log tail ==="; tail -300 config.log; exit 1; }
+
+      - name: Pre-build LevelDB (generate build_config.mk)
+        run: |
+          # Parallel make races on $(shell ./build_detect_platform); pre-build
+          # leveldb sequentially so build_config.mk exists before main make.
+          cd src/leveldb
+          ./build_detect_platform build_config.mk ./
+          ls -la build_config.mk
+          head -5 build_config.mk
+
+      - name: make
+        run: make -j$(nproc) || { echo "=== make failed ==="; exit 1; }
+
+      - name: Verify binaries
+        run: |
+          file src/Offeringsd src/Offerings-cli src/qt/Offerings-qt 2>&1 | head -10
+          ls -la src/Offeringsd src/Offerings-cli src/qt/Offerings-qt 2>&1 | head
+
+      - name: Strip + package
+        run: |
+          BIN_D=src/Offeringsd
+          BIN_C=src/Offerings-cli
+          BIN_Q=src/qt/Offerings-qt
+          strip --strip-all "$BIN_D" "$BIN_C" "$BIN_Q"
+
+          # Derive a versioned release name. Tag builds get "Offerings-qt-<tag>-linux64",
+          # non-tag builds get "Offerings-qt-snapshot-<short-sha>-linux64". The archive
+          # extracts to a top-level dir of the same name so users land in a clean
+          # versioned folder.
+          if [ -n "${GITHUB_REF_NAME:-}" ] && [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            RELEASE_NAME="Offerings-qt-${GITHUB_REF_NAME}-linux64"
+          else
+            RELEASE_NAME="Offerings-qt-snapshot-${GITHUB_SHA::7}-linux64"
+          fi
+          echo "RELEASE_NAME=$RELEASE_NAME" >> "$GITHUB_ENV"
+
+          mkdir -p "dist/$RELEASE_NAME"
+          cp "$BIN_Q" "dist/$RELEASE_NAME/Offerings-qt"
+          # Bundle daemon + cli too — operator who downloads the GUI tarball gets a
+          # full functional wallet without a second download.
+          cp "$BIN_D" "dist/$RELEASE_NAME/Offeringsd"
+          cp "$BIN_C" "dist/$RELEASE_NAME/Offerings-cli"
+          ( cd "dist/$RELEASE_NAME" && sha256sum Offerings-qt Offeringsd Offerings-cli > SHA256SUMS-linux-qt5.txt )
+
+          # Linux operators want tar.gz, not zip.
+          ( cd dist && tar czf "../${RELEASE_NAME}.tar.gz" "$RELEASE_NAME" )
+
+          # Side artifact: bare SHA256SUMS without unpacking.
+          cp "dist/$RELEASE_NAME/SHA256SUMS-linux-qt5.txt" dist/SHA256SUMS-linux-qt5.txt
+
+          ls -la "${RELEASE_NAME}.tar.gz" dist/SHA256SUMS-linux-qt5.txt
+          cat dist/SHA256SUMS-linux-qt5.txt
+
+      - name: Upload Linux Qt5 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cthulhu-offerings-linux-x86_64-qt5
+          path: |
+            ${{ env.RELEASE_NAME }}.tar.gz
+            dist/SHA256SUMS-linux-qt5.txt
+          retention-days: 90
+
+      - name: Attach to release (if tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.RELEASE_NAME }}.tar.gz
+            dist/SHA256SUMS-linux-qt5.txt
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
