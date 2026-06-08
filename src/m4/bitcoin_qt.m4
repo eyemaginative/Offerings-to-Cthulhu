@@ -395,7 +395,7 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
           dnl link: plugin/support libs before $QT_LIBS, bundled + system X libs
           dnl after. This exact set was confirmed with a static link test
           dnl against the depends-built Qt.
-          QT_LIBS="-lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus $QT_LIBS -lqtharfbuzz -lqtpcre2 -lqtlibpng -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb -ldl"
+          QT_LIBS="-lqxcb -lQt5XcbQpa -lQt5ServiceSupport -lQt5ThemeSupport -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5AccessibilitySupport -lQt5InputSupport -lQt5DBus $QT_LIBS -lqtharfbuzz -lqtpcre2 -lpng16 -lz -lxcb-static -lfontconfig -lfreetype -lexpat -lxcb -lX11 -lX11-xcb -ldl"
         fi
       fi
     else
