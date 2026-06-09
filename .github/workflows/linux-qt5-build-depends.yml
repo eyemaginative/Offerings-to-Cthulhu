@@ -105,42 +105,6 @@ jobs:
           ls x86_64-unknown-linux-gnu/lib/ 2>&1 | head -20
           ls x86_64-unknown-linux-gnu/include/ 2>&1 | head -10
 
-      - name: Materialize Qt host tools at expected build path
-        run: |
-          # depends/ cache restores Qt install but discards work/build dir.
-          # OFF's pre-generated qmake config embeds qt/X.Y.Z-HASH/qtbase/bin/
-          # for rcc/uic/moc/lupdate. Recreate that dir and symlink from native install.
-          # MUST run BEFORE autogen+configure because configure invokes qmake.
-          NATIVE=$PWD/depends/x86_64-unknown-linux-gnu/native/bin
-          echo "=== native bin ==="
-          ls -la $NATIVE/ 2>&1 | grep -E "rcc|uic|moc|lupdate|lrelease|lconvert|qmake" || true
-          # Find the qt hash dir (deterministic from qt.mk hash)
-          QT_HASH_DIR=$(ls -d depends/work/build/x86_64-unknown-linux-gnu/qt/5.9.8-* 2>/dev/null | head -1)
-          if [ -z "$QT_HASH_DIR" ]; then
-            # Cache restored but work/ discarded — recreate the canonical hash path.
-            # Hash is deterministic from depends/packages/qt.mk + Makefile + funcs.mk.
-            QT_HASH_DIR=$(ls -d depends/x86_64-unknown-linux-gnu/work/build/qt/5.9.8-* 2>/dev/null | head -1)
-          fi
-          if [ -z "$QT_HASH_DIR" ]; then
-            # Last-resort: discover any qt 5.x.y- dir under work/
-            QT_HASH_DIR=$(find depends -type d -path '*/work/build/*/qt/5.*-*' 2>/dev/null | head -1)
-          fi
-          if [ -z "$QT_HASH_DIR" ]; then
-            echo "ERROR: could not locate qt build hash dir under depends/work/"
-            find depends -type d -name 'qt' 2>/dev/null | head -5
-            exit 1
-          fi
-          echo "Materializing host tools in $QT_HASH_DIR/qtbase/bin/"
-          mkdir -p "$QT_HASH_DIR/qtbase/bin"
-          for tool in rcc moc uic lupdate lrelease lconvert qmake; do
-            if [ -f "$NATIVE/${tool}-qt5" ]; then
-              ln -sf "$NATIVE/${tool}-qt5" "$QT_HASH_DIR/qtbase/bin/$tool"
-            elif [ -f "$NATIVE/${tool}" ]; then
-              ln -sf "$NATIVE/${tool}" "$QT_HASH_DIR/qtbase/bin/$tool"
-            fi
-          done
-          ls -la "$QT_HASH_DIR/qtbase/bin/"
-
       - name: autogen + configure
         run: |
           ./autogen.sh
