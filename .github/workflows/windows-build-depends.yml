@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install build deps + mingw-w64 toolchain
         run: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Cache depends/ sources + built artifacts
         id: cache-depends
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             depends/sources
@@ -207,7 +207,7 @@ jobs:
           cat dist/SHA256SUMS-windows.txt
 
       - name: Upload Windows Qt5 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cthulhu-offerings-windows-x86_64-qt5
           path: |
