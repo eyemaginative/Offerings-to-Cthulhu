@@ -9,6 +9,11 @@ $(package)_patches=gperf_header_regen.patch
 define $(package)_set_vars
   $(package)_config_opts=--disable-docs --disable-shared --enable-static --disable-libxml2 --disable-iconv
   $(package)_config_opts += --disable-dependency-tracking --enable-option-checking
+  # Point the static fontconfig at the system /etc/fonts and /usr/share/fonts at
+  # runtime instead of the build-host depends/ prefix. Without these, the binary
+  # emits "Fontconfig error: Cannot load default config file" on every Linux
+  # desktop it's dropped on and Qt aborts before drawing a window (v2.0.7 bug).
+  $(package)_config_opts += --sysconfdir=/etc --datadir=/usr/share --localstatedir=/var
   $(package)_cflags+=-fPIC
   $(package)_cflags += -Wno-implicit-function-declaration
   $(package)_config_opts +=--libdir=$($($(package)_type)_prefix)/lib
