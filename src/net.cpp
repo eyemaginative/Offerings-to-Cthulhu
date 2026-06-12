@@ -51,7 +51,6 @@ bool fDiscover = true;
 uint64_t nLocalServices = NODE_NETWORK;
 CCriticalSection cs_mapLocalHost;
 map<CNetAddr, LocalServiceInfo> mapLocalHost;
-static bool vfReachable[NET_MAX] = {};
 static bool vfLimited[NET_MAX] = {};
 static CNode* pnodeLocalHost = NULL;
 static CNode* pnodeSync = NULL;
@@ -224,14 +223,6 @@ void AdvertizeLocal(CNode *pnode)
     }
 }
 
-void SetReachable(enum Network net, bool fFlag)
-{
-    LOCK(cs_mapLocalHost);
-    vfReachable[net] = fFlag;
-    if (net == NET_IPV6 && fFlag)
-        vfReachable[NET_IPV4] = true;
-}
-
 // learn a new local address
 bool AddLocal(const CService& addr, int nScore)
 {
@@ -254,7 +245,6 @@ bool AddLocal(const CService& addr, int nScore)
             info.nScore = nScore + (fAlready ? 1 : 0);
             info.nPort = addr.GetPort();
         }
-        SetReachable(addr.GetNetwork());
     }
 
     return true;
@@ -310,7 +300,7 @@ bool IsReachable(const CNetAddr& addr)
 {
     LOCK(cs_mapLocalHost);
     enum Network net = addr.GetNetwork();
-    return vfReachable[net] && !vfLimited[net];
+    return !vfLimited[net];
 }
 
 

@@ -701,6 +701,10 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
+    // Without SetReachable, NET_TOR must be limited until an onion proxy is set,
+    // otherwise IsReachable() would treat .onion as dialable with no Tor proxy.
+    SetLimited(NET_TOR);
+
     CService addrProxy;
     bool fProxy = false;
     if (mapArgs.count("-proxy")) {
@@ -733,7 +737,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (!addrOnion.IsValid())
             return InitError(strprintf(_("Invalid -onion address: '%s'"), mapArgs.count("-onion")?mapArgs["-onion"]:mapArgs["-tor"]));
         SetProxy(NET_TOR, addrOnion, 5);
-        SetReachable(NET_TOR);
+        SetLimited(NET_TOR, false);
     }
 
     // see Step 2: parameter interactions for more information about these
