@@ -37,6 +37,9 @@ public:
 
     void showOutOfSyncWarning(bool fShow);
 
+protected:
+    void paintEvent(QPaintEvent *event);
+
 private:
     QStackedWidget *walletStack;
     BitcoinGUI *gui;

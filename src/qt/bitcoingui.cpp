@@ -126,6 +126,12 @@ BitcoinGUI::BitcoinGUI(bool fIsTestnet, QWidget *parent) :
         /** Create wallet frame and make it the central widget */
         walletFrame = new WalletFrame(this);
         setCentralWidget(walletFrame);
+
+        // Paint the tufted-green background image on WalletFrame itself.
+        // The qss-level rule on QMainWindow gets covered by the central
+        // widget; setting it here directly (with the leading-dot exact-class
+        // selector) is the (BOB)-proven pattern.
+        this->setStyleSheet(".WalletFrame { background-image: url(\":/images/app_bg\"); background-repeat: repeat; background-position: top left; border: none; }");
     } else
 #endif
     {
@@ -371,12 +377,27 @@ void BitcoinGUI::createMenuBar()
     file->addAction(quitAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&About"));
-    if(walletFrame)
-    {
-        help->addAction(openRPCConsoleAction);
-    }
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
+
+    // Text Based Worship lives as its own top-level menubar entry to the
+    // right of the About menu, not as an item inside it. Qt supports
+    // QAction directly on QMenuBar — click invokes the slot immediately
+    // with no submenu. Wallet-only (the action is the RPC console).
+    //
+    // Use a fresh icon-less QAction here instead of openRPCConsoleAction:
+    // openRPCConsoleAction carries the `:/icons/debugwindow` icon (needed
+    // for the system tray menu, where icons render correctly), but Qt's
+    // QMenuBar on several Linux styles renders icon-bearing actions as
+    // an icon-only chip with no label, hiding the "Text Based Worship"
+    // text entirely.
+    if(walletFrame)
+    {
+        QAction *worshipMenuBarAction = new QAction(tr("&Text Based Worship"), this);
+        worshipMenuBarAction->setStatusTip(openRPCConsoleAction->statusTip());
+        connect(worshipMenuBarAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
+        appMenuBar->addAction(worshipMenuBarAction);
+    }
 }
 
 void BitcoinGUI::createToolBars()
@@ -390,7 +411,6 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
         toolbar->addAction(codexAction);
-        toolbar->addAction(openRPCConsoleAction);
         overviewAction->setChecked(true);
     }
 }

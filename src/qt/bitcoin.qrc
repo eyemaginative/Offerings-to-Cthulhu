@@ -53,6 +53,7 @@
         <file alias="splash">res/images/splash.png</file>
         <file alias="splash_testnet">res/images/splash_testnet.png</file>
         <file alias="wallet_bgcoin">res/images/wallet_bgcoin.png</file>
+        <file alias="app_bg">res/images/app_bg.png</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>

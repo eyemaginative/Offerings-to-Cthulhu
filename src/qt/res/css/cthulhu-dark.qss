@@ -5,24 +5,88 @@
  */
 
 QMainWindow,
-QDialog,
-QWidget {
+QDialog {
     background-color: #0a1518;
     color: #cfd8dc;
     selection-background-color: #1f3a3a;
     selection-color: #f0d390;
 }
 
+QWidget {
+    color: #cfd8dc;
+    selection-background-color: #1f3a3a;
+    selection-color: #f0d390;
+}
+
+/* Explicit dark fill on every top-level popup QDialog subclass. The generic
+ * `QDialog { background-color: #0a1518 }` rule above SHOULD apply via Qt's
+ * type-selector subclass match, but on Qt 5.x with native X11 window
+ * decoration the rule is silently skipped for QDialog subclasses
+ * (autoFillBackground=false + native window chrome means the stylesheet
+ * bg is dropped on the dialog widget itself, while children still get
+ * their own rules). Subclass-name selectors win the specificity tie and
+ * force Qt to paint, fixing the "white window background" reports on the
+ * Sign/Verify, RPC Console (Information/Peers/Network/Console tabs),
+ * address book, options, help, etc. */
+RPCConsole,
+SignVerifyMessageDialog,
+OpenURIDialog,
+OptionsDialog,
+HelpMessageDialog,
+AddressBookPage,
+AskPassphraseDialog,
+CoinControlDialog,
+TransactionDescDialog,
+EditAddressDialog {
+    background-color: #0a1518;
+}
+
+/* RPCConsole's tab pages, the right-pane detail panel under Peers, and any
+ * other plain-QWidget content under a popup dialog have no autoFillBackground
+ * and no rule, so they paint nothing and reveal whatever's behind. Force a
+ * dark fill on the tab-page level so each tab reads as part of the dialog. */
+RPCConsole QWidget#tab_info,
+RPCConsole QWidget#tab_console,
+RPCConsole QWidget#tab_peers,
+RPCConsole QWidget#tab,
+RPCConsole QWidget#detailWidget,
+RPCConsole TrafficGraphWidget,
+OptionsDialog QWidget#tabMain,
+OptionsDialog QWidget#tabWallet,
+OptionsDialog QWidget#tabNetwork,
+OptionsDialog QWidget#tabWindow,
+OptionsDialog QWidget#tabMining,
+OptionsDialog QWidget#tabDisplay {
+    background-color: #0a1518;
+}
+
+/* (App-wide background image rules moved to the bottom of this file —
+   they MUST come after the generic `QFrame { background-color: #142025 }`
+   rule below so the specificity tie is broken by document order in our
+   favor. WalletFrame is a QFrame subclass; equal-specificity → later
+   rule wins.) */
+
 /* raised surfaces (panels, frames, group boxes) */
 QFrame,
 QGroupBox,
 QToolBar,
-QStatusBar,
-QMenuBar,
 QMenu {
     background-color: #142025;
     color: #cfd8dc;
     border: 1px solid #1a2a30;
+}
+
+/* Top + bottom window chrome — neutral grey, unified between menu bar and
+ * status bar so the wallet reads as a framed application. The QMenuBar is
+ * intentionally NOT in the QFrame/QGroupBox/QToolBar group above because
+ * on X11 the QMenuBar can fall back to OS-native rendering (light theme)
+ * when it's left to inherit a generic QFrame style — an explicit
+ * background-color here forces Qt to paint the bar itself. */
+QMenuBar {
+    background-color: #b0b0b0;
+    color: #1a1a1a;
+    border: none;
+    border-bottom: 1px solid #8a8a8a;
 }
 
 QGroupBox {
@@ -160,14 +224,25 @@ QMenu::separator {
     margin: 4px 6px;
 }
 
-/* status bar */
+/* status bar — lighter neutral grey paired with the QMenuBar above so the
+ * top + bottom window chrome reads as a unified frame. Scoped to
+ * QStatusBar only; QPushButton / QToolBar QToolButton / QFrame borders
+ * elsewhere are unaffected (separate selectors). */
 QStatusBar {
-    background-color: #08111a;
-    color: #9aa8aa;
-    border-top: 1px solid #1a2a30;
+    background-color: #b8b8b8;
+    color: #1a1a1a;
+    border-top: 1px solid #8a8a8a;
 }
 QStatusBar QLabel {
-    color: #9aa8aa;
+    color: #1a1a1a;
+}
+/* The right-edge frameBlocks panel that holds the encryption / connection /
+ * sync-icon labels is a bare QFrame inside QStatusBar — without this it
+ * gets the generic `QFrame { background-color: #142025 }` and shows as a
+ * dark island on the gray bar. */
+QStatusBar QFrame {
+    background-color: transparent;
+    border: none;
 }
 
 /* scrollbars — slim, near-invisible against the dark */
@@ -261,4 +336,82 @@ QSlider::handle:horizontal {
     background-color: #dda149;
     border-radius: 6px;
     margin: -4px 0;
+}
+
+/* ============================================================
+ * APP-WIDE BACKGROUND IMAGE — MUST stay at the bottom of file
+ * ============================================================
+ * QMainWindow stylesheet bg-image is famously flaky because the central
+ * widget covers the viewport. We paint the image on WalletFrame (the actual
+ * central widget) and on QMainWindow itself, then mark every intermediate
+ * container transparent so the image isn't covered up.
+ *
+ * Document order matters: WalletFrame is a QFrame subclass, equal-specificity
+ * with the `QFrame { background-color: #142025 }` rule above. Later rule wins,
+ * so this block needs to live at the bottom of the file. */
+QMainWindow,
+BitcoinGUI,
+WalletFrame,
+.WalletFrame {
+    background-color: #0a1518;
+    background-image: url(:/images/app_bg);
+    background-repeat: repeat;
+    background-position: top left;
+    border: 2px solid #909090;
+}
+
+/* Containers between WalletFrame and the page content must be transparent
+ * or they'll paint over the background image.
+ *
+ * ONLY add classes here that are embedded inside WalletFrame's
+ * QStackedWidget — i.e. things the bg tile actually sits underneath.
+ * Top-level popup dialogs (new'd freestanding + show()'d, e.g.
+ * SignVerifyMessageDialog, AddressBookPage, OpenURIDialog,
+ * OptionsDialog) have NO WalletFrame ancestor, so transparency on them
+ * reveals OS window chrome (white border) and kills the QDialog
+ * dark fill. Leave those to inherit the QDialog rule at the top. */
+WalletView,
+QStackedWidget,
+OverviewPage,
+SendCoinsDialog,
+ReceiveCoinsDialog,
+TransactionView,
+CodexPage,
+RPCConsole > QWidget,
+#scrollAreaWidgetContents {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+}
+
+/* QLabel inherits from QFrame, so the `QFrame { background-color: #142025 }`
+ * rule above paints a dark block around every label. Make labels transparent
+ * so transparent-PNG icons (like the wallet_bgcoin star) and text show on
+ * whatever sits behind them — the bg-image or the parent panel color.
+ * Labels that genuinely want a fill (e.g. labelAlerts) carry an inline
+ * stylesheet in the .ui that overrides this. */
+QLabel {
+    background-color: transparent;
+    border: none;
+}
+
+/* OverviewPage's two big panel cards (`frame` = balance, `frame_2` = transactions)
+ * are QFrame::StyledPanel and get the generic `QFrame { background-color: #142025 }`
+ * dark fill, which covers the WalletFrame bg-image everywhere except the small
+ * gap where the star logo lives. Make them transparent so the tiled bg shows
+ * app-wide; keep a thin border so the cards still read as grouped containers.
+ * Same specificity gotcha applies — this lives at the bottom of the file. */
+OverviewPage QFrame {
+    background-color: transparent;
+    border: 1px solid #2a3e46;
+}
+
+/* Right-column transactions panel needs an opaque-ish backing so the
+ * Transgressions list stays readable over the busy tile pattern. ~70%
+ * opacity = clearly a card, but the tile still bleeds through faintly.
+ * ID selector (#frame_2) beats the plain-class OverviewPage QFrame rule
+ * above on specificity, so this wins regardless of file order. */
+OverviewPage QFrame#frame_2 {
+    background-color: rgba(20, 32, 37, 0.70);
+    border: 1px solid #2a3e46;
 }

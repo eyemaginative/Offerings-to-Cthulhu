@@ -11,6 +11,9 @@
 
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPainter>
+#include <QPaintEvent>
+#include <QPixmap>
 
 WalletFrame::WalletFrame(BitcoinGUI *_gui) :
     QFrame(_gui),
@@ -30,6 +33,21 @@ WalletFrame::WalletFrame(BitcoinGUI *_gui) :
 
 WalletFrame::~WalletFrame()
 {
+}
+
+void WalletFrame::paintEvent(QPaintEvent *event)
+{
+    // Manual tiled bg-image draw. Qt's qss `background-image: url(...);
+    // background-repeat: repeat;` on a QFrame subclass is unreliable —
+    // it often paints the image once at native size with no tiling.
+    // drawTiledPixmap is the primitive Qt itself uses internally and
+    // it always tiles correctly across the viewport.
+    static const QPixmap bg(":/images/app_bg");
+    if (!bg.isNull()) {
+        QPainter painter(this);
+        painter.drawTiledPixmap(rect(), bg);
+    }
+    QFrame::paintEvent(event);
 }
 
 void WalletFrame::setClientModel(ClientModel *clientModel)

@@ -23,10 +23,25 @@ using namespace boost::assign;
 
 unsigned int pnSeed[] =
 {
-    // seed1.23skidoo.info IP at v2.0.0-rc3 build time — fixed-seed fallback.
-    // 159.198.79.74:20000 — packed little-endian uint32 below decodes via
-    // memcpy into in_addr bytes 159,198,79,74 (network byte order).
-    0x4a4fc69f, 0x06721441, 0xe8d12246,
+    // Fixed-seed fallback for fresh Qt clients on first run with no peers.dat.
+    // Each entry is the 4 IP bytes laid out in network-order in host memory
+    // then read as a little-endian uint32; memcpy into in_addr.s_addr yields
+    // the original A.B.C.D. Verify a new entry with:
+    //   python3 -c 'import struct,ipaddress; \
+    //     print("0x%08x" % struct.unpack("<I", \
+    //     ipaddress.IPv4Address("A.B.C.D").packed)[0])'
+    //
+    // Inclusion criteria for any addition:
+    //   1. IP must accept inbound P2P connections and complete a full
+    //      version/verack handshake from outside the cluster. Outbound-only
+    //      nodes (CGNAT, NATed home machines) do not belong here.
+    //   2. Operator must be known and have explicitly opted in. The seed
+    //      list is who a fresh client phones home to on first run; every
+    //      operator we list can observe every new wallet's starting IP, so
+    //      we don't bake in strangers regardless of how reachable they are.
+    0x4a4fc69f,   // 159.198.79.74  — Conclave seed (seed1.23skidoo.info)
+    0x06721441,   // 65.20.114.6    — Conclave seed (alternate)
+    0xe8d12246,   // 70.34.209.232  — Conclave seed (alternate)
 };
 
 static const unsigned int timeMainGenesisBlock = 1379187075;
