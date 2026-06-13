@@ -1272,16 +1272,6 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                 }
 
                 int64_t nChange = nValueIn - nValue - nFeeRet;
-                // The following if statement should be removed once enough miners
-                // have upgraded to the 0.9 GetMinFee() rules. Until then, this avoids
-                // creating free transactions that have change outputs less than
-                // CENT bitcoins.
-                if (nFeeRet < CTransaction::nMinTxFee && nChange > 0 && nChange < CENT)
-                {
-                    int64_t nMoveToFee = min(nChange, CTransaction::nMinTxFee - nFeeRet);
-                    nChange -= nMoveToFee;
-                    nFeeRet += nMoveToFee;
-                }
 
                 if (nChange > 0)
                 {
@@ -1358,9 +1348,21 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                 int64_t nPayFee = nTransactionFee * (1 + (int64_t)nBytes / 1000);
                 bool fAllowFree = AllowFree(dPriority);
                 int64_t nMinFee = GetMinFee(wtxNew, nBytes, fAllowFree, GMF_SEND);
-                if (nFeeRet < max(nPayFee, nMinFee))
+                // The GMF_SEND floor is based on nMinTxFee, but peers enforce the
+                // GMF_RELAY floor (nMinRelayTxFee) in AcceptToMemoryPool(). When
+                // those base fees differ (or for large coin-control transactions
+                // where the per-kB floor binds), building only to the send floor
+                // produces a transaction peers reject with "not enough fees".
+                // Never build below what the network will relay. AcceptToMemoryPool
+                // passes fAllowFree=true here, so mirror that exactly (the relay
+                // waiver is size-gated, not priority-gated): with nBytes identical
+                // on both sides this matches txMinFee precisely -- never rejected,
+                // never overpaying.
+                int64_t nRelayFee = GetMinFee(wtxNew, nBytes, true, GMF_RELAY);
+                int64_t nFeeNeeded = max(nPayFee, max(nMinFee, nRelayFee));
+                if (nFeeRet < nFeeNeeded)
                 {
-                    nFeeRet = max(nPayFee, nMinFee);
+                    nFeeRet = nFeeNeeded;
                     continue;
                 }
 
