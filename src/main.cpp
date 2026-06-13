@@ -67,7 +67,7 @@ multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
 std::map<uint256, CBlock*> mapOrphanBlocksSyncCheckpoint;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-int64_t CTransaction::nMinTxFee = 100;  // Override with -mintxfee; matches nMinRelayTxFee so wallet's auto-fee doesn't undershoot the peer relay floor on >49 KB coin-control TXs.
+int64_t CTransaction::nMinTxFee = 10;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying and mining) */
 int64_t CTransaction::nMinRelayTxFee = 100;
 
