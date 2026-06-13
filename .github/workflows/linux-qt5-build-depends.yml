@@ -94,9 +94,10 @@ jobs:
       - name: Build depends/ for x86_64-unknown-linux-gnu
         run: |
           cd depends
-          # Bitcoin Core depends/ supports NO_QT, NO_UPNP, NO_ZMQ flags. We want Qt for the GUI wallet.
+          # Bitcoin Core depends/ supports NO_QT, NO_UPNP, NO_ZMQ flags. We want Qt for the GUI wallet
+          # AND miniupnpc so the Options→Network "Map port using UPnP" checkbox is functional.
           # First run is slow (~30-60 min). Subsequent runs are cached.
-          make HOST=x86_64-unknown-linux-gnu -j$(nproc) NO_UPNP=1 || {
+          make HOST=x86_64-unknown-linux-gnu -j$(nproc) || {
             echo "=== depends/ build failed — last 80 lines ==="
             tail -80 depends/work/build/x86_64-unknown-linux-gnu/*/build.log 2>/dev/null || true
             exit 1
