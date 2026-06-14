@@ -2207,7 +2207,13 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
         // Conclave signed-mining window: until OpenMiningHeight, only blocks
         // signed by a Conclave key are valid (the home signer mines the canon).
-        if (IsInSignedWindow(pindex->nHeight) && !CheckConclaveSignature(block, pindex->nHeight))
+        // Skip during template self-validation (fJustCheck=true): the block
+        // carries an unsigned OFFSIG placeholder at this point that
+        // SignBlockIfNeeded fills in AFTER CreateNewBlock returns. The real
+        // check fires at submit/network-receive (fJustCheck=false).
+        if (!fJustCheck
+            && IsInSignedWindow(pindex->nHeight)
+            && !CheckConclaveSignature(block, pindex->nHeight))
             return state.DoS(100,
                 error("ConnectBlock() : block in signed window lacks a valid Conclave signature (height=%d)",
                       pindex->nHeight),
