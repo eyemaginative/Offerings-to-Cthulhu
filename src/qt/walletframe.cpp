@@ -37,15 +37,19 @@ WalletFrame::~WalletFrame()
 
 void WalletFrame::paintEvent(QPaintEvent *event)
 {
-    // Manual tiled bg-image draw. Qt's qss `background-image: url(...);
-    // background-repeat: repeat;` on a QFrame subclass is unreliable —
-    // it often paints the image once at native size with no tiling.
-    // drawTiledPixmap is the primitive Qt itself uses internally and
-    // it always tiles correctly across the viewport.
+    // Manual scale-to-fill, center-cropped bg-image draw. Qt's qss
+    // `background-image: url(...);` on a QFrame subclass paints at native
+    // size with no scaling and is otherwise unreliable for subclassed
+    // QFrames, so we scale the pixmap to cover the viewport (keeping
+    // aspect ratio, cropping overflow) and draw it ourselves.
     static const QPixmap bg(":/images/app_bg");
     if (!bg.isNull()) {
         QPainter painter(this);
-        painter.drawTiledPixmap(rect(), bg);
+        const QSize target = rect().size();
+        const QPixmap scaled = bg.scaled(target, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        const int x = (scaled.width()  - target.width())  / 2;
+        const int y = (scaled.height() - target.height()) / 2;
+        painter.drawPixmap(rect(), scaled, QRect(x, y, target.width(), target.height()));
     }
     QFrame::paintEvent(event);
 }

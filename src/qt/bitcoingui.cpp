@@ -127,11 +127,12 @@ BitcoinGUI::BitcoinGUI(bool fIsTestnet, QWidget *parent) :
         walletFrame = new WalletFrame(this);
         setCentralWidget(walletFrame);
 
-        // Paint the tufted-green background image on WalletFrame itself.
-        // The qss-level rule on QMainWindow gets covered by the central
-        // widget; setting it here directly (with the leading-dot exact-class
-        // selector) is the (BOB)-proven pattern.
-        this->setStyleSheet(".WalletFrame { background-image: url(\":/images/app_bg\"); background-repeat: repeat; background-position: top left; border: none; }");
+        // Bg-image painting lives in WalletFrame::paintEvent (scale-to-fill,
+        // center-crop). qss `background-image` on a QFrame subclass is
+        // unreliable, and a qss `background-repeat: repeat` here would
+        // also tile the image underneath the manual paint. Keep only the
+        // border-none rule.
+        this->setStyleSheet(".WalletFrame { border: none; }");
     } else
 #endif
     {
