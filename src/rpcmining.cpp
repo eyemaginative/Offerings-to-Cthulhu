@@ -522,19 +522,34 @@ Value getblocktemplate(const Array& params, bool fHelp)
     UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
-    // v2.0.0-rc3: sign the template's OFFSIG output if we're in the Conclave
-    // signed-mining window. The signature is now extranonce-invariant (see
-    // OffSigningHash in main.cpp), so a pool can serve this signed template
-    // to multiple workers searching different extranonce ranges without
-    // invalidating the signature. Skip if the daemon doesn't hold the key
-    // (block will be unsignable and rejected at ConnectBlock — that's the
-    // correct behavior: this daemon shouldn't be serving GBT in the window).
-    if (!SignBlockIfNeeded(pblock, pindexPrev->nHeight + 1, pwalletMain)) {
-        LogPrintf("getblocktemplate: in Conclave signed window but no "
-                  "authorized signing key in wallet — template will be "
-                  "rejected on submit\n");
-        // Continue anyway — the pool may have a stale fork to mine; reject
-        // happens at submitblock/ConnectBlock, which is the right surface.
+    // v2.0.0: if -pooladdress= is configured, rebuild the coinbase Miningcore-shape
+    // and emit pre-split coinbase bytes for external pool consumption. Otherwise fall
+    // through to the standalone OFFSIG signing path (used by daemons that run their
+    // own internal miner via setgenerate).
+    std::string poolAddr = GetArg("-pooladdress", "");
+    std::string poolTag  = GetArg("-pooltag", "/Miningcore/");
+    std::vector<unsigned char> poolCoinbaseBytes;
+    size_t poolCoinbaseExtranonceOffset = 0;
+    bool fPoolCoinbase = false;
+    if (!poolAddr.empty()) {
+        if (BuildPoolCoinbase(pblock, pindexPrev->nHeight + 1, pwalletMain,
+                              poolAddr, poolTag,
+                              poolCoinbaseBytes, poolCoinbaseExtranonceOffset)) {
+            fPoolCoinbase = true;
+        } else {
+            LogPrintf("getblocktemplate: BuildPoolCoinbase failed for -pooladdress=%s "
+                      "— falling back to standard template (will be rejected post-fork)\n",
+                      poolAddr.c_str());
+        }
+    }
+    if (!fPoolCoinbase) {
+        // v2.0.0-rc3: sign the template's OFFSIG output if we're in the Conclave
+        // signed-mining window. The signature is extranonce-invariant.
+        if (!SignBlockIfNeeded(pblock, pindexPrev->nHeight + 1, pwalletMain)) {
+            LogPrintf("getblocktemplate: in Conclave signed window but no "
+                      "authorized signing key in wallet — template will be "
+                      "rejected on submit\n");
+        }
     }
 
     Array transactions;
@@ -599,6 +614,18 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("curtime", (int64_t)pblock->nTime));
     result.push_back(Pair("bits", HexBits(pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
+
+    // v2.0.0: if BuildPoolCoinbase ran, hand Miningcore the pre-split coinbase
+    // bytes. Miningcore-side gate is HasCoinbaseTxn in coins.json; when both
+    // fields are present, BitcoinJob.cs skips its own coinbase construction.
+    if (fPoolCoinbase) {
+        std::vector<unsigned char> initBytes(poolCoinbaseBytes.begin(),
+                                             poolCoinbaseBytes.begin() + poolCoinbaseExtranonceOffset);
+        std::vector<unsigned char> finalBytes(poolCoinbaseBytes.begin() + poolCoinbaseExtranonceOffset + 8,
+                                              poolCoinbaseBytes.end());
+        result.push_back(Pair("coinbasetxn_initial", HexStr(initBytes.begin(), initBytes.end())));
+        result.push_back(Pair("coinbasetxn_final",   HexStr(finalBytes.begin(), finalBytes.end())));
+    }
 
     return result;
 }

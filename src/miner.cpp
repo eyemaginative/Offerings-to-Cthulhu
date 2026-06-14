@@ -9,6 +9,7 @@
 #include "main.h"
 #include "net.h"
 #include "checkpoints.h"
+#include "base58.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
@@ -572,6 +573,73 @@ bool SignBlockIfNeeded(CBlock* pblock, int nHeight, CWallet* pwallet)
     payload.insert(payload.end(), vchSig.begin(), vchSig.end());
     pblock->vtx[0].vout[sigVout].scriptPubKey = CScript() << OP_RETURN << payload;
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+    return true;
+}
+
+// v2.0.0: Rebuild the template's coinbase Miningcore-shape so external pools can serve
+// it. Replaces vout[0]'s OP_TRUE dummy with the configured pool address, lays a fixed
+// 8-byte extranonce placeholder inside scriptSig at a sentinel-marked offset, preserves
+// the Codex chunk, and signs OFFSIG. The signature is extranonce-invariant (see
+// OffSigningHash) so miners can vary the placeholder freely.
+//
+// Sentinel = 8 × 0xBB. Vanishingly unlikely to collide with any legitimate byte in
+// the serialized coinbase (height varint is small, /P2SH/ + tag are ASCII, codex
+// payload is ASCII Lovecraft corpus, all amounts/sequences are bounded). Caller
+// reads extranonceOffset and splits serializedCoinbase there.
+bool BuildPoolCoinbase(CBlock* pblock, int nHeight, CWallet* pwallet,
+                       const std::string& poolAddrStr, const std::string& tag,
+                       std::vector<unsigned char>& serializedCoinbase,
+                       size_t& extranonceOffset)
+{
+    if (poolAddrStr.empty() || pblock == NULL || pblock->vtx.empty())
+        return false;
+
+    CBitcoinAddress addr(poolAddrStr);
+    if (!addr.IsValid())
+        return false;
+    CScript poolScript;
+    poolScript.SetDestination(addr.Get());
+
+    pblock->vtx[0].vout[0].scriptPubKey = poolScript;
+
+    static const unsigned char SENTINEL[8] = {
+        0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB
+    };
+    std::vector<unsigned char> sentinelVec(SENTINEL, SENTINEL + 8);
+
+    CScript scriptSig;
+    scriptSig << nHeight;
+    scriptSig << sentinelVec;
+    std::vector<unsigned char> codex = CodexFragment(nHeight);
+    if (!codex.empty())
+        scriptSig << codex;
+    if (!tag.empty()) {
+        std::vector<unsigned char> tagVec(tag.begin(), tag.end());
+        scriptSig << tagVec;
+    }
+    if (scriptSig.size() > 100)
+        return false;
+
+    pblock->vtx[0].vin[0].scriptSig = scriptSig;
+    pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+
+    if (!SignBlockIfNeeded(pblock, nHeight, pwallet))
+        return false;
+
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << pblock->vtx[0];
+    serializedCoinbase.assign(ss.begin(), ss.end());
+
+    extranonceOffset = (size_t)-1;
+    for (size_t i = 0; i + 8 <= serializedCoinbase.size(); i++) {
+        if (memcmp(&serializedCoinbase[i], SENTINEL, 8) == 0) {
+            extranonceOffset = i;
+            break;
+        }
+    }
+    if (extranonceOffset == (size_t)-1)
+        return false;
+
     return true;
 }
 
