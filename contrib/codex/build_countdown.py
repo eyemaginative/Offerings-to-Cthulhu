@@ -258,6 +258,25 @@ def render_postfork():
 <style>.bar > i {{ width:{sig_progress:.3f}%; }}</style></head>
 <body><div class="wrap">{HEADER_HTML}
   <div class="eyebrow">SubGenius.Finance &mdash; The Conclave</div>
+
+  <div class="awaken-row">
+    <a class="awaken-link" href="/bridge/">
+      <span class="eyebrow">Worshipper Recognition</span>
+      <strong>The Reclamation</strong>
+      <span class="arrow">Claim from the Treasury &rarr;</span>
+    </a>
+    <a class="awaken-link" href="/codex/">
+      <span class="eyebrow">The Drowned Library</span>
+      <strong>The Chain Codex</strong>
+      <span class="arrow">Read what He recites &rarr;</span>
+    </a>
+    <a class="awaken-link" href="/bridge/treasury/">
+      <span class="eyebrow">Where the tithe flows</span>
+      <strong>Treasury Ledger</strong>
+      <span class="arrow">Every spend on chain &rarr;</span>
+    </a>
+  </div>
+
   <h1>THE STARS ARE RIGHT</h1>
   <div class="chant">He has risen at block 1,000,000.<br>The Restoration is among us.</div>
 
@@ -305,24 +324,6 @@ def render_postfork():
     </ul>
   </div>
 
-  <div class="awaken-row">
-    <a class="awaken-link" href="/bridge/">
-      <span class="eyebrow">Worshipper Recognition</span>
-      <strong>The Reclamation</strong>
-      <span class="arrow">Claim from the Treasury &rarr;</span>
-    </a>
-    <a class="awaken-link" href="/codex/">
-      <span class="eyebrow">The Drowned Library</span>
-      <strong>The Chain Codex</strong>
-      <span class="arrow">Read what He recites &rarr;</span>
-    </a>
-    <a class="awaken-link" href="/bridge/treasury/">
-      <span class="eyebrow">Where the tithe flows</span>
-      <strong>Treasury Ledger</strong>
-      <span class="arrow">Every spend on chain &rarr;</span>
-    </a>
-  </div>
-
   <h2 style="font-size:1rem; color:var(--dim); letter-spacing:.18em; text-transform:uppercase; margin-top:2.4em;">Get the wallet &mdash; {RELEASE_TAG}</h2>
   <div class="release-row">
     <a class="release-btn" href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/download/{RELEASE_TAG}/Offerings-daemon-{RELEASE_TAG}-linux64.tar.gz">Linux daemon</a>
@@ -331,7 +332,7 @@ def render_postfork():
     <a class="release-btn" href="https://github.com/SubGeniusFinance/Offerings-to-Cthulhu/releases/latest">All assets &amp; SHA256SUMS</a>
   </div>
 
-  <div class="foot">Awakened at <strong>{awakening_str}</strong> &middot; updated {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(now))} &middot; ETA from a live {len(samples)}-sample rate window.<br>
+  <div class="foot">He awoke at <strong>{awakening_str}</strong> &middot; the chain breathes at {bpm:.2f} blocks/min &middot; the page refreshes every minute.<br>
     <em>That is not dead which can eternal lie, and with strange aeons even death may die.</em></div>
 {FOOTER_HTML}
 </div>
