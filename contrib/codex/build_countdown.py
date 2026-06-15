@@ -13,7 +13,7 @@ import subprocess, json, os, time
 # SGF-HEADER-CONSTANTS
 HEADER_HTML = """<header class="site-header">
 <h1><a href="/">Cthulhu<img src="/static/img/off_240x240.png" alt="Offerings to Cthulhu — home"></a>Offerings</h1>
-<p class="site-tagline">He has risen.<br>The Restoration is among us.</p>
+<p class="site-tagline">The time draws near.<br>The return of The Great Old One is upon us.</p>
 </header>"""
 
 HEADER_CSS = """
