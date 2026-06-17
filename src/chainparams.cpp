@@ -252,6 +252,19 @@ public:
         base58Prefixes[SECRET_KEY] = list_of(247).convert_to_container<std::vector<unsigned char> >();
         base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
         base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
+
+        // ACP test-fixture key (issue #40). Single deterministic keypair for testnet + regtest
+        // so the regtest harness in qa/rpc-tests/ can sign without inventing keys at test
+        // setup time. Privkey published in qa/rpc-tests/phase2_acp.py — NOT a real Conclave key.
+        // Pubkey hex derived from sha256("OFFv2-test-checkpointkey-2026!!!") as privkey.
+        // Uncompressed (65-byte) form: the pre-#40 ppcoin path stored uncompressed master
+        // keys and the WIF for signing must be uncompressed too — keep both that way.
+        // CRITICAL: clear() first — CTestNetParams inherits from CMainParams so the mainnet
+        // Conclave keys (Slot #1/#2/#3) are already in vConclaveKeys at this point.
+        vConclaveKeys.clear();
+        vConclaveKeys.push_back(ParseHex(
+            "0407bfe02590535b1f349ab8229773d149fa0fe17389136c9a378e77de22370ee0"
+            "5c2b3e3f9c23a06e5d37930b46dd2c562392ddc0317c66eb8a20d32f8f0bddbc")); // test-fixture ACP key
     }
     virtual Network NetworkID() const { return CChainParams::TESTNET; }
 };

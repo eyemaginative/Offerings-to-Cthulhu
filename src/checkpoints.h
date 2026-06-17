@@ -53,8 +53,10 @@ public:
 class CSyncCheckpoint : public CUnsignedSyncCheckpoint
 {
 public:
-    static const std::string strMainPubKey;
-    static const std::string strTestPubKey;
+    // Phase-2 ACP master privkey (issue #40): set at daemon start via -checkpointkey=<WIF>.
+    // The pubkey is read dynamically from Params().ConclaveKeys()[0] — the pre-#40
+    // strMainPubKey / strTestPubKey constants pointed at stale 2014 ppcoin/Peercoin keys
+    // and were deleted along with their TestNet() branch in CheckSignature.
     static std::string strMasterPrivKey;
 
     std::vector<unsigned char> vchMsg;
