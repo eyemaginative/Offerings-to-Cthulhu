@@ -4,16 +4,29 @@
 
 #include "checkpoints.h"
 
+#include "chainparams.h"
 #include "main.h"
 #include "uint256.h"
 #include "key.h"
 #include "txdb.h"
 #include "base58.h"
+#include "util.h"
 
 #include <stdint.h>
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
 #include <boost/foreach.hpp>
+
+// Phase-2 ACP (issue #40): return hex-encoded primary Conclave pubkey (Slot #0)
+// for the active network from chainparams. Single source of truth — the pre-#40
+// strMainPubKey / strTestPubKey constants in CSyncCheckpoint pointed at stale
+// ppcoin/Peercoin-era keys and were never updated.
+static std::string GetCheckpointMasterPubKeyHex()
+{
+    const std::vector<std::vector<unsigned char> >& keys = Params().ConclaveKeys();
+    if (keys.empty()) return "";
+    return HexStr(keys[0]);
+}
 
 namespace Checkpoints
 {
@@ -414,7 +427,9 @@ namespace Checkpoints
     bool CheckCheckpointPubKey()
     {
         std::string strPubKey = "";
-        std::string strMasterPubKey = TestNet() ? CSyncCheckpoint::strTestPubKey : CSyncCheckpoint::strMainPubKey;
+        std::string strMasterPubKey = GetCheckpointMasterPubKeyHex();
+        if (strMasterPubKey.empty())
+            return true; // network has no Conclave key (e.g., legacy testnet pre-#40); ACP disabled
         if (!pblocktree->ReadCheckpointPubKey(strPubKey) || strPubKey != strMasterPubKey)
         {
             // write checkpoint master key to db
@@ -521,17 +536,19 @@ namespace Checkpoints
 
 }
 
-// ppcoin: sync-checkpoint master key
-const std::string CSyncCheckpoint::strMainPubKey = "0466aa7cf205be5c40f114c80d0d4087959508ace5642c9b849af1ba78d7c6b969f3e8d36b3d44e5a0ac1d2d8f3e6f7452055713943870700385544c2a04c5aa55";
-const std::string CSyncCheckpoint::strTestPubKey = "041ba70a9e3afd1c0c13b7577e4f71ede2eee884df617fa28bfb0ee3fe993b9cc2835c16b794e46095bf425c4e2cdc2e628becdb196f0302840282d3d32d6c69bd";
+// Phase-2 ACP master privkey (issue #40). Set at startup via -checkpointkey=<WIF>; see
+// init.cpp::SetCheckpointPrivKey wiring. Empty when running as a non-broadcaster node.
 std::string CSyncCheckpoint::strMasterPrivKey = "";
 
-// ppcoin: verify signature of sync-checkpoint message
+// Verify signature of sync-checkpoint message against the active network's primary
+// Conclave key (Params().ConclaveKeys()[0]). The pre-#40 strMainPubKey / strTestPubKey
+// constants pointed at stale 2014 ppcoin/Peercoin keys and were never updated to a
+// Conclave key — this single-source-of-truth lookup eliminates the constant-drift bug.
 bool CSyncCheckpoint::CheckSignature()
 {
-    std::string strMasterPubKey = TestNet() ? CSyncCheckpoint::strTestPubKey : CSyncCheckpoint::strMainPubKey;
-//    if (!key.Set(ParseHex(strMasterPubKey)))
-//        return error("CSyncCheckpoint::CheckSignature() : SetPubKey failed");
+    std::string strMasterPubKey = GetCheckpointMasterPubKeyHex();
+    if (strMasterPubKey.empty())
+        return error("CSyncCheckpoint::CheckSignature() : network has no Conclave key configured");
     CPubKey key(ParseHex(strMasterPubKey));
     if (!key.Verify(Hash(vchMsg.begin(), vchMsg.end()), vchSig))
         return error("CSyncCheckpoint::CheckSignature() : verify signature failed");
