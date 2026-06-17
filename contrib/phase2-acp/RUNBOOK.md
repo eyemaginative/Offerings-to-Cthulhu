@@ -184,21 +184,8 @@ local; new daemon won't broadcast.
 
 ### "The privkey may be compromised"
 
-This is the bad day. The broadcaster's pubkey is baked into
-`chainparams.cpp:188`. Rotating to a new key requires a chainparams
-change (touching `vConclaveKeys[0]` for mainnet) and a recompiled binary
-distributed to enough of the network to matter. Plan as a coordinated
-release.
-
-Interim mitigation while a rotation is built:
-1. Operator stops broadcasting (no new checkpoints from the compromised
-   key).
-2. Other operators (Conclave Key #2 or #3 holders) cannot step in unless
-   the source is patched to honor signatures from Slot #1 OR Slot #2 OR
-   Slot #3 — currently only Slot #0 is consulted (`Params().ConclaveKeys()[0]`).
-   See open subquestion 1 below.
-3. Recipients can opt out of enforcement via `enforcecheckpoint false`,
-   reverting to `MAX_REORG_DEPTH=100`-only protection.
+Coordinated chainparams rotation required. Separate internal procedure;
+not in scope for this public runbook.
 
 ### "My daemon crashed mid-broadcast"
 
@@ -209,15 +196,14 @@ just restart with `-checkpointkey` as before.
 
 ## Open subquestions (track separately from this runbook)
 
-1. **Multi-slot redundancy** — extend `CheckSignature` to try signatures
-   against each of `vConclaveKeys[0..2]`. Today only Slot #0 is consulted,
-   so loss of Slot #1 key is loss of the entire broadcaster role until a
-   chainparams rotation lands.
-2. **Cadence heartbeat** — supplement tip-advance auto-broadcast with a
+1. **Cadence heartbeat** — supplement tip-advance auto-broadcast with a
    periodic re-broadcast to handle the case where a peer joined right
    after the most recent tip-advance and missed the gossip wave.
-3. **Depth tuning** — `MAX_REORG_DEPTH=100` ≈ 100 minutes at 60s blocks.
+2. **Depth tuning** — `MAX_REORG_DEPTH=100` ≈ 100 minutes at 60s blocks.
    Worth tuning if real-world reorg statistics suggest a different bound.
+
+Operational items deferred to internal documentation are not enumerated
+here. The Conclave maintains a separate brief.
 
 ## Cross-references
 
